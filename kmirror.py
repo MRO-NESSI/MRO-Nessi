@@ -20,6 +20,8 @@ For full details refer to README_KMIRROR.
 '''
 
 import wx
+import sys
+#import XPS_C8_drivers as xps
 
 class KMirrorApp(wx.App):
 	'''The K-Mirror testing app.'''	
@@ -33,6 +35,12 @@ class KMirrorFrame(wx.Frame):
 	'''The frame for the K-Mirror panel.'''
 	def __init__(self,*args,**kwargs):
 		super(KMirrorFrame,self).__init__(*args,**kwargs)
+		self.run_mode=-1
+		#self.x=xps.XPS()
+		#self.SocketID=x.TCP_ConnectToServer('192.168.0.254',5001,1)
+		#if self.SocketID == -1:
+		#	self.run_mode = -1
+		#
 		self.panel_zero=Master(self)
 		self.panel_one=Information(self)
 		self.panel_two=Control(self)
@@ -42,7 +50,9 @@ class KMirrorFrame(wx.Frame):
 		self.__DoLayout()
 		self.SetInitialSize()
 		self.Bind(wx.EVT_CLOSE,self.OnClose)
-		self.OnOpen()
+		
+		if self.run_mode == -1:
+			self.OnFail()
 
 	def __DoLayout(self):
 		'''A basic layout handler.'''
@@ -62,11 +72,21 @@ class KMirrorFrame(wx.Frame):
 			event.Veto()
 		elif result == wx.YES:
 			event.Skip()
+			#self.x.TCP_CloseSocket(SocketID)
 		else:
 			event.Veto()
 
-	def OnOpen(self):
-		print 'I opened connections :D'
+	def OnFail(self):
+		result=wx.MessageBox('Connection to Newport Controller has failed.\nPlease Check IP and Port.\n\nContinue without functionality?',style=wx.CENTER|wx.ICON_EXCLAMATION|wx.YES_NO)
+		if result == wx.YES:
+			print 'fail mode'
+
+		elif result == wx.NO:
+			sys.exit()
+
+		else:
+			sys.exit()
+
 	
 class Master(wx.Panel):
 	'''The Master controller panel, which changes states for the program and device.'''
@@ -107,7 +127,10 @@ class Control(wx.Panel):
 		self.title=wx.StaticText(self,label='Control')
 		self.speed=wx.TextCtrl(self)
 		self.move=wx.TextCtrl(self)
-		self.mode_one=wx.RadioButton(self,
+		self.mode_one=wx.RadioButton(self,-1,'Move Relative', style = wx.RB_GROUP)
+		self.mode_two=wx.RadioButton(self,-1,'Move Absolute')
+		self.mode_three=wx.RadioButton(self,-1,'Move Spindle')
+
 		#
 #		
 #		
@@ -117,14 +140,19 @@ class Control(wx.Panel):
 		#
 		self.execute=wx.Button(self,label='Execute')
 		self.__DoLayout()
-		self.Bind(wx.BUTTON_EVT, self.OnButton)
+		#self.Bind(wx.EVT_BUTTON, self.OnButton)
 		self.SetInitialSize()
 
 	def __DoLayout(self):
 		'''A basic layout handler for Control panel.'''
 		sizer=wx.GridBagSizer()
 		sizer.Add(self.title,(0,0))
-		sizer.Add(self.execute,(1,0))
+		sizer.Add(self.mode_one,(1,0))
+		sizer.Add(self.mode_two,(2,0))
+		sizer.Add(self.mode_three,(3,0))
+		sizer.Add(self.execute,(4,1))
+		sizer.Add(self.speed,(1,1))
+		sizer.Add(self.move,(2,1))
 		self.SetSizer(sizer)
 
 if __name__=='__main__':
