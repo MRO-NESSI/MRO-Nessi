@@ -105,6 +105,9 @@ class Control(wx.Panel):
 	def __init__(self,*args,**kwargs):
 		super(Control,self).__init__(*args,**kwargs)
 		self.title=wx.StaticText(self,label='Control')
+		self.speed=wx.TextCtrl(self)
+		self.move=wx.TextCtrl(self)
+		self.mode_one=wx.RadioButton(self,
 		#
 #		
 #		
@@ -114,6 +117,7 @@ class Control(wx.Panel):
 		#
 		self.execute=wx.Button(self,label='Execute')
 		self.__DoLayout()
+		self.Bind(wx.BUTTON_EVT, self.OnButton)
 		self.SetInitialSize()
 
 	def __DoLayout(self):
