@@ -36,7 +36,7 @@ class KMirrorFrame(wx.Frame):
 	'''The frame for the K-Mirror panel.'''
 	def __init__(self,*args,**kwargs):
 		super(KMirrorFrame,self).__init__(*args,**kwargs)
-		self.run_mode=-1
+		self.run_mode=0
 		#self.x=xps.XPS()
 		#self.SocketID=x.TCP_ConnectToServer('192.168.0.254',5001,1)
 		#if self.SocketID == -1:
@@ -73,6 +73,9 @@ class KMirrorFrame(wx.Frame):
 			event.Veto()
 		elif result == wx.YES:
 			event.Skip()
+			self.panel_zero.Close()
+			self.panel_one.Close()
+			self.panel_two.Close()
 			#self.x.TCP_CloseSocket(SocketID)
 		else:
 			event.Veto()
@@ -93,16 +96,23 @@ class Master(wx.Panel):
 	'''The Master controller panel, which changes states for the program and device.'''
 	def __init__(self,*args,**kwargs):
 		super(Master,self).__init__(*args,**kwargs)
+		self.mode='Enable'
 		self.title=wx.StaticText(self,label='Master')
-		self.move_enable=wx.Button(self,label='enable')
+		self.move_enable=wx.Button(self,label='%s' % self.mode)
 		self.kill_group=wx.Button(self,label='kill group')
 		#####################################
 		self.kill_group.SetBackgroundColour(wx.Colour(255,0, 0))
 		self.kill_group.ClearBackground()
 		self.kill_group.Refresh()   
+		#self.x=xps.XPS()
+		#self.SocketID=x.TCP_ConnectToServer('192.168.0.254',5001,1)
+		#if self.SocketID == -1:
+		#	self.run_mode = -1
+		#
 		#####################################
 		self.line=wx.StaticLine(self,style=wx.LI_HORIZONTAL)
 		self.__DoLayout()
+		self.Bind(wx.EVT_BUTTON,self.OnButton)
 		self.SetInitialSize()
 		
 	def __DoLayout(self):
@@ -114,10 +124,24 @@ class Master(wx.Panel):
 		sizer.Add(self.kill_group,(2,3))
 		self.SetSizer(sizer)
 
+	def OnButton(self,event):
+		if event.GetEventObject()==self.move_enable:
+			pass################
+		else:
+			pass################
+
+	def Close(self):
+		print 'red leader'
+
 class Information(wx.Panel):
 	def __init__(self,*args,**kwargs):
 		super(Information,self).__init__(*args,**kwargs)
 		self.title=wx.StaticText(self,label='Information')
+		#self.x=xps.XPS()
+		#self.SocketID=x.TCP_ConnectToServer('192.168.0.254',5001,1)
+		#if self.SocketID == -1:
+		#	self.run_mode = -1
+		#
 		self.__DoLayout()
 		self.SetInitialSize()
 
@@ -127,6 +151,9 @@ class Information(wx.Panel):
 		sizer.Add(self.title,(0,0))
 		self.SetSizer(sizer)
 
+	def Close(self):
+		print 'panel_one'
+
 class Control(wx.Panel):
 	def __init__(self,*args,**kwargs):
 		super(Control,self).__init__(*args,**kwargs)
@@ -135,9 +162,6 @@ class Control(wx.Panel):
 		self.label_two=wx.StaticText(self,label='deg/s')
 		self.label_three=wx.StaticText(self,label='Travel Position')
 		self.label_four=wx.StaticText(self,label='deg')
-		self.label_five=wx.StaticText(self,label='Time of Travel')
-		self.label_six=wx.StaticText(self,label='s')
-		self.time=FS.FloatSpin(self,digits=4)
 		self.speed=FS.FloatSpin(self,digits=4)
 		self.position=FS.FloatSpin(self,digits=4)
 		self.mode_one=wx.RadioButton(self,-1,'Move Relative  ', style = wx.RB_GROUP)
@@ -150,10 +174,15 @@ class Control(wx.Panel):
 #		ADD ALL OTHER SETTING CONTROLS
 #
 #
+		#self.x=xps.XPS()
+		#self.SocketID=x.TCP_ConnectToServer('192.168.0.254',5001,1)
+		#if self.SocketID == -1:
+		#	self.run_mode = -1
+		#
 		#
 		self.execute=wx.Button(self,label='Execute')
 		self.__DoLayout()
-		#self.Bind(wx.EVT_BUTTON, self.OnButton)
+		self.Bind(wx.EVT_BUTTON, self.OnButton)
 		self.SetInitialSize()
 
 	def __DoLayout(self):
@@ -164,19 +193,19 @@ class Control(wx.Panel):
 		sizer.Add(self.label_two,(2,2))
 		sizer.Add(self.label_three,(3,1))
 		sizer.Add(self.label_four,(4,2))
-		sizer.Add(self.label_five,(5,1))
-		sizer.Add(self.label_six,(6,2))
-		sizer.Add(self.mode_one,(1,0))
-		sizer.Add(self.mode_two,(2,0))
-		sizer.Add(self.mode_three,(3,0))
+		sizer.Add(self.mode_one,(1,0),(1,1),wx.ALIGN_CENTER_VERTICAL)
+		sizer.Add(self.mode_two,(2,0),(1,1),wx.ALIGN_CENTER_VERTICAL)
+		sizer.Add(self.mode_three,(3,0),(1,1),wx.ALIGN_CENTER_VERTICAL)
 		sizer.Add(self.speed,(2,1))
 		sizer.Add(self.position,(4,1))
-		sizer.Add(self.time,(6,1))
-		sizer.Add(self.execute,(7,2))
+		sizer.Add(self.execute,(5,2))
 		self.SetSizer(sizer)
 
 	def OnButton(self,event):
 		pass
+
+	def Close(self):
+		print 'me'
 
 if __name__=='__main__':
 	app=KMirrorApp(False)	
