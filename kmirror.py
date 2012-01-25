@@ -21,6 +21,7 @@ For full details refer to README_KMIRROR.
 
 import wx
 import sys
+import wx.lib.agw.floatspin as FS
 #import XPS_C8_drivers as xps
 
 class KMirrorApp(wx.App):
@@ -95,6 +96,11 @@ class Master(wx.Panel):
 		self.title=wx.StaticText(self,label='Master')
 		self.move_enable=wx.Button(self,label='enable')
 		self.kill_group=wx.Button(self,label='kill group')
+		#####################################
+		self.kill_group.SetBackgroundColour(wx.Colour(255,0, 0))
+		self.kill_group.ClearBackground()
+		self.kill_group.Refresh()   
+		#####################################
 		self.line=wx.StaticLine(self,style=wx.LI_HORIZONTAL)
 		self.__DoLayout()
 		self.SetInitialSize()
@@ -131,9 +137,9 @@ class Control(wx.Panel):
 		self.label_four=wx.StaticText(self,label='deg')
 		self.label_five=wx.StaticText(self,label='Time of Travel')
 		self.label_six=wx.StaticText(self,label='s')
-		self.time=wx.TextCtrl(self)
-		self.speed=wx.TextCtrl(self)
-		self.position=wx.TextCtrl(self)
+		self.time=FS.FloatSpin(self,digits=4)
+		self.speed=FS.FloatSpin(self,digits=4)
+		self.position=FS.FloatSpin(self,digits=4)
 		self.mode_one=wx.RadioButton(self,-1,'Move Relative  ', style = wx.RB_GROUP)
 		self.mode_two=wx.RadioButton(self,-1,'Move Absolute  ')
 		self.mode_three=wx.RadioButton(self,-1,'Move Spindle  ')
