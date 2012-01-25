@@ -79,7 +79,7 @@ class KMirrorFrame(wx.Frame):
 	def OnFail(self):
 		result=wx.MessageBox('Connection to Newport Controller has failed.\nPlease Check IP and Port.\n\nContinue without functionality?',style=wx.CENTER|wx.ICON_EXCLAMATION|wx.YES_NO)
 		if result == wx.YES:
-			print 'fail mode'
+			pass #more code here?
 
 		elif result == wx.NO:
 			sys.exit()
@@ -125,11 +125,18 @@ class Control(wx.Panel):
 	def __init__(self,*args,**kwargs):
 		super(Control,self).__init__(*args,**kwargs)
 		self.title=wx.StaticText(self,label='Control')
+		self.label_one=wx.StaticText(self,label='Travel Speed')
+		self.label_two=wx.StaticText(self,label='deg/s')
+		self.label_three=wx.StaticText(self,label='Travel Position')
+		self.label_four=wx.StaticText(self,label='deg')
+		self.label_five=wx.StaticText(self,label='Time of Travel')
+		self.label_six=wx.StaticText(self,label='s')
+		self.time=wx.TextCtrl(self)
 		self.speed=wx.TextCtrl(self)
-		self.move=wx.TextCtrl(self)
-		self.mode_one=wx.RadioButton(self,-1,'Move Relative', style = wx.RB_GROUP)
-		self.mode_two=wx.RadioButton(self,-1,'Move Absolute')
-		self.mode_three=wx.RadioButton(self,-1,'Move Spindle')
+		self.position=wx.TextCtrl(self)
+		self.mode_one=wx.RadioButton(self,-1,'Move Relative  ', style = wx.RB_GROUP)
+		self.mode_two=wx.RadioButton(self,-1,'Move Absolute  ')
+		self.mode_three=wx.RadioButton(self,-1,'Move Spindle  ')
 
 		#
 #		
@@ -147,13 +154,23 @@ class Control(wx.Panel):
 		'''A basic layout handler for Control panel.'''
 		sizer=wx.GridBagSizer()
 		sizer.Add(self.title,(0,0))
+		sizer.Add(self.label_one,(1,1))
+		sizer.Add(self.label_two,(2,2))
+		sizer.Add(self.label_three,(3,1))
+		sizer.Add(self.label_four,(4,2))
+		sizer.Add(self.label_five,(5,1))
+		sizer.Add(self.label_six,(6,2))
 		sizer.Add(self.mode_one,(1,0))
 		sizer.Add(self.mode_two,(2,0))
 		sizer.Add(self.mode_three,(3,0))
-		sizer.Add(self.execute,(4,1))
-		sizer.Add(self.speed,(1,1))
-		sizer.Add(self.move,(2,1))
+		sizer.Add(self.speed,(2,1))
+		sizer.Add(self.position,(4,1))
+		sizer.Add(self.time,(6,1))
+		sizer.Add(self.execute,(7,2))
 		self.SetSizer(sizer)
+
+	def OnButton(self,event):
+		pass
 
 if __name__=='__main__':
 	app=KMirrorApp(False)	
