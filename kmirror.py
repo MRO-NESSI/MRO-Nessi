@@ -132,6 +132,7 @@ class Master(wx.Panel):
 
 	def Close(self):
 		print 'red leader'
+		#self.x.TCP_CloseSocket(SocketID)
 
 class Information(wx.Panel):
 	def __init__(self,*args,**kwargs):
@@ -153,6 +154,7 @@ class Information(wx.Panel):
 
 	def Close(self):
 		print 'panel_one'
+		#self.x.TCP_CloseSocket(SocketID)
 
 class Control(wx.Panel):
 	def __init__(self,*args,**kwargs):
@@ -206,6 +208,7 @@ class Control(wx.Panel):
 
 	def Close(self):
 		print 'me'
+		#self.x.TCP_CloseSocket(SocketID)
 
 if __name__=='__main__':
 	app=KMirrorApp(False)	
