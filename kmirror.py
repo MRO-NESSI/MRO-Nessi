@@ -24,6 +24,14 @@ import sys
 import wx.lib.agw.floatspin as FS
 #import XPS_C8_drivers as xps
 
+def XPSErrorHandler(Ecode):
+	self.code=Ecode
+######
+######
+######
+######
+######
+
 class KMirrorApp(wx.App):
 	'''The K-Mirror testing app.'''	
 	def OnInit(self):
@@ -81,11 +89,9 @@ class KMirrorFrame(wx.Frame):
 			event.Veto()
 
 	def OnFail(self):
-		result=wx.MessageBox('Connection to Newport Controller has failed.\nPlease Check IP and Port.\n\nContinue without functionality?',style=wx.CENTER|wx.ICON_EXCLAMATION|wx.YES_NO)
-		if result == wx.YES:
-			pass #more code here?
+		result=wx.MessageBox('Connection to Newport Controller has failed.\nPlease Check IP and Port and restart program.',style=wx.CENTER|wx.ICON_EXCLAMATION|wx.OK)
 
-		elif result == wx.NO:
+		if result == wx.OK:
 			sys.exit()
 
 		else:
@@ -157,32 +163,40 @@ class Information(wx.Panel):
 class Control(wx.Panel):
 	def __init__(self,*args,**kwargs):
 		super(Control,self).__init__(*args,**kwargs)
+
 		self.title=wx.StaticText(self,label='Control')
 		self.label_one=wx.StaticText(self,label='Travel Speed')
 		self.label_two=wx.StaticText(self,label='deg/s')
 		self.label_three=wx.StaticText(self,label='Travel Position')
 		self.label_four=wx.StaticText(self,label='deg')
-		self.speed=FS.FloatSpin(self,digits=4)
-		self.position=FS.FloatSpin(self,digits=4)
+		self.speed=FS.FloatSpin(self,digits=5)
+		self.position=FS.FloatSpin(self,digits=5)
+
 		self.mode_one=wx.RadioButton(self,-1,'Move Relative  ', style = wx.RB_GROUP)
 		self.mode_two=wx.RadioButton(self,-1,'Move Absolute  ')
 		self.mode_three=wx.RadioButton(self,-1,'Move Spindle  ')
+		
+		self.move_mode=0		#mode 0 is relative, 1 is absolute and 2 is spindle. -1 is error.
 
-		#
-#		
-#		
-#		ADD ALL OTHER SETTING CONTROLS
-#
-#
+		#########  XPS Specific Calls  ##########
 		#self.x=xps.XPS()
 		#self.SocketID=x.TCP_ConnectToServer('192.168.0.254',5001,1)
 		#if self.SocketID == -1:
 		#	self.run_mode = -1
-		#
-		#
+		#self.Group = 'Spindle'
+		#self.Positioner = self.Group + '.Spindle'
+
+		#self.profile=self.x.PositionerSGammaParameterGet(self.SocketID,self.Positioner)
+		#if self.profile[0] == 0:
+		#	pass
+		#else:
+		#	
+		#########################################
+
 		self.execute=wx.Button(self,label='Execute')
 		self.__DoLayout()
 		self.Bind(wx.EVT_BUTTON, self.OnButton)
+		self.Bind(wx.EVT_RADIOBUTTON,self.OnRadio)
 		self.SetInitialSize()
 
 	def __DoLayout(self):
@@ -202,7 +216,61 @@ class Control(wx.Panel):
 		self.SetSizer(sizer)
 
 	def OnButton(self,event):
-		pass
+		'''Defining button functionality.'''
+		if self.move_mode == 0:
+			pass
+			#return=self.x.PositionerSGammaParameterSet(self.SocketID,self.Positioner,self.speed.GetValue(),self.profile[2],self.profile[3],self.profile[4])
+			#if return == 0:
+			#	move=self.x.GroupMoveRelative(self.SocketID,self.Group,self.position.GetValue())
+			#	if move == 0:
+			#		pass
+			#	else:
+			#		XPSErrorHandler(move)
+			#
+			#else:
+			#	XPSErrorHandler(return)			
+				
+		elif self.move_mode == 1:
+			pass
+			#return=self.x.PositionerSGammaParameterSet(self.SocketID,self.Positioner,self.speed.GetValue(),self.profile[2],self.profile[3],self.profile[4])
+			#if return == 0:
+			#	move=self.x.GroupMoveAbsolute(self.SocketID,self.Group,self.position.GetValue())
+			#	if move == 0:
+			#		pass
+			#	else:
+			#		XPSErrorHandler(move)
+			#
+			#else:
+			#	XPSErrorHandler(return)		
+		elif self.move_mode == 2:
+			pass
+			#return=self.x.PositionerSGammaParameterSet(self.SocketID,self.Positioner,self.speed.GetValue(),self.profile[2],self.profile[3],self.profile[4])
+			#if return == 0:
+			#	move=self.x.GroupJogModeEnable(self.SocketID,self.Group,self.position.GetValue()) ?????????
+			#	if move == 0:
+			#		pass
+			#	else:
+			#		XPSErrorHandler(move)
+			#
+			#else:
+			#	XPSErrorHandler(return)		
+		else:
+			print 'What even is this?'
+		
+
+	def OnRadio(self,event):
+
+		if self.mode_one.GetValue()==True:
+			self.move_mode=0
+
+		elif self.mode_two.getValue()==True:
+			self.move_mode=1
+
+		elif self.mode_three.GetValue()==True:
+			self.move_mode=2
+
+		else:
+			self.move_mode=-1
 
 	def Close(self):
 		print 'me'
