@@ -107,9 +107,9 @@ class Master(wx.Panel):
 
 	def OnButton(self,event):
 		pass
-		#kill=self.x.KillAll(SocketID)
+		#kill=self.x.KillAll(self.SocketID)
 		#if kill[0] != 0:
-		#	XPSErrorHandler(self.SocketID, self.kill[0], 'KillAll')
+		#	XPSErrorHandler(self.SocketID, kill[0], 'KillAll')
 		#else:
 		#	result=wx.MessageBox('All Groups Killed.\nProgram Must Be Restarted.',style=wx.CENTER|wx.ICON_EXCLAMATION|wx.OK)		
 			
@@ -123,7 +123,7 @@ class Master(wx.Panel):
 			sys.exit()
 
 	def Close(self):
-		#self.x.TCP_CloseSocket(SocketID)
+		#self.x.TCP_CloseSocket(self.SocketID)
 		
 		print 'Emergency Panel Closed'
 
@@ -177,7 +177,7 @@ class Information(wx.Panel):
 
 	def Close(self):
 		print 'panel_one'
-		#self.x.TCP_CloseSocket(SocketID)
+		#self.x.TCP_CloseSocket(self.SocketID)
 
 	def XPSErrorHandler(self,socket,code,name):
 		if code != -2 and code != -108:
@@ -236,7 +236,7 @@ class Control(wx.Panel):
 
 		self.profile=self.x.PositionerSGammaParameterGet(self.SocketID,self.Positioner)
 		if self.profile[0] != 0:
-			XPSErrorHandler(self.SocketID, self.GHomeSearch[0], 'PositionerSGammaParameterGet')	
+			XPSErrorHandler(self.SocketID, self.profile[0], 'PositionerSGammaParameterGet')	
 		'''	
 		#########################################
 
@@ -268,13 +268,13 @@ class Control(wx.Panel):
 			return=self.x.PositionerSGammaParameterSet(self.SocketID,self.Positioner,self.speed.GetValue(),self.profile[2],self.profile[3],self.profile[4])
 
 			if return != 0:
-				XPSErrorHandler(self.SocketID, return, 'PositionerSGammaParameterSet')	
+				XPSErrorHandler(self.SocketID, return[0], 'PositionerSGammaParameterSet')	
 
 			else:
 				
 				move=self.x.GroupMoveRelative(self.SocketID,self.Group,[self.position.GetValue()])
 				if move != 0:
-					XPSErrorHandler(self.SocketID, move, 'GroupMoveRelative')
+					XPSErrorHandler(self.SocketID, move[0], 'GroupMoveRelative')
 						
 			'''
 		elif self.move_mode == 1:
@@ -282,12 +282,12 @@ class Control(wx.Panel):
 			return=self.x.PositionerSGammaParameterSet(self.SocketID,self.Positioner,self.speed.GetValue(),self.profile[2],self.profile[3],self.profile[4])
 
 			if return != 0:
-				XPSErrorHandler(self.SocketID, return, 'PositionerSGammaParameterSet')	
+				XPSErrorHandler(self.SocketID, return[0], 'PositionerSGammaParameterSet')	
 
 			else:
 				move=self.x.GroupMoveAbsolute(self.SocketID,self.Group,[self.position.GetValue()])
 				if move != 0:
-					XPSErrorHandler(self.SocketID, move, 'GroupMoveRelative')
+					XPSErrorHandler(self.SocketID, move[0], 'GroupMoveRelative')
 						
 			'''
 		else:
