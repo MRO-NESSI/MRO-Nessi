@@ -231,7 +231,7 @@ class Control(wx.Panel):
      		XPSErrorHandler(self.SocketID, self.GInit[0], 'GroupInitialize')
      
 		self.GHomeSearch=self.x.GroupHomeSearchAndRelativeMove(self.SocketId, self.Group,self.home)
-		if self.GHomeSearch != 0:
+		if self.GHomeSearch[0] != 0:
      		XPSErrorHandler(self.SocketID, self.GHomeSearch[0], 'GroupHomeSearchAndRelativeMove')
 
 		self.profile=self.x.PositionerSGammaParameterGet(self.SocketID,self.Positioner)
@@ -267,13 +267,13 @@ class Control(wx.Panel):
 			'''
 			return=self.x.PositionerSGammaParameterSet(self.SocketID,self.Positioner,self.speed.GetValue(),self.profile[2],self.profile[3],self.profile[4])
 
-			if return != 0:
+			if return[0] != 0:
 				XPSErrorHandler(self.SocketID, return[0], 'PositionerSGammaParameterSet')	
 
 			else:
 				
 				move=self.x.GroupMoveRelative(self.SocketID,self.Group,[self.position.GetValue()])
-				if move != 0:
+				if move[0] != 0:
 					XPSErrorHandler(self.SocketID, move[0], 'GroupMoveRelative')
 						
 			'''
@@ -281,12 +281,12 @@ class Control(wx.Panel):
 			'''
 			return=self.x.PositionerSGammaParameterSet(self.SocketID,self.Positioner,self.speed.GetValue(),self.profile[2],self.profile[3],self.profile[4])
 
-			if return != 0:
+			if return[0] != 0:
 				XPSErrorHandler(self.SocketID, return[0], 'PositionerSGammaParameterSet')	
 
 			else:
 				move=self.x.GroupMoveAbsolute(self.SocketID,self.Group,[self.position.GetValue()])
-				if move != 0:
+				if move[0] != 0:
 					XPSErrorHandler(self.SocketID, move[0], 'GroupMoveRelative')
 						
 			'''
