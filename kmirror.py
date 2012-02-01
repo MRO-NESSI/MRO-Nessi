@@ -106,11 +106,8 @@ class Master(wx.Panel):
 		self.SetSizer(sizer)
 
 	def OnButton(self,event):
-		kill=self.x.KillAll(self.SocketID)
-		if kill[0] != 0:
-			self.XPSErrorHandler(self.SocketID, kill[0], 'KillAll')
-		else:
-			result=wx.MessageBox('All Groups Killed.\nProgram Must Be Restarted.',style=wx.CENTER|wx.ICON_EXCLAMATION|wx.OK)		
+		task=EmergencyThread(self,app,self.SocketID)
+		task.start()		
 			
 	def OnFail(self):
 		result=wx.MessageBox('Connection to Newport Controller has failed at Emergency Panel.\nPlease Check IP and Port.',style=wx.CENTER|wx.ICON_EXCLAMATION|wx.OK)
@@ -262,32 +259,16 @@ class Control(wx.Panel):
 
 	def OnButton(self,event):
 		'''Defining button functionality.'''
-		if self.move_mode == 0:
+		if self.move_mode == 0 or self.move_mode == 1:
 			
-			returns=self.x.PositionerSGammaParametersSet(self.SocketID,self.Positioner,self.speed.GetValue(),self.profile[2],self.profile[3],self.profile[4])
+			result=self.x.PositionerSGammaParametersSet(self.SocketID,self.Positioner,self.speed.GetValue(),self.profile[2],self.profile[3],self.profile[4])
 
-			if returns[0] != 0:
+			if result[0] != 0:
 				self.XPSErrorHandler(self.SocketID, returns[0], 'PositionerSGammaParametersSet')	
 
 			else:
-				
-				move=self.x.GroupMoveRelative(self.SocketID,self.Group,[self.position.GetValue()])
-				if move[0] != 0:
-					self.XPSErrorHandler(self.SocketID, move[0], 'GroupMoveRelative')
-						
-			
-		elif self.move_mode == 1:
-			
-			returns=self.x.PositionerSGammaParametersSet(self.SocketID,self.Positioner,self.speed.GetValue(),self.profile[2],self.profile[3],self.profile[4])
-
-			if returns[0] != 0:
-				self.XPSErrorHandler(self.SocketID, returns[0], 'PositionerSGammaParameterSet')	
-
-			else:
-				move=self.x.GroupMoveAbsolute(self.SocketID,self.Group,[self.position.GetValue()])
-				if move[0] != 0:
-					self.XPSErrorHandler(self.SocketID, move[0], 'GroupMoveRelative')
-						
+				task=ControlThread(self,app,self.SocketID,self.Group,self.position.GetValue(),self.move_mode)
+				task.start()
 			
 		else:
 			result=wx.MessageBox('Button Malfunction in Control Panel.',style=wx.CENTER|wx.ICON_EXCLAMATION|wx.OK)
@@ -331,6 +312,38 @@ class Control(wx.Panel):
 				choice=wx.MessageBox(name +' : TCP timeout',style=wx.CENTER|wx.ICON_EXCLAMATION|wx.OK)
 			elif code == -108:
 				choice=wx.MessageBox(name +' : The TCP/IP connection was closed by an administrator',style=wx.CENTER|wx.ICON_EXCLAMATION|wx.OK)
+
+class ControlThread(thr.Thread):
+	def __init__(self,app,socket,group,val,mode):
+		super(ControlThread,self).__init__()
+		self.app=app
+		self.socket=socket
+		self.group=group
+		self.val=val
+		
+	def run(self):
+		if self.mode == 0:
+			move=self.app.frame.panel_two.x.GroupMoveRelative(self.socket,self.group,[self.val])
+			if move[0] != 0:
+				self.app.frame.panel_two.XPSErrorHandler(self.SocketID, move[0], 'GroupMoveRelative')
+		elif self.mode == 1:
+			move=self.app.frame.panel_two.x.GroupMoveAbsolute(self.socket,self.group,[self.val])
+			if move[0] != 0:
+				self.app.frame.panel_two.XPSErrorHandler(self.SocketID, move[0], 'GroupMoveAbsolute')
+
+class EmergencyThread(thr.Thread):
+	def __init__(self,app,socket):
+		super(EmergencyThread,self).__init__()
+		self.app=app
+		self.socket=socket
+
+	def run(self):
+		kill=self.app.frame.panel_zero.x.KillAll(self.socket)
+		if kill[0] != 0:
+			self.app.frame.panel_zero.XPSErrorHandler(self.socket, kill[0], 'KillAll')
+		else:
+			result=wx.MessageBox('All Groups Killed.\nProgram Must Be Restarted.',style=wx.CENTER|wx.ICON_EXCLAMATION|wx.OK)
+
 
 if __name__=='__main__':
 	app=KMirrorApp(False)	
