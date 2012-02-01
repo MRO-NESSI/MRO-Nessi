@@ -22,7 +22,7 @@ For full details refer to README_KMIRROR.
 import wx
 import sys
 import wx.lib.agw.floatspin as FS
-#import XPS_C8_drivers as xps
+import XPS_C8_drivers as xps
 
 
 
@@ -84,13 +84,13 @@ class Master(wx.Panel):
 		self.kill_group.ClearBackground()
 		self.kill_group.Refresh()   
 		#####################################
-		'''
+		
 		self.x=xps.XPS()
-		self.SocketID=x.TCP_ConnectToServer('192.168.0.254',5001,1)
+		self.SocketID=self.x.TCP_ConnectToServer('192.168.0.254',5001,1)
 		if self.SocketID == -1:
 			self.OnFail()
 		
-		'''
+	
 		#####################################
 		self.line=wx.StaticLine(self,style=wx.LI_HORIZONTAL)
 		self.__DoLayout()
@@ -106,12 +106,11 @@ class Master(wx.Panel):
 		self.SetSizer(sizer)
 
 	def OnButton(self,event):
-		pass
-		#kill=self.x.KillAll(self.SocketID)
-		#if kill[0] != 0:
-		#	XPSErrorHandler(self.SocketID, kill[0], 'KillAll')
-		#else:
-		#	result=wx.MessageBox('All Groups Killed.\nProgram Must Be Restarted.',style=wx.CENTER|wx.ICON_EXCLAMATION|wx.OK)		
+		kill=self.x.KillAll(self.SocketID)
+		if kill[0] != 0:
+			self.XPSErrorHandler(self.SocketID, kill[0], 'KillAll')
+		else:
+			result=wx.MessageBox('All Groups Killed.\nProgram Must Be Restarted.',style=wx.CENTER|wx.ICON_EXCLAMATION|wx.OK)		
 			
 	def OnFail(self):
 		result=wx.MessageBox('Connection to Newport Controller has failed at Emergency Panel.\nPlease Check IP and Port.',style=wx.CENTER|wx.ICON_EXCLAMATION|wx.OK)
@@ -123,7 +122,7 @@ class Master(wx.Panel):
 			sys.exit()
 
 	def Close(self):
-		#self.x.TCP_CloseSocket(self.SocketID)
+		self.x.TCP_CloseSocket(self.SocketID)
 		
 		print 'Emergency Panel Closed'
 
@@ -146,15 +145,15 @@ class Information(wx.Panel):
 		super(Information,self).__init__(*args,**kwargs)
 		self.title=wx.StaticText(self,label='Information')
 		###################################
-		'''
+		
 		self.x=xps.XPS()
-		self.SocketID=x.TCP_ConnectToServer('192.168.0.254',5001,1)
+		self.SocketID=self.x.TCP_ConnectToServer('192.168.0.254',5001,1)
 		if self.SocketID == -1:
 			self.OnFail()
 			
-		self.Group = 'Group1'
-		self.Positioner = self.Group + '.Positioner'
-		'''
+		self.Group = 'GROUP1'
+		self.Positioner = self.Group + '.POSITIONER'
+		
 		###################################
 		self.__DoLayout()
 		self.SetInitialSize()
@@ -177,7 +176,7 @@ class Information(wx.Panel):
 
 	def Close(self):
 		print 'panel_one'
-		#self.x.TCP_CloseSocket(self.SocketID)
+		self.x.TCP_CloseSocket(self.SocketID)
 
 	def XPSErrorHandler(self,socket,code,name):
 		if code != -2 and code != -108:
@@ -207,37 +206,37 @@ class Control(wx.Panel):
 		self.mode_one=wx.RadioButton(self,-1,'Move Relative  ', style = wx.RB_GROUP)
 		self.mode_two=wx.RadioButton(self,-1,'Move Absolute  ')
 		
-		self.move_mode=-2		#Mode 0 is relative and mode 1 is absolute. -1 is error.
+		self.move_mode=0		#Mode 0 is relative and mode 1 is absolute. -1 is error.
 
 		#########  XPS Specific Calls  ##########
-		'''
+		
 
 		self.home=[0]
 
 		self.x=xps.XPS()
-		self.SocketID=x.TCP_ConnectToServer('192.168.0.254',5001,1)
+		self.SocketID=self.x.TCP_ConnectToServer('192.168.0.254',5001,1)
 		if self.SocketID == -1:
 			self.OnFail()
 			
-		self.Group = 'Group1'
-		self.Positioner = self.Group + '.Positioner'
+		self.Group = 'GROUP1'
+		self.Positioner = self.Group + '.POSITIONER'
 		
-		self.GKill=self.x.GroupKill(self.SocketId, self.Group)
+		self.GKill=self.x.GroupKill(self.SocketID, self.Group)
 		if self.GKill[0] != 0:
-     		XPSErrorHandler(self.SocketID, self.GKill[0], 'GroupKill')
+     			self.XPSErrorHandler(self.SocketID, self.GKill[0], 'GroupKill')
      
-		self.GInit=self.x.GroupInitialize(self.SocketId, self.Group)
-		if GInit[0] != 0:
-     		XPSErrorHandler(self.SocketID, self.GInit[0], 'GroupInitialize')
+		self.GInit=self.x.GroupInitialize(self.SocketID, self.Group)
+		if self.GInit[0] != 0:
+     			self.XPSErrorHandler(self.SocketID, self.GInit[0], 'GroupInitialize')
      
-		self.GHomeSearch=self.x.GroupHomeSearchAndRelativeMove(self.SocketId, self.Group,self.home)
+		self.GHomeSearch=self.x.GroupHomeSearchAndRelativeMove(self.SocketID, self.Group,self.home)
 		if self.GHomeSearch[0] != 0:
-     		XPSErrorHandler(self.SocketID, self.GHomeSearch[0], 'GroupHomeSearchAndRelativeMove')
+     			self.XPSErrorHandler(self.SocketID, self.GHomeSearch[0], 'GroupHomeSearchAndRelativeMove')
 
-		self.profile=self.x.PositionerSGammaParameterGet(self.SocketID,self.Positioner)
+		self.profile=self.x.PositionerSGammaParametersGet(self.SocketID,self.Positioner)
 		if self.profile[0] != 0:
-			XPSErrorHandler(self.SocketID, self.profile[0], 'PositionerSGammaParameterGet')	
-		'''	
+			self.XPSErrorHandler(self.SocketID, self.profile[0], 'PositionerSGammaParametersGet')	
+			
 		#########################################
 
 		self.execute=wx.Button(self,label='Execute')
@@ -264,32 +263,32 @@ class Control(wx.Panel):
 	def OnButton(self,event):
 		'''Defining button functionality.'''
 		if self.move_mode == 0:
-			'''
-			return=self.x.PositionerSGammaParameterSet(self.SocketID,self.Positioner,self.speed.GetValue(),self.profile[2],self.profile[3],self.profile[4])
+			
+			returns=self.x.PositionerSGammaParametersSet(self.SocketID,self.Positioner,self.speed.GetValue(),self.profile[2],self.profile[3],self.profile[4])
 
-			if return[0] != 0:
-				XPSErrorHandler(self.SocketID, return[0], 'PositionerSGammaParameterSet')	
+			if returns[0] != 0:
+				self.XPSErrorHandler(self.SocketID, returns[0], 'PositionerSGammaParametersSet')	
 
 			else:
 				
 				move=self.x.GroupMoveRelative(self.SocketID,self.Group,[self.position.GetValue()])
 				if move[0] != 0:
-					XPSErrorHandler(self.SocketID, move[0], 'GroupMoveRelative')
+					self.XPSErrorHandler(self.SocketID, move[0], 'GroupMoveRelative')
 						
-			'''
+			
 		elif self.move_mode == 1:
-			'''
-			return=self.x.PositionerSGammaParameterSet(self.SocketID,self.Positioner,self.speed.GetValue(),self.profile[2],self.profile[3],self.profile[4])
+			
+			returns=self.x.PositionerSGammaParametersSet(self.SocketID,self.Positioner,self.speed.GetValue(),self.profile[2],self.profile[3],self.profile[4])
 
-			if return[0] != 0:
-				XPSErrorHandler(self.SocketID, return[0], 'PositionerSGammaParameterSet')	
+			if returns[0] != 0:
+				self.XPSErrorHandler(self.SocketID, returns[0], 'PositionerSGammaParameterSet')	
 
 			else:
 				move=self.x.GroupMoveAbsolute(self.SocketID,self.Group,[self.position.GetValue()])
 				if move[0] != 0:
-					XPSErrorHandler(self.SocketID, move[0], 'GroupMoveRelative')
+					self.XPSErrorHandler(self.SocketID, move[0], 'GroupMoveRelative')
 						
-			'''
+			
 		else:
 			result=wx.MessageBox('Button Malfunction in Control Panel.',style=wx.CENTER|wx.ICON_EXCLAMATION|wx.OK)
 		
@@ -316,7 +315,7 @@ class Control(wx.Panel):
 
 	def Close(self):
 		
-		#self.x.TCP_CloseSocket(SocketID)
+		self.x.TCP_CloseSocket(self.SocketID)
 			
 		print 'panel two closed'
 
