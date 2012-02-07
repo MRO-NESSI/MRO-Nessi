@@ -75,7 +75,7 @@ class KMirrorFrame(wx.Frame):
 			event.Veto()
 	
 class Master(wx.Panel):
-	''''The Master controller panel, which changes states for the program and device.''''
+	'''The Master controller panel, which changes states for the program and device.'''
 	def __init__(self,*args,**kwargs):
 		super(Master,self).__init__(*args,**kwargs)
 		self.mode='Enable'
@@ -90,7 +90,7 @@ class Master(wx.Panel):
 		self.SetInitialSize()
 		
 	def __DoLayout(self):
-		''''A basic layout handler for Emergency Panel.''''
+		'''A basic layout handler for Emergency Panel.'''
 		sizer=wx.GridBagSizer()
 		sizer.Add(self.title,(0,0),(1,1),wx.ALIGN_CENTER_HORIZONTAL)
 		sizer.Add(self.line,(1,0),(1,1),wx.EXPAND)
@@ -128,17 +128,12 @@ class Information(wx.Panel):
 		###################################
 		self.__DoLayout()
 		self.SetInitialSize()
-		print self.SocketID 
 
 	def __DoLayout(self):
 		'''A basic layout handler for Information panel.'''
 		sizer=wx.GridBagSizer()
 		sizer.Add(self.title,(0,0))
 		self.SetSizer(sizer)
-
-	def Close(self):
-		print 'panel_one'
-		app.frame.x.TCP_CloseSocket(self.SocketID)
 
 	def XPSErrorHandler(self,socket,code,name):
 		if code != -2 and code != -108:
@@ -187,19 +182,19 @@ class Control(wx.Panel):
 		self.Group = 'GROUP1'
 		self.Positioner = self.Group + '.POSITIONER'
 		
-		self.GKill=app.frame.x.GroupKill(self.SocketID, self.Group)
+		self.GKill=self.x.GroupKill(self.SocketID, self.Group)
 		if self.GKill[0] != 0:
      			self.XPSErrorHandler(self.SocketID, self.GKill[0], 'GroupKill')
      
-		self.GInit=app.frame.x.GroupInitialize(self.SocketID, self.Group)
+		self.GInit=self.x.GroupInitialize(self.SocketID, self.Group)
 		if self.GInit[0] != 0:
      			self.XPSErrorHandler(self.SocketID, self.GInit[0], 'GroupInitialize')
      
-		self.GHomeSearch=app.frame.x.GroupHomeSearchAndRelativeMove(self.SocketID, self.Group,self.home)
+		self.GHomeSearch=self.x.GroupHomeSearchAndRelativeMove(self.SocketID, self.Group,self.home)
 		if self.GHomeSearch[0] != 0:
      			self.XPSErrorHandler(self.SocketID, self.GHomeSearch[0], 'GroupHomeSearchAndRelativeMove')
 
-		self.profile=app.frame.x.PositionerSGammaParametersGet(self.SocketID,self.Positioner)
+		self.profile=self.x.PositionerSGammaParametersGet(self.SocketID,self.Positioner)
 		if self.profile[0] != 0:
 			self.XPSErrorHandler(self.SocketID, self.profile[0], 'PositionerSGammaParametersGet')	
 			
@@ -231,10 +226,10 @@ class Control(wx.Panel):
 		'''Defining button functionality.'''
 		if self.move_mode == 0 or self.move_mode == 1:
 			
-			result=app.frame.x.PositionerSGammaParametersSet(self.SocketID,self.Positioner,self.speed.GetValue(),self.profile[2],self.profile[3],self.profile[4])
+			result=self.x.PositionerSGammaParametersSet(self.SocketID,self.Positioner,self.speed.GetValue(),self.profile[2],self.profile[3],self.profile[4])
 
 			if result[0] != 0:
-				self.XPSErrorHandler(self.SocketID, returns[0], 'PositionerSGammaParametersSet')	
+				self.XPSErrorHandler(self.SocketID, result[0], 'PositionerSGammaParametersSet')	
 
 			else:
 				task=ControlThread(app,self.SocketID,self.Group,self.position.GetValue(),self.move_mode)
@@ -296,11 +291,11 @@ class ControlThread(thr.Thread):
 		
 	def run(self):
 		if self.mode == 0:
-			move=self.app.frame.x.GroupMoveRelative(self.socket,self.group,[self.val])
+			move=self.app.frame.panel_two.x.GroupMoveRelative(self.socket,self.group,[self.val])
 			if move[0] != 0:
 				self.app.frame.panel_two.XPSErrorHandler(self.socket, move[0], 'GroupMoveRelative')
 		elif self.mode == 1:
-			move=self.app.frame.x.GroupMoveAbsolute(self.socket,self.group,[self.val])
+			move=self.app.frame.panel_two.x.GroupMoveAbsolute(self.socket,self.group,[self.val])
 			if move[0] != 0:
 				self.app.frame.panel_two.XPSErrorHandler(self.socket, move[0], 'GroupMoveAbsolute')
 
