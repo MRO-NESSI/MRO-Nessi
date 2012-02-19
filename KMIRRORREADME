@@ -1,0 +1,53 @@
+kmirror.py
+
+===============================================
+                          _   _       _a_a
+              _   _     _{.`=`.}_    {/ ''\_
+        _    {.`'`.}   {.'  _  '.}  {|  ._oo)
+       { \  {/ .-. \} {/  .' '.  \} {/  |  
+~~~~^~`~^~`~^~`~^~`~^~^~`^~^~`^~^~^~^~^~^~`^~~`
+                     NESSI
+===============================================
+
+Matthew Napolitano
+01/18/2012
+
+Layout
+						GUI
+|---------------------------------------------------|
+|(x)(-)(+)       K-Mirror Testing Program			|
+|---------------------------------------------------|
+|					  Control						|
+|													|
+| O Move Relative (1)	Travel Speed				|
+|						--------------				|
+| 					   | 20.000000 |  | deg/s (3)	|
+|						--------------				|
+| 													|
+| O Move Absolute (2)	Travel Position				|
+|						--------------				|
+|	-------------	   | 00.000000 |  |	deg	(4)		|
+|  |   Execute	 | (5)	--------------				|
+|	-------------									|
+|---------------------------------------------------|
+|					 Information					|
+|---------------------------------------------------|
+|					  Emergency						|
+|				   ---------------					|
+|				  |	  KILL ALL	  |	(6)	   			|
+|				   ---------------					|
+|													|
+|---------------------------------------------------|
+
+
+	
+Functionality
+
+This program allows you to define what type of motion the motor will execute, either Relative or Absolute motion. 
+This choice is controlled by the radio buttons (1) and (2). 
+Relative motion is defined as moving X degrees from the current position.
+Absolute motion is defined as moving to position X where the home position is defined as 00.00 degrees.
+Positive is defined as Clockwise when the motor is viewed from above and the home indicator is on top.
+
+
+
