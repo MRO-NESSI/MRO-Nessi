@@ -6,7 +6,7 @@
 
 #################################
 #
-# Fix borders, add buttons and controls to control.  work on info panel.  Implement slider/TextCTRL combo for speed of rotation.
+# In this version I have moved parts of the program that hold information about the motor outside the gui so the threads do not need to interact with the gui asynchronously.
 #
 #################################
 
@@ -25,10 +25,39 @@ import wx.lib.agw.floatspin as FS
 import XPS_C8_drivers as xps
 import threading as thr
 
+def OnFail():
+	result=wx.MessageBox('Connection to Newport Controller has failed.\nPlease Check IP and Port.',style=wx.CENTER|wx.ICON_EXCLAMATION|wx.OK)
+	if result == wx.OK:
+		sys.exit()
+	else:
+		sys.exit()
 
+x=xps.XPS()
+socket1=x.TCP_ConnectToServer('192.168.0.254',5001,1)
+socket2=x.TCP_ConnectToServer('192.168.0.254',5001,1)
+socket3=x.TCP_ConnectToServer('192.168.0.254',5001,1)
 
+if socket1 == -1 or socket2 == -1 or socket3 == -1
+	OnFail()
 
+def XPSErrorHandler(socket,code,name):
+	if code != -2 and code != -108:about:startpage
+		error=x.ErrorStringGet(socket,code)
+		if error[0] != 0:
+			choice=wx.MessageBox(name +' : ERROR '+ str(code),style=wx.CENTER|wx.ICON_EXCLAMATION|wx.OK)
+		else:
+			choice=wx.MessageBox(name +' : '+ error[1],style=wx.CENTER|wx.ICON_EXCLAMATION|wx.OK)
+	else:
+		if code == -2:
+			choice=wx.MessageBox(name +' : TCP timeout',style=wx.CENTER|wx.ICON_EXCLAMATION|wx.OK)
+		elif code == -108:
+			choice=wx.MessageBox(name +' : The TCP/IP connection was closed by an administrator',style=wx.CENTER|wx.ICON_EXCLAMATION|wx.OK)
 
+def Close():
+		
+		x.TCP_CloseSocket(socket1)
+		x.TCP_CloseSocket(socket2)
+		x.TCP_CloseSocket(socket3)
 
 class KMirrorApp(wx.App):
 	'''The K-Mirror testing app.'''	
@@ -98,26 +127,13 @@ class Master(wx.Panel):
 		self.SetSizer(sizer)
 
 	def OnButton(self,event):
-		SocketID=app.frame.panel_two.SocketID3
+		SocketID=socket1
 		kill=app.frame.panel_two.x.KillAll(SocketID)
 		if kill[0] != 0:
-			self.XPSErrorHandler(SocketID, kill[0], 'KillAll')
+			XPSErrorHandler(SocketID, kill[0], 'KillAll')
 		else:
 			result=wx.MessageBox('All Groups Killed.\nProgram Must Be Restarted.',style=wx.CENTER|wx.ICON_EXCLAMATION|wx.OK)		
 
-	def XPSErrorHandler(socket,code,name):
-		if code != -2 and code != -108:
-			error=app.frame.panel_two.x.ErrorStringGet(socket,code)
-			if error[0] != 0:
-				choice=wx.MessageBox(name +' : ERROR '+ str(code),style=wx.CENTER|wx.ICON_EXCLAMATION|wx.OK)
-			else:
-				choice=wx.MessageBox(name +' : '+ error[1],style=wx.CENTER|wx.ICON_EXCLAMATION|wx.OK)
-		else:
-			if code == -2:
-				choice=wx.MessageBox(name +' : TCP timeout',style=wx.CENTER|wx.ICON_EXCLAMATION|wx.OK)
-			elif code == -108:
-				choice=wx.MessageBox(name +' : The TCP/IP connection was closed by an administrator',style=wx.CENTER|wx.ICON_EXCLAMATION|wx.OK)
-	
 class Information(wx.Panel):
 	def __init__(self,*args,**kwargs):
 		super(Information,self).__init__(*args,**kwargs)
@@ -134,19 +150,6 @@ class Information(wx.Panel):
 		sizer=wx.GridBagSizer()
 		sizer.Add(self.title,(0,0))
 		self.SetSizer(sizer)
-
-	def XPSErrorHandler(self,socket,code,name):
-		if code != -2 and code != -108:
-			error=app.frame.x.ErrorStringGet(socket,code)
-			if error[0] != 0:
-				choice=wx.MessageBox(name +' : ERROR '+ str(code),style=wx.CENTER|wx.ICON_EXCLAMATION|wx.OK)
-			else:
-				choice=wx.MessageBox(name +' : '+ error[1],style=wx.CENTER|wx.ICON_EXCLAMATION|wx.OK)
-		else:
-			if code == -2:
-				choice=wx.MessageBox(name +' : TCP timeout',style=wx.CENTER|wx.ICON_EXCLAMATION|wx.OK)
-			elif code == -108:
-				choice=wx.MessageBox(name +' : The TCP/IP connection was closed by an administrator',style=wx.CENTER|wx.ICON_EXCLAMATION|wx.OK)
 
 class Control(wx.Panel):
 	def __init__(self,*args,**kwargs):
@@ -167,36 +170,27 @@ class Control(wx.Panel):
 
 		#########  XPS Specific Calls  ##########
 		
-		
+		self.SocketID=socket3
 		self.home=[0]
-
-		self.x=xps.XPS()
-		self.SocketID1=self.x.TCP_ConnectToServer('192.168.0.254',5001,1)
-		self.SocketID2=self.x.TCP_ConnectToServer('192.168.0.254',5001,1)
-		self.SocketID3=self.x.TCP_ConnectToServer('192.168.0.254',5001,1)
-		self.SocketID=self.SocketID1
 	
-		if self.SocketID1 == -1 or self.SocketID2 == -1 or self.SocketID3 == -1:
-			self.OnFail()
-			
 		self.Group = 'GROUP1'
 		self.Positioner = self.Group + '.POSITIONER'
 		
-		self.GKill=self.x.GroupKill(self.SocketID, self.Group)
+		self.GKill=x.GroupKill(self.SocketID, self.Group)
 		if self.GKill[0] != 0:
-     			self.XPSErrorHandler(self.SocketID, self.GKill[0], 'GroupKill')
+     			XPSErrorHandler(self.SocketID, self.GKill[0], 'GroupKill')
      
-		self.GInit=self.x.GroupInitialize(self.SocketID, self.Group)
+		self.GInit=x.GroupInitialize(self.SocketID, self.Group)
 		if self.GInit[0] != 0:
-     			self.XPSErrorHandler(self.SocketID, self.GInit[0], 'GroupInitialize')
+     			XPSErrorHandler(self.SocketID, self.GInit[0], 'GroupInitialize')
      
-		self.GHomeSearch=self.x.GroupHomeSearchAndRelativeMove(self.SocketID, self.Group,self.home)
+		self.GHomeSearch=x.GroupHomeSearchAndRelativeMove(self.SocketID, self.Group,self.home)
 		if self.GHomeSearch[0] != 0:
-     			self.XPSErrorHandler(self.SocketID, self.GHomeSearch[0], 'GroupHomeSearchAndRelativeMove')
+     			XPSErrorHandler(self.SocketID, self.GHomeSearch[0], 'GroupHomeSearchAndRelativeMove')
 
-		self.profile=self.x.PositionerSGammaParametersGet(self.SocketID,self.Positioner)
+		self.profile=x.PositionerSGammaParametersGet(self.SocketID,self.Positioner)
 		if self.profile[0] != 0:
-			self.XPSErrorHandler(self.SocketID, self.profile[0], 'PositionerSGammaParametersGet')	
+			XPSErrorHandler(self.SocketID, self.profile[0], 'PositionerSGammaParametersGet')	
 			
 		#########################################
 
@@ -226,13 +220,13 @@ class Control(wx.Panel):
 		'''Defining button functionality.'''
 		if self.move_mode == 0 or self.move_mode == 1:
 			
-			result=self.x.PositionerSGammaParametersSet(self.SocketID,self.Positioner,self.speed.GetValue(),self.profile[2],self.profile[3],self.profile[4])
+			result=x.PositionerSGammaParametersSet(self.SocketID,self.Positioner,self.speed.GetValue(),self.profile[2],self.profile[3],self.profile[4])
 
 			if result[0] != 0:
-				self.XPSErrorHandler(self.SocketID, result[0], 'PositionerSGammaParametersSet')	
+				XPSErrorHandler(self.SocketID, result[0], 'PositionerSGammaParametersSet')	
 
 			else:
-				task=ControlThread(app,self.SocketID,self.Group,self.position.GetValue(),self.move_mode)
+				task=ControlThread(self.SocketID,self.Group,self.position.GetValue(),self.move_mode)
 				task.start()
 			
 		else:
@@ -250,15 +244,6 @@ class Control(wx.Panel):
 		else:
 			self.move_mode=-1
 	
-	def OnFail(self):
-		result=wx.MessageBox('Connection to Newport Controller has failed.\nPlease Check IP and Port.',style=wx.CENTER|wx.ICON_EXCLAMATION|wx.OK)
-
-		if result == wx.OK:
-			sys.exit()
-
-		else:
-			sys.exit()
-
 	def Close(self):
 		
 		self.x.TCP_CloseSocket(self.SocketID1)
@@ -267,23 +252,9 @@ class Control(wx.Panel):
 			
 		print 'panel two closed'
 
-	def XPSErrorHandler(self,socket,code,name):
-		if code != -2 and code != -108:
-			error=self.x.ErrorStringGet(socket,code)
-			if error[0] != 0:
-				choice=wx.MessageBox(name +' : ERROR '+ str(code),style=wx.CENTER|wx.ICON_EXCLAMATION|wx.OK)
-			else:
-				choice=wx.MessageBox(name +' : '+ error[1],style=wx.CENTER|wx.ICON_EXCLAMATION|wx.OK)
-		else:
-			if code == -2:
-				choice=wx.MessageBox(name +' : TCP timeout',style=wx.CENTER|wx.ICON_EXCLAMATION|wx.OK)
-			elif code == -108:
-				choice=wx.MessageBox(name +' : The TCP/IP connection was closed by an administrator',style=wx.CENTER|wx.ICON_EXCLAMATION|wx.OK)
-
 class ControlThread(thr.Thread):
-	def __init__(self,app,socket,group,val,mode):
+	def __init__(self,socket,group,val,mode):
 		super(ControlThread,self).__init__()
-		self.app=app
 		self.socket=socket
 		self.group=group
 		self.val=val
@@ -291,13 +262,13 @@ class ControlThread(thr.Thread):
 		
 	def run(self):
 		if self.mode == 0:
-			move=self.app.frame.panel_two.x.GroupMoveRelative(self.socket,self.group,[self.val])
+			move=x.GroupMoveRelative(self.socket,self.group,[self.val])
 			if move[0] != 0:
-				self.app.frame.panel_two.XPSErrorHandler(self.socket, move[0], 'GroupMoveRelative')
+				XPSErrorHandler(self.socket, move[0], 'GroupMoveRelative')
 		elif self.mode == 1:
-			move=self.app.frame.panel_two.x.GroupMoveAbsolute(self.socket,self.group,[self.val])
+			move=x.GroupMoveAbsolute(self.socket,self.group,[self.val])
 			if move[0] != 0:
-				self.app.frame.panel_two.XPSErrorHandler(self.socket, move[0], 'GroupMoveAbsolute')
+				XPSErrorHandler(self.socket, move[0], 'GroupMoveAbsolute')
 
 
 if __name__=='__main__':
