@@ -43,11 +43,14 @@ Layout
 	
 Functionality
 
-This program allows you to define what type of motion the motor will execute, either Relative or Absolute motion. 
+This program allows the user to define what type of motion the motor will execute, either Relative or Absolute motion. 
 This choice is controlled by the radio buttons (1) and (2). 
 Relative motion is defined as moving X degrees from the current position.
 Absolute motion is defined as moving to position X where the home position is defined as 00.00 degrees.
 Positive is defined as Clockwise when the motor is viewed from above and the home indicator is on top.
+Travel speed (3) allows the user to define the speed the motor should rotate at and speeds between 0 and __ degrees per second are valid.
+Travel position (4) allows the user to define where the motor will move to.  Positions plus or minus 170 degrees from  home are valid.
+The execute button (5) initiates the motion defined by the user.
 
 
 
