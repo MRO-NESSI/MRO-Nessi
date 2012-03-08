@@ -37,11 +37,11 @@ socket1=x.TCP_ConnectToServer('192.168.0.254',5001,1)
 socket2=x.TCP_ConnectToServer('192.168.0.254',5001,1)
 socket3=x.TCP_ConnectToServer('192.168.0.254',5001,1)
 
-if socket1 == -1 or socket2 == -1 or socket3 == -1
+if socket1 == -1 or socket2 == -1 or socket3 == -1:
 	OnFail()
 
 def XPSErrorHandler(socket,code,name):
-	if code != -2 and code != -108:about:startpage
+	if code != -2 and code != -108:
 		error=x.ErrorStringGet(socket,code)
 		if error[0] != 0:
 			choice=wx.MessageBox(name +' : ERROR '+ str(code),style=wx.CENTER|wx.ICON_EXCLAMATION|wx.OK)
@@ -128,7 +128,7 @@ class Master(wx.Panel):
 
 	def OnButton(self,event):
 		SocketID=socket1
-		kill=app.frame.panel_two.x.KillAll(SocketID)
+		kill=x.KillAll(SocketID)
 		if kill[0] != 0:
 			XPSErrorHandler(SocketID, kill[0], 'KillAll')
 		else:
