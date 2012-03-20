@@ -99,7 +99,7 @@ class KMirrorFrame(wx.Frame):
 			event.Veto()
 		elif result == wx.YES:
 			event.Skip()
-			self.panel_two.Close()
+			Close()
 		else:
 			event.Veto()
 	
@@ -132,7 +132,12 @@ class Master(wx.Panel):
 		if kill[0] != 0:
 			XPSErrorHandler(SocketID, kill[0], 'KillAll')
 		else:
-			result=wx.MessageBox('All Groups Killed.\nProgram Must Be Restarted.',style=wx.CENTER|wx.ICON_EXCLAMATION|wx.OK)		
+			result=wx.MessageBox('All Groups Killed.\nProgram Must Be Restarted.',style=wx.CENTER|wx.ICON_EXCLAMATION|wx.OK)	
+			if result == wx.OK:
+				sys.exit()
+			else:
+				sys.exit()
+				
 
 class Information(wx.Panel):
 	def __init__(self,*args,**kwargs):
@@ -199,7 +204,6 @@ class Control(wx.Panel):
 		self.Bind(wx.EVT_BUTTON, self.OnButton)
 		self.Bind(wx.EVT_RADIOBUTTON,self.OnRadio)
 		self.SetInitialSize()
-		print self.SocketID 
 
 	def __DoLayout(self):
 		'''A basic layout handler for Control panel.'''
@@ -244,14 +248,6 @@ class Control(wx.Panel):
 		else:
 			self.move_mode=-1
 	
-	def Close(self):
-		
-		self.x.TCP_CloseSocket(self.SocketID1)
-		self.x.TCP_CloseSocket(self.SocketID2)
-		self.x.TCP_CloseSocket(self.SocketID3)
-			
-		print 'panel two closed'
-
 class ControlThread(thr.Thread):
 	def __init__(self,socket,group,val,mode):
 		super(ControlThread,self).__init__()
