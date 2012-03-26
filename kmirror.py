@@ -7,6 +7,7 @@
 #################################
 #
 # In this version I have moved parts of the program that hold information about the motor outside the gui so the threads do not need to interact with the gui asynchronously.
+# As of 03/20/2012 this program runs correctly.
 #
 #################################
 
@@ -184,7 +185,7 @@ class Control(wx.Panel):
 		self.GKill=x.GroupKill(self.SocketID, self.Group)
 		if self.GKill[0] != 0:
      			XPSErrorHandler(self.SocketID, self.GKill[0], 'GroupKill')
-     
+
 		self.GInit=x.GroupInitialize(self.SocketID, self.Group)
 		if self.GInit[0] != 0:
      			XPSErrorHandler(self.SocketID, self.GInit[0], 'GroupInitialize')
@@ -192,10 +193,11 @@ class Control(wx.Panel):
 		self.GHomeSearch=x.GroupHomeSearchAndRelativeMove(self.SocketID, self.Group,self.home)
 		if self.GHomeSearch[0] != 0:
      			XPSErrorHandler(self.SocketID, self.GHomeSearch[0], 'GroupHomeSearchAndRelativeMove')
-
+		
 		self.profile=x.PositionerSGammaParametersGet(self.SocketID,self.Positioner)
 		if self.profile[0] != 0:
-			XPSErrorHandler(self.SocketID, self.profile[0], 'PositionerSGammaParametersGet')	
+				XPSErrorHandler(self.SocketID, self.profile[0], 'PositionerSGammaParametersGet')
+			
 			
 		#########################################
 
