@@ -27,11 +27,8 @@ import XPS_C8_drivers as xps
 import threading as thr
 
 def OnFail():
-	result=wx.MessageBox('Connection to Newport Controller has failed.\nPlease Check IP and Port.',style=wx.CENTER|wx.ICON_EXCLAMATION|wx.OK)
-	if result == wx.OK:
-		sys.exit()
-	else:
-		sys.exit()
+	print 'Connection to Newport Controller has failed.\nPlease Check IP and Port.'
+	sys.exit()
 
 x=xps.XPS()
 socket1=x.TCP_ConnectToServer('192.168.0.254',5001,1)
@@ -162,18 +159,28 @@ class Control(wx.Panel):
 		super(Control,self).__init__(*args,**kwargs)
 
 		self.title=wx.StaticText(self,label='Control')
-		self.label_one=wx.StaticText(self,label='Travel Speed')
-		self.label_two=wx.StaticText(self,label='deg/s')
-		self.label_three=wx.StaticText(self,label='Travel Position')
-		self.label_four=wx.StaticText(self,label='deg')
-		self.speed=FS.FloatSpin(self,digits=6)
+		self.label_one=wx.StaticText(self,label='Position')
+		self.label_two=wx.StaticText(self,label='deg')
+		self.label_three=wx.StaticText(self,label='Velocity')
+		self.label_four=wx.StaticText(self,label='deg/s')
+		self.label_five=wx.StaticText(self,label='Acceleration')
+		self.label_six=wx.StaticText(self,label='deg/s^2')
+		self.label_seven=wx.StaticText(self,label='Min Jerk Time')
+		self.label_eight=wx.StaticText(self,label='sec')
+		self.label_nine=wx.StaticText(self,label='Max Jerk Time')
+		self.label_ten=wx.StaticText(self,label='sec')
 		self.position=FS.FloatSpin(self,digits=6)
+		self.velocity=FS.FloatSpin(self,digits=6)
+		self.acceleration=FS.FloatSpin(self,digits=6)
+		self.jerk1=FS.FloatSpin(self,digits=6)
+		self.jerk2=FS.FloatSpin(self,digits=6)
 
 		self.mode_one=wx.RadioButton(self,-1,'Move Relative  ', style = wx.RB_GROUP)
 		self.mode_two=wx.RadioButton(self,-1,'Move Absolute  ')
 		
 		self.move_mode=0		#Mode 0 is relative and mode 1 is absolute. -1 is error.
-
+		
+		
 		#########  XPS Specific Calls  ##########
 		
 		self.SocketID=socket3
@@ -200,6 +207,11 @@ class Control(wx.Panel):
 			
 			
 		#########################################
+		
+		self.velocity.SetValue(self.profile[1])	
+		self.acceleration.SetValue(self.profile[2])	
+		self.jerk1.SetValue(self.profile[3])	
+		self.jerk2.SetValue(self.profile[4])		
 
 		self.execute=wx.Button(self,label='Execute')
 		self.__DoLayout()
@@ -210,23 +222,33 @@ class Control(wx.Panel):
 	def __DoLayout(self):
 		'''A basic layout handler for Control panel.'''
 		sizer=wx.GridBagSizer()
-		sizer.Add(self.title,(0,0),(1,3),wx.ALIGN_CENTER_HORIZONTAL|wx.CENTER)
+		sizer.Add(self.title,(0,0),(1,5),wx.ALIGN_CENTER_HORIZONTAL|wx.CENTER)
 		sizer.Add(self.label_one,(1,1))
 		sizer.Add(self.label_two,(2,2),(1,1),wx.ALIGN_CENTER_HORIZONTAL)
 		sizer.Add(self.label_three,(3,1))
 		sizer.Add(self.label_four,(4,2))
+		sizer.Add(self.label_five,(1,3))
+		sizer.Add(self.label_six,(2,4))
+		sizer.Add(self.label_seven,(3,3))
+		sizer.Add(self.label_eight,(4,4),(1,1),wx.ALIGN_CENTER_HORIZONTAL)
+		sizer.Add(self.label_nine,(5,3))
+		sizer.Add(self.label_ten,(6,4),(1,1),wx.ALIGN_CENTER_HORIZONTAL)
 		sizer.Add(self.mode_one,(1,0),(1,1),wx.ALIGN_CENTER_VERTICAL)
 		sizer.Add(self.mode_two,(2,0),(1,1),wx.ALIGN_CENTER_VERTICAL)
-		sizer.Add(self.speed,(2,1))
-		sizer.Add(self.position,(4,1))
+		sizer.Add(self.velocity,(4,1))
+		sizer.Add(self.position,(2,1))
 		sizer.Add(self.execute,(4,0))
+		sizer.Add(self.acceleration,(2,3))
+		sizer.Add(self.jerk1,(4,3))
+		sizer.Add(self.jerk2,(6,3))
 		self.SetSizer(sizer)
 
 	def OnButton(self,event):
 		'''Defining button functionality.'''
+		
 		if self.move_mode == 0 or self.move_mode == 1:
 			
-			result=x.PositionerSGammaParametersSet(self.SocketID,self.Positioner,self.speed.GetValue(),self.profile[2],self.profile[3],self.profile[4])
+			result=x.PositionerSGammaParametersSet(self.SocketID,self.Positioner,self.velocity.GetValue(),self.acceleration.GetValue(),self.jerk1.GetValue(),self.jerk2.GetValue())
 
 			if result[0] != 0:
 				XPSErrorHandler(self.SocketID, result[0], 'PositionerSGammaParametersSet')	
