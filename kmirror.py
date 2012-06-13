@@ -6,7 +6,6 @@
 
 #################################
 #
-# In this version I have moved parts of the program that hold information about the motor outside the gui so the threads do not need to interact with the gui asynchronously.
 # As of 03/20/2012 this program runs correctly.
 #
 #################################
@@ -16,7 +15,7 @@ kmirror.py created on 01/18/2012 by Matt Napolitano.
 ----------------------------------------------------
 This is a GUI designed to aid the testing of the Newport rotation stage RV350PP through the Newport XPS-C8 controller.
 This program will allow for absolute moving, relative moving, and speed variation.
-For full details refer to README_KMIRROR.
+For full details refer to KMIRRORREADME.
 ----------------------------------------------------
 '''
 
@@ -151,12 +150,15 @@ class Information(wx.Panel):
 		self.label_four=wx.StaticText(self,label='deg/s')
 		self.pos=wx.TextCtrl(self)
 		self.vel=wx.TextCtrl(self)
+		self.read=wx.Button(self,label='Manual Read')
+		self.SocketID=socket2
 
 		###################################
 		self.Group = 'GROUP1'
 		self.Positioner = self.Group + '.POSITIONER'
 		###################################
-
+		
+		self.Bind(wx.EVT_BUTTON, self.OnButton)
 		self.__DoLayout()
 		self.SetInitialSize()
 
@@ -170,7 +172,18 @@ class Information(wx.Panel):
 		sizer.Add(self.label_four,(2,3))
 		sizer.Add(self.pos,(2,0))
 		sizer.Add(self.vel,(2,2))
+		sizer.Add(self.read,(3,0),(1,4),wx.ALIGN_CENTER_HORIZONTAL|wx.CENTER)
 		self.SetSizer(sizer)
+
+	def OnButton(self,event):
+		position=x.GroupPositionCurrentGet(self.SocketID,self.Group,1)
+		if position[0] != 0:
+			XPSErrorHandler(self.SocketID, position[0], 'GroupPositionCurrentGet')
+		velocity=x.GroupVelocityCurrentGet(self.SocketID,self.Group,1)
+		if velocity[0] != 0:
+			XPSErrorHandler(self.SocketID, velocity[0], 'GroupVelocityCurrentGet')
+		self.pos.SetValue(str(position[1]))
+		self.vel.SetValue(str(velocity[1]))
 
 class Control(wx.Panel):
 	def __init__(self,*args,**kwargs):
@@ -263,7 +276,7 @@ class Control(wx.Panel):
 		self.SetSizer(sizer)
 
 	def OnButton(self,event):
-		'''Defining button functionality.'''
+		'''This button will initiate motion and begin automatic tracking of position and movement.'''
 		
 		if self.move_mode == 0 or self.move_mode == 1:
 
