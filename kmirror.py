@@ -13,7 +13,7 @@
 '''
 kmirror.py created on 01/18/2012 by Matt Napolitano.
 ----------------------------------------------------
-This is a GUI designed to aid the testing of the Newport rotation stage RV350PP through the Newport XPS-C8 controller.
+This is a GUI designed to aid the testing of the Newport rotation stage RV350HAT-F through the Newport XPS-C8 controller.
 This program will allow for absolute moving, relative moving, and speed variation.
 For full details refer to KMIRRORREADME.
 ----------------------------------------------------
@@ -188,7 +188,6 @@ class Information(wx.Panel):
 class Control(wx.Panel):
 	def __init__(self,*args,**kwargs):
 		super(Control,self).__init__(*args,**kwargs)
-
 		self.title=wx.StaticText(self,label='Control')
 		self.label_one=wx.StaticText(self,label='Position')
 		self.label_two=wx.StaticText(self,label='deg')
@@ -205,15 +204,10 @@ class Control(wx.Panel):
 		self.acceleration=FS.FloatSpin(self,digits=6)
 		self.jerk1=FS.FloatSpin(self,digits=6)
 		self.jerk2=FS.FloatSpin(self,digits=6)
-
 		self.mode_one=wx.RadioButton(self,-1,'Move Relative  ', style = wx.RB_GROUP)
-		self.mode_two=wx.RadioButton(self,-1,'Move Absolute  ')
-		
-		self.move_mode=0		#Mode 0 is relative and mode 1 is absolute. -1 is error.
-		
-		
-		#########  XPS Specific Calls  ##########
-		
+		self.mode_two=wx.RadioButton(self,-1,'Move Absolute  ')		
+		self.move_mode=0		#Mode 0 is relative and mode 1 is absolute. -1 is error.		
+		#########  XPS Specific Calls  ##########		
 		self.SocketID_A=socket2
 		self.SocketID=socket3
 		self.home=[0]
@@ -235,16 +229,12 @@ class Control(wx.Panel):
 		
 		self.profile=x.PositionerSGammaParametersGet(self.SocketID,self.Positioner)
 		if self.profile[0] != 0:
-				XPSErrorHandler(self.SocketID, self.profile[0], 'PositionerSGammaParametersGet')
-			
-			
-		#########################################
-		
+				XPSErrorHandler(self.SocketID, self.profile[0], 'PositionerSGammaParametersGet')			
+		#########################################		
 		self.velocity.SetValue(self.profile[1])	
 		self.acceleration.SetValue(self.profile[2])	
 		self.jerk1.SetValue(self.profile[3])	
-		self.jerk2.SetValue(self.profile[4])		
-
+		self.jerk2.SetValue(self.profile[4])
 		self.execute=wx.Button(self,label='Execute')
 		self.__DoLayout()
 		self.Bind(wx.EVT_BUTTON, self.OnButton)
@@ -279,19 +269,14 @@ class Control(wx.Panel):
 		'''This button will initiate motion and begin automatic tracking of position and movement.'''
 		
 		if self.move_mode == 0 or self.move_mode == 1:
-
 			info=InfoThread(self.SocketID_A,self.Group)
-			info.start()
-			
+			info.start()			
 			result=x.PositionerSGammaParametersSet(self.SocketID,self.Positioner,self.velocity.GetValue(),self.acceleration.GetValue(),self.jerk1.GetValue(),self.jerk2.GetValue())
-
 			if result[0] != 0:
 				XPSErrorHandler(self.SocketID, result[0], 'PositionerSGammaParametersSet')	
-
 			else:
 				task=ControlThread(self.SocketID,self.Group,self.position.GetValue(),self.move_mode)
-				task.start()
-			
+				task.start()			
 		else:
 			result=wx.MessageBox('Button Malfunction in Control Panel.',style=wx.CENTER|wx.ICON_EXCLAMATION|wx.OK)
 		
@@ -300,10 +285,8 @@ class Control(wx.Panel):
 
 		if self.mode_one.GetValue()==True:
 			self.move_mode=0
-
 		elif self.mode_two.GetValue()==True:
 			self.move_mode=1
-
 		else:
 			self.move_mode=-1
 	
