@@ -11,46 +11,80 @@ kmirror.py
 
 Matthew Napolitano
 01/18/2012
+Questions can be directed to mnapolit@nmt.edu
 
 Layout
-						GUI
-|---------------------------------------------------|
-|(x)(-)(+)       K-Mirror Testing Program			|
-|---------------------------------------------------|
-|					  Control						|
-|													|
-| O Move Relative (1)	Travel Speed				|
-|						--------------				|
-| 					   | 20.000000 |  | deg/s (3)	|
-|						--------------				|
-| 													|
-| O Move Absolute (2)	Travel Position				|
-|						--------------				|
-|	-------------	   | 00.000000 |  |	deg	(4)		|
-|  |   Execute	 | (5)	--------------				|
-|	-------------									|
-|---------------------------------------------------|
-|					 Information					|
-|---------------------------------------------------|
-|					  Emergency						|
-|				   ---------------					|
-|				  |	  KILL ALL	  |	(6)	   			|
-|				   ---------------					|
-|													|
-|---------------------------------------------------|
+						              GUI
+|--------------------------------------------------------------------------------|
+|                           K-Mirror Testing Program							 |
+|--------------------------------------------------------------------------------|
+|					              Control					 					 |
+|																				 |
+| O Move Relative (1)	Position				    Acceleration                 |
+|						--------------				--------------               |
+| 					   | 00.000000 |  | deg   (3)  | 00.000000 |  | deg/s^2 (5)  |
+|						--------------				--------------               |
+| 													                             |
+| O Move Absolute (2)	Velocity				    Min Jerk Time                |
+|						--------------				--------------               |
+|	-------------	   | 00.000000 |  |	deg/s(4)   | 00.000000 |  | sec  (6)     |
+|  |   Execute	 | (8)	--------------				--------------               |
+|	-------------									                             |
+|                                                   Max Jerk Time                |
+|												    --------------               |
+|                                                  | 00.000000 |  | sec  (7)     |
+|                                                   --------------               |
+|																				 |
+|--------------------------------------------------------------------------------|
+|					             Information					                 |             
+|				Position				      Velocity	                         |
+|			  --------------				--------------               		 |
+| 			 | 00.000000    | deg (9)      | 00.000000    | deg/s   (10)  		 |
+|			  --------------				--------------               		 |
+|																				 |
+|							  ----------------									 |
+|				 			 |  Manual Read	  |	(11)   							 |
+|							  ----------------									 |
+|																				 |
+|--------------------------------------------------------------------------------|
+|					              Emergency										 |
+|				  			   ---------------									 |
+|				              |	  KILL ALL	  |	(12)   							 |
+|				               ---------------									 |
+|																				 |
+|--------------------------------------------------------------------------------|
 
 
 	
-Functionality
+#####FUNCTIONALITY#####
 
-This program allows the user to define what type of motion the motor will execute, either Relative or Absolute motion. 
-This choice is controlled by the radio buttons (1) and (2). 
+Control Panel
+
+This panel contains the controls for basic motion including motion type, motion parameters, and motion initiation.
+
+This program allows the user to define what type of motion the motor will execute, either Relative or Absolute motion. This choice is controlled by the radio buttons (1) and (2). 
 Relative motion is defined as moving X degrees from the current position.
 Absolute motion is defined as moving to position X where the home position is defined as 00.00 degrees.
 Positive is defined as Clockwise when the motor is viewed from above and the home indicator is on top.
-Travel speed (3) allows the user to define the speed the motor should rotate at and speeds between 0 and __ degrees per second are valid.
-Travel position (4) allows the user to define where the motor will move to.  Positions plus or minus 170 degrees from  home are valid.
-The execute button (5) initiates the motion defined by the user.
+Position (4) allows the user to define where the motor will move to.  Positions plus or minus 170 degrees from  home are valid.
+Velocity (3) allows the user to define the speed the motor should rotate at and speeds between 0 and 80 degrees per second are valid.
+Acceleration (5) allows the user to define the acceleration of the motor. #More information coming.#
+Min Jerk Time (6) and Max Jerk Time (7) allow the user to define min and max jerk times. #More information coming.#
+The execute button (8) initiates the motion defined by the user.
 
+Information Panel
+
+This panel has a read out of some motion charachteristics.
+Position (9) is a readout of the current position of the motor.
+Velocity (10) is a readout of the current velocity of the motor.
+These will automatically update when motion is initiated.
+Manual Read (11) will manually update readouts (9) and (10).
+
+Emergency Panel
+
+This panel contains the emergency stop button.
+KILL ALL (12) is the emergency stop button.  When pressed it will interrupt all motion and send the kill command to all motors.  The motors must be reinitialized before motion can be performed if the kill command is sent.  This can be done by restarting the program. There is also a stop all button on the motor controller (Newport XPS Controller) that will also stop all motion.  It is recommended that the software stop be used frst.
+
+!!!!!KNOWN BUGS!!!!!
 
 
