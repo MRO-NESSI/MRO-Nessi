@@ -25,6 +25,8 @@ import sys
 import wx.lib.agw.floatspin as FS
 import XPS_C8_drivers as xps
 import threading as thr
+import time
+from wx.lib.pubsub import Publisher
 
 def OnFail():
 	print 'Connection to Newport Controller has failed.\nPlease Check IP and Port.'
@@ -97,6 +99,8 @@ class KMirrorFrame(wx.Frame):
 			event.Veto()
 		elif result == wx.YES:
 			event.Skip()
+			Publisher().sendMessage(('flag'),0)
+			time.sleep(1)
 			Close()
 		else:
 			event.Veto()
@@ -141,17 +145,31 @@ class Information(wx.Panel):
 	def __init__(self,*args,**kwargs):
 		super(Information,self).__init__(*args,**kwargs)
 		self.title=wx.StaticText(self,label='Information')
+		self.label_one=wx.StaticText(self,label='Position')
+		self.label_two=wx.StaticText(self,label='deg')
+		self.label_three=wx.StaticText(self,label='Velocity')
+		self.label_four=wx.StaticText(self,label='deg/s')
+		self.pos=wx.TextCtrl(self)
+		self.vel=wx.TextCtrl(self)
+
 		###################################
 		self.Group = 'GROUP1'
 		self.Positioner = self.Group + '.POSITIONER'
 		###################################
+
 		self.__DoLayout()
 		self.SetInitialSize()
 
 	def __DoLayout(self):
 		'''A basic layout handler for Information panel.'''
 		sizer=wx.GridBagSizer()
-		sizer.Add(self.title,(0,0))
+		sizer.Add(self.title,(0,0),(1,4),wx.ALIGN_CENTER_HORIZONTAL|wx.CENTER)
+		sizer.Add(self.label_one,(1,0),(1,2),wx.ALIGN_CENTER_HORIZONTAL|wx.CENTER)
+		sizer.Add(self.label_two,(2,1))
+		sizer.Add(self.label_three,(1,2),(1,2),wx.ALIGN_CENTER_HORIZONTAL|wx.CENTER)
+		sizer.Add(self.label_four,(2,3))
+		sizer.Add(self.pos,(2,0))
+		sizer.Add(self.vel,(2,2))
 		self.SetSizer(sizer)
 
 class Control(wx.Panel):
@@ -183,6 +201,7 @@ class Control(wx.Panel):
 		
 		#########  XPS Specific Calls  ##########
 		
+		self.SocketID_A=socket2
 		self.SocketID=socket3
 		self.home=[0]
 	
@@ -247,6 +266,9 @@ class Control(wx.Panel):
 		'''Defining button functionality.'''
 		
 		if self.move_mode == 0 or self.move_mode == 1:
+
+			info=InfoThread(self.SocketID_A,self.Group)
+			info.start()
 			
 			result=x.PositionerSGammaParametersSet(self.SocketID,self.Positioner,self.velocity.GetValue(),self.acceleration.GetValue(),self.jerk1.GetValue(),self.jerk2.GetValue())
 
@@ -290,6 +312,28 @@ class ControlThread(thr.Thread):
 			if move[0] != 0:
 				XPSErrorHandler(self.socket, move[0], 'GroupMoveAbsolute')
 
+class InfoThread(thr.Thread):
+	def __init__(self,socket,group):
+		super(InfoThread,self).__init__()
+		self.socket=socket
+		self.group=group
+		self.state=1
+
+	def run(self):
+		while self.state == 1:
+			time.sleep(.5)
+			pos=x.GroupPositionCurrentGet(self.socket,self.group,1)
+			if pos[0] != 0:
+				XPSErrorHandler(self.socket, pos[0], 'GroupPositionCurrentGet')
+			vel=x.GroupVelocityCurrentGet(self.socket,self.group,1)
+			if vel[0] != 0:
+				XPSErrorHandler(self.socket, vel[0], 'GroupVelocityCurrentGet')
+			app.frame.panel_one.pos.SetValue(str(pos[1]))
+			app.frame.panel_one.vel.SetValue(str(vel[1]))
+			Publisher().subscribe(self.update,('flag'))
+	
+	def update(self,flag):
+		self.state=flag.data
 
 if __name__=='__main__':
 	app=KMirrorApp(False)	
