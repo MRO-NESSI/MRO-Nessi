@@ -1,7 +1,37 @@
-<<<<<<< HEAD
-This is the readme for newportfunctions.py
-=======
+
+===============================================
+                          _   _       _a_a
+              _   _     _{.`=`.}_    {/ ''\_
+        _    {.`'`.}   {.'  _  '.}  {|  ._oo)
+       { \  {/ .-. \} {/  .' '.  \} {/  |  
+~~~~^~`~^~`~^~`~^~`~^~^~`^~^~`^~^~^~^~^~^~`^~~`
+                     NESSI
+===============================================
+
 NEWPORTFUNCTIONSREADME
 Matt Napolitano
 Created 06/19/2012
->>>>>>> 305f45de04dc2a52816fa7e37716c43e8212458e
+Questions can be directed to mnapolit@nmt.edu
+
+This readme describes the functionality of the module newportfunctions.py.
+
+0 GLOSSARY
+-------------------
+1 Functions
+	1.1 Initialize
+	1.2 Close
+
+2 Variables
+	2.1 socketid
+-------------------
+
+
+1 FUNCTIONS
+-------------------
+1.1 Initialize(VALUE)
+	This function opens sockets recursively until either 100 or VALUE is reached.
+	If the user gives anything other than an integer for VALUE then the program will print an error.
+	Each socket returns an integer valued socket ID which is then appended to socketid(2.1).
+	If the socket ID returned is -1 then the program has a communication problem and will exit.
+	This function does not return anything.
+	 
