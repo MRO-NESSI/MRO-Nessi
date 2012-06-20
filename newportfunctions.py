@@ -100,8 +100,22 @@ def Track(socket,group,positioner,parameter,location):
 			pub.Publisher().sendMessage((str(location)),result[1])
 	
 	elif parameter == 1:
-	
+		pass
+
 	else:
+		pass
+
+# This function will control the movement of the motors.
+def Move(socket,group,positioner,movetype,movement):
+	'''Move the specified motor given the specified parameters from the movement input. '''
+	if movetype == 0:
+		pass
+
+	elif movetype == 1:
+		pass
+
+	else:
+		pass
 		
 #The emergency kill function.
 def Emergency():
@@ -110,7 +124,7 @@ def Emergency():
 	# This checks to insure the kill command worked.  If it did not work, the standard error handler is called.
 	if kill[0] != 0:
 		XPSErrorHandler(SocketID, kill[0], 'KillAll')
-	# If the command worked, a message is displayed telling the user that it was succesful and that the groups need to be rreinitialized before they can be used again.
+	# If the command worked, a message is displayed telling the user that it was succesful and that the groups need to be reinitialized before they can be used again.
 	else:
 		result=wx.MessageBox('All Groups Killed.\nGroups Must Be Reinitialized.',style=wx.CENTER|wx.ICON_EXCLAMATION|wx.OK)	
 		
