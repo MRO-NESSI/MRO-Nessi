@@ -56,7 +56,7 @@ def XPSErrorHandler(socket,code,name):
 		# If the error string lookup fails, this message will display with the error code.
 		if error[0] != 0:
 			choice=wx.MessageBox(name +' : ERROR '+ str(code),style=wx.CENTER|wx.ICON_EXCLAMATION|wx.OK)
-`		# This displays the error string.
+		# This displays the error string.
 		else:
 			choice=wx.MessageBox(name +' : '+ error[1],style=wx.CENTER|wx.ICON_EXCLAMATION|wx.OK)
 	# This code handles the case where the connection to the controller fails after initial contact.
@@ -234,12 +234,13 @@ class Information(wx.Panel):
 		position=x.GroupPositionCurrentGet(self.SocketID,self.Group,1)
 		if position[0] != 0:
 			XPSErrorHandler(self.SocketID, position[0], 'GroupPositionCurrentGet')
+		else:
+			self.pos.SetValue(str(position[1]))
 		velocity=x.GroupVelocityCurrentGet(self.SocketID,self.Group,1)
 		if velocity[0] != 0:
 			XPSErrorHandler(self.SocketID, velocity[0], 'GroupVelocityCurrentGet')
-		# These commands will set the value in the readout to be the retreived values.
-		self.pos.SetValue(str(position[1]))
-		self.vel.SetValue(str(velocity[1]))
+		else:		
+			self.vel.SetValue(str(velocity[1]))
 
 # The panel which handles tho commands for movement.
 class Control(wx.Panel):
@@ -297,10 +298,11 @@ class Control(wx.Panel):
 		if self.profile[0] != 0:
 				XPSErrorHandler(self.SocketID2, self.profile[0], 'PositionerSGammaParametersGet')			
 		# These commands set the values of the entry boxes to the stored setting on the motor.		
-		self.velocity.SetValue(self.profile[1])	
-		self.acceleration.SetValue(self.profile[2])	
-		self.jerk1.SetValue(self.profile[3])	
-		self.jerk2.SetValue(self.profile[4])
+		else:		
+			self.velocity.SetValue(self.profile[1])	
+			self.acceleration.SetValue(self.profile[2])	
+			self.jerk1.SetValue(self.profile[3])	
+			self.jerk2.SetValue(self.profile[4])
 		# Defining the button.
 		self.execute=wx.Button(self,label='Execute')
 		# Performing the layout.
@@ -418,12 +420,13 @@ class InfoThread(thr.Thread):
 			pos=x.GroupPositionCurrentGet(self.socket,self.group,1)
 			if pos[0] != 0:
 				XPSErrorHandler(self.socket, pos[0], 'GroupPositionCurrentGet')
+			else:
+				app.frame.panel_one.pos.SetValue(str(pos[1]))
 			vel=x.GroupVelocityCurrentGet(self.socket,self.group,1)
 			if vel[0] != 0:
 				XPSErrorHandler(self.socket, vel[0], 'GroupVelocityCurrentGet')
-			# The functions that update the information panel.
-			app.frame.panel_one.pos.SetValue(str(pos[1]))
-			app.frame.panel_one.vel.SetValue(str(vel[1]))
+			else:
+				app.frame.panel_one.vel.SetValue(str(vel[1]))
 			# the function that checks to see if the movement state has changed.
 			Publisher().subscribe(self.update,('flag'))
 	# This function actually changes the movement state.
