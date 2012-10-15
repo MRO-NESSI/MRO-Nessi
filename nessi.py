@@ -1,5 +1,17 @@
+#!/usr/bin/env python
+"""
+ Control software for NESSI
+ 
+ author:       Luke Schmidt, Matt Napolitano
+ author_email: lschmidt@nmt.edu
+"""
+
+__author__ = 'Luke Schmidt, Matt Napolitano'
+__date__ = '2012'
+
 #Live update plotting of temps with matplot lib from code by Eli Bendersky
 #http://eli.thegreenplace.net/2008/08/01/matplotlib-with-wxpython-guis/
+
 import os, sys
 import random
 import time
@@ -7,8 +19,14 @@ from datetime import datetime
 import pprint
 import cStringIO
 import wx
-#custom settings for GUI
+import ds9
+
+# Drivers
+import FLI
+
+# Custom settings for GUI
 import nessi_settings as settings
+
 from wx.lib.stattext import GenStaticText
 import threading
 import numpy as np
@@ -358,61 +376,36 @@ class GuidePanelSettings(wx.Panel):
         self.star2 = wx.StaticText(self, label="Star 2: ")
         self.star1_xy = wx.StaticText(self, label="(x.000,y.000)")
         self.star2_xy = wx.StaticText(self, label="(x.000,y.000)")
-        self.guide = wx.ToggleButton(self, 1, size=(85,-1), label="Guiding Off")
+        self.guide = wx.ToggleButton(self, 1, size=(100,-1), label="Guiding Off")
         self.log_onoff = wx.CheckBox(self, -1, 'Guiding Log On', (10,10))
-        self.noise_onoff = wx.CheckBox(self, -1, 'Noise Reduction', (10,10))
         self.guide_state = self.guide.GetValue()
         self.cadence_text = wx.StaticText(self, label="Cadence (s): ")
         self.cadence = wx.TextCtrl(self, -1, '10.0', size=(50,-1), style=wx.TE_NO_VSCROLL)
                 
         #stat
-        self.cooler_on_text = wx.StaticText(self, label="Cooler Power: ")
-        self.cooler_on = wx.StaticText(self, label=" ")
-        self.cooler_cb = wx.CheckBox(self, -1, " " , (10,10))
-        self.cooler_cb.SetValue(True)
         self.curr_temp_text = wx.StaticText(self, label="Current Temp: ")
         self.curr_temp = wx.StaticText(self, label="...              ")
-        self.curr_setpoint_text = wx.StaticText(self, label="Current Set Point: ")
-        self.curr_setpoint = wx.StaticText(self, label="...              ")
-        self.set_point_minus = wx.Button(self, size=(20,20), label="-")
-        self.set_point_plus = wx.Button(self, size=(20,20), label="+")
-        self.cooler_load_text = wx.StaticText(self, label="Cooler Load: ")
-        self.cooler_load = wx.StaticText(self, label="...              ")
-        
-        self.curr_heatsink_text = wx.StaticText(self, label="Heatsink Temp: ")
-        self.curr_heatsink = wx.StaticText(self, label="...              ")
-        self.fan_text = wx.StaticText(self, label="Fan Speed: ")
-        self.fan_off  = wx.RadioButton(self, -1, 'Off', style=wx.RB_GROUP)
-        self.fan_low  = wx.RadioButton(self, -1, 'Low')
-        self.fan_med  = wx.RadioButton(self, -1, 'Med')
-        self.fan_high = wx.RadioButton(self, -1, 'High')
-        self.fan_low.SetValue(True)
+        self.curr_setpoint_text = wx.StaticText(self, label="Current Set Point (C): ")
+        self.curr_setpoint = wx.TextCtrl(self, -1, '', size=(50,-1), style=wx.TE_NO_VSCROLL)
+        self.curr_setpoint.SetValue('0')
+        self.curr_setpoint_button = wx.Button(self, size=(80,-1), label="Set")
         
         #exp
+        self.exp_text = wx.StaticText(self, -1, label="Exposure (s):")
         self.exposure = wx.TextCtrl(self, -1, '', size=(50,-1), style=wx.TE_NO_VSCROLL)
         self.exposure.SetValue('0.03')
-        self.exp_text = wx.StaticText(self, -1, label="Exposure (s):")
-        self.reset_frame = wx.Button(self, size=(120,-1), label="Reset ROI")
-        self.take = wx.Button(self, size=(80, -1), label="Take Image")
+        self.take = wx.Button(self, size=(100, -1), label="Take Image")
         self.binH_text = wx.StaticText(self, -1, label="BinH: ")
         self.binH = wx.SpinCtrl(self, id=-1, value='', min=1, max=10, initial=1, size=(40, -1))
         self.binV_text = wx.StaticText(self, -1, label="BinV: ")
         self.binV = wx.SpinCtrl(self, id=-1, value='', min=1, max=10, initial=1, size=(40, -1))
-        self.roistartH_text = wx.StaticText(self, -1, label="ROI Start H: ")
-        self.roistartH = wx.SpinCtrl(self, id=-1, value='', min=1, max=1024, initial=1, size=(55, -1))
-        self.roistartV_text = wx.StaticText(self, -1, label="ROI Start V: ")
-        self.roistartV = wx.SpinCtrl(self, id=-1, value='', min=1, max=1024, initial=1, size=(55, -1))
-        self.roiH_text = wx.StaticText(self, -1, label="ROI End H: ")
-        self.roiH = wx.SpinCtrl(self, id=-1, value='', min=1, max=1024, initial=1024, size=(55, -1))
-        self.roiV_text = wx.StaticText(self, -1, label="ROI End V: ")
-        self.roiV = wx.SpinCtrl(self, id=-1, value='', min=1, max=1024, initial=1024, size=(55, -1))
-        
+                
         self.series = wx.SpinCtrl(self, id=-1, value='', min=1, max=1000, initial=1, size=(50, -1))
         self.series_text = wx.StaticText(self, -1, label="Series: ")
+        self.scadence_text = wx.StaticText(self, -1, label="Cadence (s):")
         self.scadence = wx.TextCtrl(self, -1, '', size=(50,-1), style=wx.TE_NO_VSCROLL)
         self.scadence.SetValue('10.0')
-        self.scadence_text = wx.StaticText(self, -1, label="Cadence (s):")
-        self.take_series = wx.ToggleButton(self, 2, size=(80, -1), label="Take Series")
+        self.take_series = wx.ToggleButton(self, 2, size=(100, -1), label="Take Series")
         self.sname = wx.TextCtrl(self, -1, 'img', size=(130,-1), style=wx.TE_NO_VSCROLL)
         self.sname_text = wx.StaticText(self, -1, label="Series Name: ")
         self.autosave_on_text = wx.StaticText(self, label="Autosave: ")
@@ -427,37 +420,22 @@ class GuidePanelSettings(wx.Panel):
         self.__DoLayout()
         
         # Event Handlers
-        self.Bind(wx.EVT_BUTTON, self.SetPointP, self.set_point_plus)
-        self.Bind(wx.EVT_BUTTON, self.SetPointM, self.set_point_minus)
         
         self.Bind(wx.EVT_TOGGLEBUTTON, self.OnGuide, id=1)
         self.Bind(wx.EVT_BUTTON, self.Expose, self.take)
         self.Bind(wx.EVT_TOGGLEBUTTON, self.ExposeSeries, id=2)
         
-        self.Bind(wx.EVT_CHECKBOX, self.CoolOnOff, self.cooler_cb)
         self.Bind(wx.EVT_CHECKBOX, self.GuideLog, self.log_onoff)
-        self.Bind(wx.EVT_RADIOBUTTON, self.FanOff, self.fan_off)
-        self.Bind(wx.EVT_RADIOBUTTON, self.FanLow, self.fan_low)
-        self.Bind(wx.EVT_RADIOBUTTON, self.FanMed, self.fan_med)
-        self.Bind(wx.EVT_RADIOBUTTON, self.FanHigh, self.fan_high)
         
-        #self.sBmp.Bind(wx.EVT_LEFT_DCLICK, self.ChooseStar1)
-        #self.sBmp.Bind(wx.EVT_RIGHT_DCLICK, self.ChooseStar2)
-        
-        self.Bind(wx.EVT_SPINCTRL, self.roiPixelsH, self.roiH)
-        self.Bind(wx.EVT_SPINCTRL, self.roiPixelsV, self.roiV)
-        self.Bind(wx.EVT_SPINCTRL, self.roiStartH, self.roistartH)
-        self.Bind(wx.EVT_SPINCTRL, self.roiStartV, self.roistartV)
         self.Bind(wx.EVT_SPINCTRL, self.roiBinH, self.binH)
         self.Bind(wx.EVT_SPINCTRL, self.roiBinV, self.binV)
-        self.Bind(wx.EVT_BUTTON, self.resetFrame, self.reset_frame)
         
     def OnPower(self):
         while self.looking:
-            dev = usb.core.find(idVendor=0x125c, idProduct=0x0010)
+            dev = usb.core.find(idVendor=0x0f18, idProduct=0x000a)
             if DEBUG: print dev
             if dev is None:
-                time.sleep(1)
+                time.sleep(0.5)
                 if DEBUG: print time.time()
             if dev != None:
                 self.looking = False
@@ -468,9 +446,6 @@ class GuidePanelSettings(wx.Panel):
         self.c_power = False
         self.looking = True
         self.curr_temp.SetLabel('...')
-        self.curr_setpoint.SetLabel('...')
-        self.curr_heatsink.SetLabel('...')
-        self.cooler_load.SetLabel('...')
         self.c.shutdown()
         self.c = None
         
@@ -486,18 +461,9 @@ class GuidePanelSettings(wx.Panel):
         exp_sz.Add(self.take, pos=(0,2), span=(1,1), flag=wx.ALIGN_CENTER_VERTICAL)
         exp_sz.Add(self.binH_text, pos=(0,3), span=(1,1), flag=wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
         exp_sz.Add(self.binH, pos=(0,4), span=(1,1), flag=wx.ALIGN_CENTER_VERTICAL)
-        exp_sz.Add(self.reset_frame, pos=(2,3), span=(1,2), flag=wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
         exp_sz.Add(self.binV_text, pos=(1,3), span=(1,1), flag=wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
         exp_sz.Add(self.binV, pos=(1,4), span=(1,1), flag=wx.ALIGN_CENTER_VERTICAL)
-        exp_sz.Add(self.roistartH_text, pos=(0,5), span=(1,1), flag=wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-        exp_sz.Add(self.roistartH, pos=(0,6), span=(1,1), flag=wx.ALIGN_CENTER_VERTICAL)
-        exp_sz.Add(self.roistartV_text, pos=(1,5), span=(1,1), flag=wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-        exp_sz.Add(self.roistartV, pos=(1,6), span=(1,1), flag=wx.ALIGN_CENTER_VERTICAL)
-        exp_sz.Add(self.roiH_text, pos=(2,5), span=(1,1), flag=wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-        exp_sz.Add(self.roiH, pos=(2,6), span=(1,1), flag=wx.ALIGN_CENTER_VERTICAL)
-        exp_sz.Add(self.roiV_text, pos=(3,5), span=(1,1), flag=wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-        exp_sz.Add(self.roiV, pos=(3,6), span=(1,1), flag=wx.ALIGN_CENTER_VERTICAL)
-
+        
         exp_sz.Add(self.series_text, pos=(1,0), span=(1,1), flag=wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
         exp_sz.Add(self.series, pos=(1,1), span=(1,1), flag=wx.ALIGN_CENTER_VERTICAL)
         exp_sz.Add(self.scadence_text, pos=(2,0), span=(1,1), flag=wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
@@ -518,29 +484,15 @@ class GuidePanelSettings(wx.Panel):
         guide_sz.Add(self.star2_xy, pos=(1,1), span=(1,1), flag=wx.ALIGN_CENTER_VERTICAL)
         guide_sz.Add(self.guide, pos=(2,0), span=(1,1), flag=wx.ALIGN_CENTER_VERTICAL)
         guide_sz.Add(self.log_onoff, pos=(3,0), span=(1,2), flag=wx.ALIGN_CENTER_VERTICAL)
-        guide_sz.Add(self.noise_onoff, pos=(4,0), span=(1,2), flag=wx.ALIGN_CENTER_VERTICAL)
-        guide_sz.Add(self.cadence_text, pos=(5,0), span=(1,1), flag=wx.ALIGN_CENTER_VERTICAL)
-        guide_sz.Add(self.cadence, pos=(5,1), span=(1,1), flag=wx.ALIGN_CENTER_VERTICAL)
+        guide_sz.Add(self.cadence_text, pos=(4,0), span=(1,1), flag=wx.ALIGN_CENTER_VERTICAL)
+        guide_sz.Add(self.cadence, pos=(4,1), span=(1,1), flag=wx.ALIGN_CENTER_VERTICAL)
                 
-        stat_sz.Add(self.cooler_on_text, pos=(0,0), span=(1,1), flag=wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-        stat_sz.Add(self.cooler_on, pos=(0,1), span=(1,1), flag=wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_LEFT)
-        stat_sz.Add(self.cooler_cb, pos=(0,3), span=(1,1), flag=wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_LEFT)
         stat_sz.Add(self.curr_temp_text, pos=(1,0), span=(1,1), flag=wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
         stat_sz.Add(self.curr_temp, pos=(1,1), span=(1,1), flag=wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_LEFT)
         stat_sz.Add(self.curr_setpoint_text, pos=(2,0), span=(1,1), flag=wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
         stat_sz.Add(self.curr_setpoint, pos=(2,1), span=(1,1), flag=wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_LEFT)
-        stat_sz.Add(self.set_point_minus, pos=(2,2), span=(1,1), flag=wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_LEFT)
-        stat_sz.Add(self.set_point_plus, pos=(2,3), span=(1,1), flag=wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_LEFT)
-        stat_sz.Add(self.curr_heatsink_text, pos=(3,0), span=(1,1), flag=wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-        stat_sz.Add(self.curr_heatsink, pos=(3,1), span=(1,1), flag=wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_LEFT)
-        stat_sz.Add(self.cooler_load_text, pos=(4,0), span=(1,1), flag=wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-        stat_sz.Add(self.cooler_load, pos=(4,1), span=(1,1), flag=wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_LEFT)
-        stat_sz.Add(self.fan_text, pos=(5,0), span=(1,1), flag=wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-        stat_sz.Add(self.fan_off, pos=(5,1), span=(1,1), flag=wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_LEFT)
-        stat_sz.Add(self.fan_low, pos=(5,2), span=(1,2), flag=wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_LEFT)
-        stat_sz.Add(self.fan_med, pos=(5,4), span=(1,1), flag=wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_LEFT)
-        stat_sz.Add(self.fan_high, pos=(5,5), span=(1,1), flag=wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_LEFT)
-                
+        stat_sz.Add(self.curr_setpoint_button, pos=(2,2), span=(1,1), flag=wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_LEFT)
+                        
         # Set up master StaticBox
         sbox = wx.StaticBox(self, label="Guide Camera")
         boxSizer = wx.StaticBoxSizer(sbox, wx.HORIZONTAL)
@@ -567,40 +519,10 @@ class GuidePanelSettings(wx.Panel):
             if not self.c_power:
                 pass
             else:
-                self.status = self.c.camState()
-                if int(self.status['coolerStatus']) == 0:
-                    sym = u'\u25C7'
-                    self.curr_temp.SetForegroundColour((255,0,0))
-                    self.cooler_on.SetForegroundColour((255,0,0))
-                    self.cooler_on.SetLabel(u'\u2717')
-                elif int(self.status['coolerStatus']) == 1:
-                    sym = u'\u2B0D'
-                    self.curr_temp.SetForegroundColour((255,0,0))
-                    self.cooler_on.SetForegroundColour((34,139,34))
-                    self.cooler_on.SetLabel(u'\u2713')
-                elif int(self.status['coolerStatus']) == 2:
-                    sym = u'\u2713'
-                    self.curr_temp.SetForegroundColour((34,139,34))
-                    self.cooler_on.SetForegroundColour((34,139,34))
-                    self.cooler_on.SetLabel(u'\u2713')
-                elif int(self.status['coolerStatus']) == 3:
-                    sym = u'\u2B28'
-                    self.curr_temp.SetForegroundColour((255,0,0))
-                    self.cooler_on.SetForegroundColour((34,139,34))
-                    self.cooler_on.SetLabel(u'\u2713')
                 #get current temp
                 temp = round(self.status['temperatureCCD'], 3)
                 self.curr_temp.SetLabel(str(temp) + u'\N{DEGREE SIGN}' + 'C  ' + sym)
-                #get current set temp
-                settemp = round(self.status['coolerSetPoint'], 0)
-                self.curr_setpoint.SetLabel(str(settemp) + u'\N{DEGREE SIGN}' + 'C')
-                #get current cooler load
-                load = round(self.status['coolerDrive'], 2)
-                self.cooler_load.SetLabel(str(load) + '%')
-                #get current heatsink temp
-                sink = round(self.status['temperatureHeatSink'], 3)
-                self.curr_heatsink.SetLabel(str(sink) + u'\N{DEGREE SIGN}' + 'C')
-                
+                            
         except ValueError:
             pass
         
@@ -660,28 +582,6 @@ class GuidePanelSettings(wx.Panel):
             self.seriesstatus.clear()
             self.exp_series_thread.join()
             
-    def resetFrame(self, event):
-        self.binH.SetValue(1)
-        self.c.roiBinningH(1)
-        self.binV.SetValue(1)
-        self.c.roiBinningV(1)
-        
-        self.roistartH.SetValue(1)
-        self.c.roiStartX(1)
-        self.roistartV.SetValue(1)
-        self.c.roiStartY(1)
-        
-        self.roiH.SetValue(1024)
-        self.c.roiPixelsH(1024)
-        self.roiV.SetValue(1024)
-        self.c.roiPixelsV(1024)
-            
-    def CoolOnOff(self, event):
-        if self.cooler_cb.GetValue():
-            self.c.coolerEnable(True)
-        else:
-            self.c.coolerEnable(False)
-    
     def roiBinH(self, event):
         h = self.binH.GetValue()
         self.c.roiBinningH(h)
@@ -694,46 +594,9 @@ class GuidePanelSettings(wx.Panel):
         self.c.roiPixelsV(1024/v)
         self.roiV.SetValue(1024/v)
         
-    def roiStartH(self, event):
-        x = self.roistartH.GetValue()
-        self.c.roiStartX(x)
-        self.c.roiPixelsH(1024-x)
-        self.roiH.SetValue(1024-x)
-        
-    def roiStartV(self, event):
-        y = self.roistartV.GetValue()
-        self.c.roiStartY(y)
-        self.c.roiPixelsV(1024-y)
-        self.roiV.SetValue(1024-y)
-        
-    def roiPixelsH(self, event):
-        h = self.roiH.GetValue()
-        self.c.roiPixelsH(h)
-        
-    def roiPixelsV(self, event):                
-        v = self.roiV.GetValue()
-        self.c.roiPixelsV(v)
-             
-    def FanOff(self, event):
-        self.c.fanSpeed(0)
-        
-    def FanLow(self, event):
-        self.c.fanSpeed(1)
-        
-    def FanMed(self, event):
-        self.c.fanSpeed(2)
-        
-    def FanHigh(self, event):
-        self.c.fanSpeed(3)
-       
-    def SetPointP(self, event):
+    def SetPoint(self, event):
         temp = self.c.coolerSetPoint()
-        self.c.coolerSetPoint(temp+1.0)
-            
-    def SetPointM(self, event):
-        temp = self.c.coolerSetPoint()
-        self.c.coolerSetPoint(temp-1.0)
-    
+        
     def ChooseStar1(self, event):
         global s1
         s1 = event.GetPosition()
@@ -806,32 +669,6 @@ class GuidePanelSettings(wx.Panel):
         self.take_series.SetForegroundColour((0,0,0))
         self.seriesstatus.clear()
         self.exp_series_thread.join()
-
-#    def on_stop(self, event):
-#        try:
-#            if not self.c_power:
-#                wx.Bell()
-#                wx.MessageBox('The guide camera does not have power.', style=wx.OK|wx.CENTER)
-#            else:
-#                pub.sendMessage("LOG EVENT", "Guiding Stopped...")
-#                self.guidestatus = False
-#        except ValueError:
-#            pass
-    
-    def AdjContBri(self, event):
-        curcon = self.contrast_sld.GetValue()*0.1
-        curbri = self.brightness_sld.GetValue()*0.1
-        curimg = self.image
-        adjusted = pic.pic_cont_bri(curimg, curcon, curbri)
-        self.sBmp.SetBitmap(adjusted)
-   
-    def ResetContrast(self, event):
-        self.contrast_sld.SetValue(10)
-        self.AdjContBri(event)
-        
-    def ResetBrightness(self, event):    
-        self.brightness_sld.SetValue(10)
-        self.AdjContBri(event)
         
     def GuideLog(self, event):
         if self.log_onoff.GetValue():
@@ -1329,15 +1166,30 @@ class PageOne(wx.Panel):
                 
         
         # Add the grid bag to the static box and make everything fit
-        #sizer.SetMinSize(wx.Size(350, -1))
         boxSizer.Add(sizer, wx.EXPAND)
         self.SetSizerAndFit(boxSizer)
         
         
 class PageTwo(wx.Panel):
-    def __init__(self, parent):
-        wx.Panel.__init__(self, parent)
-        t = wx.StaticText(self, -1, "K-Mirror Control", (40,40))
+    def __init__(self, parent, *args, **kwargs):
+        super(PageTwo, self).__init__(parent)
+        
+        # Attributes
+        self.t = wx.StaticText(self, -1, "K-Mirror Control", (40,40))
+
+        self.__DoLayout()
+
+    def __DoLayout(self):
+        sbox = wx.StaticBox(self, label="")
+        boxSizer = wx.StaticBoxSizer(sbox, wx.HORIZONTAL)
+        sizer = wx.GridBagSizer(vgap=2, hgap=2)
+        
+        # Add controls to gridbag
+        sizer.Add(self.t, pos=(0,0), span=(1,1), flag=wx.LEFT|wx.ALIGN_CENTER_VERTICAL)
+                
+        # Add the grid bag to the static box and make everything fit
+        boxSizer.Add(sizer, wx.EXPAND)
+        self.SetSizerAndFit(boxSizer)
 
 class PageThree(wx.Panel):
     def __init__(self, parent, *args, **kwargs):
@@ -1371,14 +1223,14 @@ class PageThree(wx.Panel):
 
 class MainFrame(wx.Frame):
     def __init__(self):
-        wx.Frame.__init__(self, None, title="NESSI Controller")
+        wx.Frame.__init__(self, None, title="NESSI Controller", size=(850,875))
 
         # Here we create a panel and a notebook on the panel
         self.create_menus()
         self.CreateStatusBar()
         
         p = wx.Panel(self)
-        nb = wx.Notebook(p)
+        nb = wx.Notebook(p, style=wx.NB_RIGHT)
 
         # create the page windows as children of the notebook
         page1 = PageOne(nb)

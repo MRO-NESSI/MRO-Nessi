@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 #   pyFLI - A Python wrapper for Finger Lakes Instruments scientific cameras
 #   Copyright (C) 2012 Luke Schmidt
 #
@@ -28,8 +31,8 @@ import sys
 class Fli:
     def __init__(self):
         #cdll.LoadLibrary("/usr/local/lib/fli/libfli.o")
-        self.dll = CDLL("/usr/local/lib/fli/libfli.o")
-        error = self.dll.Initialize("/usr/local/etc/andor/")
+        self.dll = CDLL("/usr/local/lib/libfli.so")
+        error = self.dll.Initialize("/usr/local/lib/")
 
         cw = c_int()
         ch = c_int()
@@ -65,7 +68,7 @@ class Fli:
     def SetVerbose(self, state=True):
         self.verbose = state
 
-    def FLIOpen(self, *dev, *name, domain):
+    def FLIOpen(self, dev, name, domain):
         """Get a handle to an FLI device. This function requires the ﬁlename and
         domain of the requested device. Valid device ﬁlenames can be obtained using
         the FLIList() function. An application may use any number of handles associated
@@ -76,7 +79,7 @@ class Fli:
         self.verbose(ERROR_CODE[error], sys._getframe().f_code.co_name)
         return ERROR_CODE[error]
 
-    def FLISetDebugLevel(self, *host, level):
+    def FLISetDebugLevel(self, host, level):
         """Enable debugging of API operations and communications. Use this function
         in combination with FLIDebug to assist in diagnosing problems that may be
         encountered during programming."""
@@ -98,15 +101,15 @@ class Fli:
         NULL character into the buffer pointed to by 'model'."""
         pass
     
-    def FLIGetPixelSize(self, dev, *pixel_x, *pixel_y):
+    def FLIGetPixelSize(self, dev, pixel_x, pixel_y):
         """Find the dimensions of a pixel in the array of the given device."""
         pass
     
-    def FLIGetHWRevision(self, dev, *hwrev):
+    def FLIGetHWRevision(self, dev, hwrev):
         """Get the hardware revision of a given device."""
         pass
     
-    def FLIGetFWRevision(self, dev, *fwrev):
+    def FLIGetFWRevision(self, dev, fwrev):
         """Get ﬁrmware revision of a given device."""
         pass
     
@@ -175,7 +178,7 @@ class Fli:
         exposure in progress by closing the shutter."""
         pass
     
-    def FLIGetExposureStatus(self, dev, *timeleft):
+    def FLIGetExposureStatus(self, dev, timeleft):
         """Find the remaining exposure time of a given camera. This function places
         the remaining exposure time (in milliseconds) in the location pointed to 
         by 'timeleft'."""
@@ -187,16 +190,16 @@ class Fli:
         of the 'temperature' parameter is from -55C to 45C."""
         pass
     
-    def FLIGetTemperature(self, dev, *temperature):
+    def FLIGetTemperature(self, dev, temperature):
         """Get the temperature of a given camera. This function places the temperature
         of the CCD camera cold ﬁnger of device 'dev' in the location pointed to 
         by temperature."""
         pass
     
-    def FLIGetCoolerPower(self, dev, *power):
+    def FLIGetCoolerPower(self, dev, power):
         pass
     
-    def FLIGrabRow(self, dev, *buff, width):
+    def FLIGrabRow(self, dev, buff, width):
         """Grab a row of an image. This function grabs the next available row of 
         the image from camera device 'dev'. The row of width 'width' is placed 
         in the buffer pointed to by 'buff'. The size of the buffer pointed to by 
@@ -234,7 +237,7 @@ class Fli:
         Many cameras do not support this mode."""
         pass
     
-    def FLIReadIOPort(self, dev, *ioportset):
+    def FLIReadIOPort(self, dev, ioportset):
         """Read the I/O port of a given camera. This function reads the I/O port 
         on camera 'dev' and places the value in the location pointed to by 
         'ioportset'."""
@@ -313,12 +316,12 @@ class Fli:
         set the ﬁlter wheel position of 'dev' to filter."""
         pass
     
-    def FLIGetFilterPos(self, dev, *filter):
+    def FLIGetFilterPos(self, dev, filter):
         """Get the ﬁlter wheel position of a given device. Use this function to 
         get the ﬁlter wheel position of 'dev'."""
         pass
     
-    def FLIGetFilterCount(self, dev, *filter):
+    def FLIGetFilterCount(self, dev, filter):
         """Get the ﬁlter wheel ﬁlter count of a given device. Use this function 
         to get the ﬁlter count of ﬁlter wheel 'dev'."""
         pass
@@ -334,12 +337,12 @@ class Fli:
         This function is non-blocking."""
         pass
     
-    def FLIGetStepperPosition(self, dev, *position):
+    def FLIGetStepperPosition(self, dev, position):
         """Get the stepper motor position of a given device. Use this function to 
         read the stepper motor position of ﬁlter wheel or focuser 'dev'."""
         pass
     
-    def FLIGetStepsRemaining(self, dev, *steps):
+    def FLIGetStepsRemaining(self, dev, steps):
         """Get the number of motor steps remaining. Use this function to determine
         if the stepper motor of 'dev' is still moving."""
         pass
@@ -359,41 +362,41 @@ class Fli:
         """Deletes a list of devices created by FLICreateList()"""
         pass
     
-    def FLIListFirst(self, *domain, *filename, fnlen, *name, namelen):
+    def FLIListFirst(self, domain, filename, fnlen, name, namelen):
         """Obtains the ﬁrst device in the list. Use this function to get the ﬁrst 
         'domain', 'filename' and 'name' from the list of attached FLI devices created
         using the function FLICreateList(). Use FLIListNext() to obtain more found
         devices."""
         pass
     
-    def FLIListNext(self, *domain, *filename, fnlen, *name, namelen):
+    def FLIListNext(self, domain, filename, fnlen, name, namelen):
         """Obtains the next device in the list. Use this function to get the next
         'domain', 'filename' and 'name' from the list of attached FLI devices created
         using the function FLICreateList()."""
         pass
     
-    def FLIReadTemperature(self, dev, channel, *temperature):
+    def FLIReadTemperature(self, dev, channel, temperature):
         """Retreive temperature from the FLI focuser 'dev'. Valid channels are
         FLI_TEMPERATURE_INTERNAL and FLI_TEMPERATURE_EXTERNAL."""
         pass
     
-    def FLIGetFocuserExtent(self, dev, *extent):
+    def FLIGetFocuserExtent(self, dev, extent):
         """Retreive the maximum extent for FLI focuser 'dev'"""
         pass
     
-    def FLIUsbBulkIO(self, dev, ep, *buf, *len):
+    def FLIUsbBulkIO(self, dev, ep, buf, len):
         """"""
         pass
     
-    def FLIGetDeviceStatus(self, dev, *camera_status):
+    def FLIGetDeviceStatus(self, dev, camera_status):
         """"""
         pass
     
-    def FLIGetCameraModeString(self, dev, mode_index, *mode_string, siz):
+    def FLIGetCameraModeString(self, dev, mode_index, mode_string, siz):
         """"""
         pass
     
-    def FLIGetCameraMode(self, dev, *mode_index):
+    def FLIGetCameraMode(self, dev, mode_index):
         """"""
         pass
     
@@ -790,7 +793,7 @@ class Fli:
 #    20089: "DRV_USBERROR",
 #    20091: "DRV_NOT_SUPPORTED",
 #    20099: "DRV_BINNING_ERROR",
-    20990: "DRV_NOCAMERA",
-    20991: "DRV_NOT_SUPPORTED",
-    20992: "DRV_NOT_AVAILABLE"
-}
+#    20990: "DRV_NOCAMERA",
+#    20991: "DRV_NOT_SUPPORTED",
+#    20992: "DRV_NOT_AVAILABLE"
+#}
