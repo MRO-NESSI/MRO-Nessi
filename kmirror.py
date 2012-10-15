@@ -91,12 +91,13 @@ class KMirrorFrame(wx.Frame):
 		'''The initialization routine for this frame.  This establishes which panels will be displayed.'''
 		super(KMirrorFrame,self).__init__(*args,**kwargs)
 		# These are the panels to be included in the frame.
-		self.panel_zero=Emergency(self)
-		self.panel_one=Information(self)
-		self.panel_two=Control(self)
+		self.notebook = NotebookDemo(self)
+		#self.panel_zero=Emergency(self)
+		#self.panel_one=Information(self)
+		#self.panel_two=Control(self)
 		# some decorative seperation between panels.
-		self.line_zero=wx.StaticLine(self,style=wx.LI_HORIZONTAL)
-		self.line_one=wx.StaticLine(self,style=wx.LI_HORIZONTAL)
+		#self.line_zero=wx.StaticLine(self,style=wx.LI_HORIZONTAL)
+		#self.line_one=wx.StaticLine(self,style=wx.LI_HORIZONTAL)
 		# calling the function that will define the layout for the frame.
 		self.__DoLayout()
 		self.SetInitialSize()
@@ -110,11 +111,12 @@ class KMirrorFrame(wx.Frame):
 		sizer=wx.GridBagSizer()
 		# These define the position of all elements of the frame where (0,0) is the top left position.
 		# (x,y) is defined with x being the vertical position and y being the horizontal position.
-		sizer.Add(self.panel_two,(0,0),(1,1),wx.ALIGN_CENTER_HORIZONTAL|wx.CENTER)
-		sizer.Add(self.line_zero,(1,0),(1,1),wx.EXPAND,border=5)
-		sizer.Add(self.panel_one,(2,0),(1,1),wx.ALIGN_CENTER_HORIZONTAL|wx.CENTER)  
-		sizer.Add(self.line_one,(3,0),(1,1),wx.EXPAND,border=5)
-		sizer.Add(self.panel_zero,(4,0),(1,1),wx.ALIGN_CENTER_HORIZONTAL|wx.CENTER)
+		sizer.Add(self.notebook,(0,0))
+		#sizer.Add(self.panel_two,(0,0),(1,1),wx.ALIGN_CENTER_HORIZONTAL|wx.CENTER)
+		#sizer.Add(self.line_zero,(1,0),(1,1),wx.EXPAND,border=5)
+		#sizer.Add(self.panel_one,(2,0),(1,1),wx.ALIGN_CENTER_HORIZONTAL|wx.CENTER)  
+		#sizer.Add(self.line_one,(3,0),(1,1),wx.EXPAND,border=5)
+		#sizer.Add(self.panel_zero,(4,0),(1,1),wx.ALIGN_CENTER_HORIZONTAL|wx.CENTER)
 		# This finalizes the layout.
 		self.SetSizer(sizer)
 	
@@ -206,8 +208,8 @@ class Information(wx.Panel):
 		self.read=wx.Button(self,label='Manual Read')
 		# setting the newport information.
 		self.SocketID=socket2
-		self.Group = 'GROUP1'
-		self.Positioner = self.Group + '.POSITIONER'
+		self.Group = 'S'
+		self.Positioner = self.Group + '.Pos'
 		# Binding the manual read button to its functions.
 		self.Bind(wx.EVT_BUTTON, self.OnButton)
 		# Finalizing the layout.
@@ -275,8 +277,8 @@ class Control(wx.Panel):
 		self.SocketID1=socket1
 		self.SocketID2=socket2
 		self.home=[0]
-		self.Group = 'GROUP1'
-		self.Positioner = self.Group + '.POSITIONER'
+		self.Group = 'S'
+		self.Positioner = self.Group + '.Pos'
 		# The start up routine for motion which is as follows:
 		# 1) kill all groups.
 		# 2) initialize the group.
@@ -367,6 +369,41 @@ class Control(wx.Panel):
 		# This error mode should not be reachable from the UI.
 		else:
 			self.move_mode=-1
+
+class NotebookDemo(wx.Notebook):
+    """
+    Notebook class
+    """
+
+    #----------------------------------------------------------------------
+    def __init__(self,*args,**kwargs):
+		super(NotebookDemo,self).__init__(*args,**kwargs)
+      	# Create the first tab and add it to the notebook
+		self.tabOne = Control(self)
+		self.tabOne.SetBackgroundColour("Gray")
+		self.AddPage(self.tabOne, "TabOne")
+		self.tabTwo = Information(self)
+		self.AddPage(self.tabTwo, "TabTwo")
+
+        # Create and add the third tab
+		self.AddPage(Emergency(self), "TabThree")
+
+#		self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGED, self.OnPageChanged)
+#		self.Bind(wx.EVT_NOTEBOOK_PAGE_CHANGING, self.OnPageChanging)
+##
+#    def OnPageChanged(self, event):
+#        old = event.GetOldSelection()
+#        new = event.GetSelection()
+#        sel = self.GetSelection()
+#        print 'OnPageChanged,  old:%d, new:%d, sel:%d\n' % (old, new, sel)
+#        event.Skip()
+
+#    def OnPageChanging(self, event):
+#        old = event.GetOldSelection()
+#        new = event.GetSelection()
+#        sel = self.GetSelection()
+#        print 'OnPageChanging, old:%d, new:%d, sel:%d\n' % (old, new, sel)
+#        event.Skip()
 
 # The thread for movement commands.	
 class ControlThread(thr.Thread):
