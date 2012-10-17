@@ -12,88 +12,94 @@ __date__ = '2012'
 #Live update plotting of temps with matplot lib from code by Eli Bendersky
 #http://eli.thegreenplace.net/2008/08/01/matplotlib-with-wxpython-guis/
 
+# General Modules
 import os, sys
 import random
 import time
-from datetime import datetime
 import pprint
 import cStringIO
 import wx
-import ds9
 import usb.core
 import usb.util
-
-# Drivers
-import FLI
-
-# Custom settings for GUI
-import nessi_settings as settings
-import prefcontrol
-
-from wx.lib.stattext import GenStaticText
-import threading
 import numpy as np
 import math
+from datetime import datetime
+
+# Threading and Multiprocess
+import threading
 import subprocess
-#for comminicating between panels
+import threadtools #module from wxPython Cookbook by Cody Precord
+
+# Images
+import ds9
+
+# Preferences for GUI
+import prefcontrol
+
+# Communicating between panels
 from wx.lib.pubsub import Publisher as pub
 
+# Plotting
 import matplotlib
-matplotlib.use('WXAgg')
+matplotlib.interactive( True )
+matplotlib.use( 'WXAgg' )
+
 from matplotlib.figure import Figure
-from matplotlib.backends.backend_wxagg import \
-    FigureCanvasWxAgg as FigCanvas, \
-    NavigationToolbar2WxAgg as NavigationToolbar
+from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigCanvas, NavigationToolbar2WxAgg as NavigationToolbar
 import pylab
+
+# Drivers and Custom Modules
+import FLI
 from guider import GuideThread, SeriesExpThread
+from driver_telescope import ScopeData
+
+#from wx.lib.stattext import GenStaticText
+#image manipulation
+#import Image
+#import backend.pic as pic
+
 # Set the system path to the root directory of the Nessi set of libraries so we 
 # can import our library modules in a consistent manner.
 #sys.path[0] = os.path.split(os.path.abspath(sys.path[0]))[0]
 #import all of the control libraries
-import threadtools #module from wxPython Cookbook by Cody Precord
-from driver_telescope import ScopeData
 
-#image manipulation
-import Image
-#import backend.pic as pic
 random.seed()
 
 DEBUG = False
 
-##################Master Dictionary for Instrument State########################
+################# Master Dictionary for Instrument State #######################
 
-inditelhost = settings.scope
-
-obspars = {'title':'Guide Camera', 'imgtyp':'object', 'telescop':'MRO 2.4-meter', 'projid':'NESSI', 'observers':''}
-
-# keyword data
-keywords = {"observers" : obspars["observers"],
-            "projid"    : obspars["projid"],
-            "telescop"  : obspars["telescop"],
-            "filename"  : "default",
-            "imagetype" : obspars["imgtyp"],
-            "title"     : obspars["title"] ,
-            "ra"        : "TCS down" ,  # set for now; overwrite 
-            "dec"       : "TCS down",   #  if inditelhost is set
-            "airmass"   : "TCS down",       
-            "telalt"    : "TCS down",
-            "telaz"     : "TCS down",
-            "focus"     : "TCS down",
-            "pa"        : "TCS down",
-            "jd"        : "TCS down",
-            "gdate"     : "TCS down",
-            "windvel"   : "No Env data",
-            "windgust"  : "No Env data",
-            "winddir"   : "No Env data",
-            "filter"    : "TCS down",
-            "guidefw"   : "None",
-            "mask"      : "TCS down",
+keywords = {"OBSERVER"  : "Observer",
+            "INST"      : "NESSI",
+            "TELESCOP"  : "MRO 2.4m",
+            "FILENAME"  : "default",
+            "IMGTYPE"   : "imgtyp",
+            "RA"        : "TCS down" ,   
+            "DEC"       : "TCS down",  
+            "AIRMASS"   : "TCS down",       
+            "TELALT"    : "TCS down",
+            "TELAZ"     : "TCS down",
+            "TELFOCUS"  : "TCS down",
+            "PA"        : "TCS down",
+            "JD"        : "TCS down",
+            "GDATE"     : "TCS down",
+            "WINDVEL"   : "No Env data",
+            "WINDGUST"  : "No Env data",
+            "WINDDIR"   : "No Env data",
+            "REI12"     : 0.0, # focus position
+            "REI34"     : 0.0, # focus position
+            "MASK"      : "None",
+            "FILTER1"   : "None",
+            "FILTER2"   : "None",
+            "GRISM"     : "None",
+            "EXP"       : 0.0,
+            "CAMTEMP"   : 0.0,
             "CTYPE1"    : "RA---TAN",
             "CTYPE2"    : "DEC--TAN",
             "CRPIX1"    : 512.0,
             "CRPIX2"    : 512.0,
-            "CDELT1"    : settings.CDELT1, 
-            "CDELT2"    : settings.CDELT2,
+            "CDELT1"    : 0.0, 
+            "CDELT2"    : 0.0,
             "CRVAL1"    : 0.0, 
             "CRVAL2"    : 0.0,
             "CROTA2"    : 0.0
@@ -311,7 +317,7 @@ class FocusREI34(wx.Panel):
         ## 1 |     in_button     |      out_button     |
         ##   +-------------------+---------------------+
     def __DoLayout(self):
-        sbox = wx.StaticBox(self, label="Focus REI-1-2")
+        sbox = wx.StaticBox(self, label="Focus REI-3-4")
         boxSizer = wx.StaticBoxSizer(sbox, wx.HORIZONTAL)
         sizer = wx.GridBagSizer(vgap=2, hgap=2)
 
@@ -579,37 +585,79 @@ class GuidePanelSettings(wx.Panel):
     def DisplayImage(self, event, image):
         image[:] = np.fliplr(image)[:]
         self.d.set_np2arr(image)
-#        self.d.set("orient x")
         self.d.set("zoom to fit")
-#        self.img = pic.overlay(wximage, NORTH_ANG, s1, s2)
-#        self.sBmp.SetBitmap(pic.PilImageToWxBitmap(self.img))
-#        self.AdjContBri(event)
-
-    def Expose(self, event):
-        """take an exposure with current settings"""
-#        # get updated header info
-#        global keywords
+        
+    def updateKeywords(self):
+        """Update the keywords for the FITS file header"""
+        global keywords
 #        #TelescopePanel.scope_update(self.parent.TelescopePanel)
-#        if self.rb_light.GetValue():
-#            light = True
-#            keywords["imagetype"] = "Light"
-#        if self.rb_dark.GetValue():
-#            light = False
-#            keywords["imagetype"] = "Dark"
-#        if self.rb_flat.GetValue():
-#            light = True
-#            keywords["imagetype"] = "Flat"
-        self.cam0.set_exposure(int(1000*float(self.exposure.GetValue())))
-        self.image = self.cam0.take_photo()
+        if self.rb_light.GetValue():
+            light = True
+            keywords["IMGTYPE"] = "Light"
+        if self.rb_dark.GetValue():
+            light = False
+            keywords["IMGTYPE"] = "Dark"
+        if self.rb_flat.GetValue():
+            light = True
+            keywords["IMGTYPE"] = "Flat"
         #get name for header
         name = self.sname.GetValue()
+
+        keywords["OBSERVER"] = str(self.parent.parent.GetPage(3).observerTxt.GetValue())
+        keywords["FILENAME"] = str(self.sname.GetValue())
+        keywords["RA"]       = 0
+        keywords["DEC"]      = 0
+        keywords["AIRMASS"]  = 0 
+        keywords["TELALT"]   = 0 
+        keywords["TELAZ"]    = 0
+        keywords["TELFOCUS"] = 0 
+        keywords["PA"]       = 0 
+        keywords["JD"]       = 0 
+        keywords["GDATE"]    = 0 
+        keywords["WINDVEL"]  = 0 
+        keywords["WINDGUST"] = 0 
+        keywords["WINDDIR"]  = 0 
+        keywords["REI12"]    = 0 
+        keywords["REI34"]    = 0 
+        keywords["MASK"]     = 0
+        keywords["FILTER1"]  = 0 
+        keywords["FILTER2"]  = 0
+        keywords["GRISM"]    = 0
+        keywords["EXP"]      = float(self.exposure.GetValue())
+        keywords["CAMTEMP"]  = float(self.cam0.get_temperature())
+        keywords["CRPIX1"]   = 0
+        keywords["CRPIX2"]   = 0
+        keywords["CDELT1"]   = float(self.parent.parent.GetPage(3).pixelscalexTxt.GetValue())
+        keywords["CDELT2"]   = float(self.parent.parent.GetPage(3).pixelscaleyTxt.GetValue())
+        keywords["CRVAL1"]   = 0
+        keywords["CRVAL2"]   = 0
+        keywords["CROTA2"]   = 0
+
+    def updateHeader(self, fitsfile):
+        """Update the header of the fits file to be saved"""
+        
+            
+    def Expose(self, event):
+        """take an exposure with current settings"""
+        # Set exposure time
+        self.cam0.set_exposure(int(1000*float(self.exposure.GetValue())))
+        # Update header info
+        self.updateKeywords()
+        # take image
+        self.image = self.cam0.take_photo()
+        
 #        self.fits = pic.UpdateFitsHeader(self.fits, keywords, name)
         #send image to the display
         self.DisplayImage(event, self.image)
         autosave = self.autosave_cb.GetValue()
         if autosave:
-            self.status = self.c.camState()
-            pic.FitsSave(self.fits, name)
+            # Make Fits File
+            filename = keywords["FILENAME"]
+            ftime = keywords["GDATE"]
+            hdu = pyfits.PrimaryHDU(self.image)
+            hdulist = pyfits.HDUList([hdu])
+            hdulist.writeto(str(self.parent.parent.GetPage(3).savefolderTxt.GetValue())+filename+ftime+".fits")
+            
             
     def ExposeSeries(self, event):
         if self.take_series.GetValue():
@@ -1294,12 +1342,16 @@ class PageFour(wx.Panel):
         self.pixelscaleyTxt = wx.TextCtrl(self, wx.ID_ANY, "")
         self.pixelscaleyTxt.Disable()
         
+        self.observerLbl = wx.StaticText(self, wx.ID_ANY, "Observer:")
+        self.observerTxt = wx.TextCtrl(self, wx.ID_ANY, "")
+        self.observerTxt.Disable()
+        
         self.editbtn = wx.Button(self, label="Edit")
         self.editadvbtn = wx.Button(self, label="Advanced")
         self.savebtn = wx.Button(self, label="Save")
         
-        self.widgets = [self.savefolderTxt, self.instportTxt, self.pixelscalexTxt, self.pixelscaleyTxt]
-        self.advwidgets = [self.scopeTxt, self.scopeportTxt, self.savefolderTxt, self.instportTxt, self.pixelscalexTxt, self.pixelscaleyTxt]
+        self.widgets = [self.savefolderTxt, self.instportTxt, self.pixelscalexTxt, self.pixelscaleyTxt, self.observerTxt]
+        self.advwidgets = [self.scopeTxt, self.scopeportTxt, self.savefolderTxt, self.instportTxt, self.pixelscalexTxt, self.pixelscaleyTxt, self.observerTxt]
         
         # Layout
         self.__DoLayout()
@@ -1326,6 +1378,8 @@ class PageFour(wx.Panel):
         prefSizer.Add(self.pixelscalexTxt, 0, wx.EXPAND)
         prefSizer.Add(self.pixelscaleyLbl, 0, wx.ALIGN_RIGHT | wx.ALIGN_CENTER_VERTICAL)
         prefSizer.Add(self.pixelscaleyTxt, 0, wx.EXPAND)
+        prefSizer.Add(self.observerLbl, 0, wx.ALIGN_RIGHT | wx.ALIGN_CENTER_VERTICAL)
+        prefSizer.Add(self.observerTxt, 0, wx.EXPAND)
         prefSizer.Add(self.editbtn, 0, wx.ALIGN_RIGHT | wx.ALIGN_CENTER_VERTICAL)
         prefSizer.Add(self.savebtn, 0, wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL)
         prefSizer.Add(self.editadvbtn, 0, wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL)
@@ -1350,6 +1404,7 @@ class PageFour(wx.Panel):
         instport = config['instrument port']
         pixelscalex = config['pixel scale x']
         pixelscaley = config['pixel scale y']
+        observer = config['Observer']
  
         self.scopeTxt.SetValue(scope)
         self.scopeportTxt.SetValue(scopeport)
@@ -1357,6 +1412,7 @@ class PageFour(wx.Panel):
         self.instportTxt.SetValue(instport)
         self.pixelscalexTxt.SetValue(pixelscalex)
         self.pixelscaleyTxt.SetValue(pixelscaley)
+        self.observerTxt.SetValue(observer)
  
     #----------------------------------------------------------------------
     def editPreferences(self, event):
@@ -1383,6 +1439,7 @@ class PageFour(wx.Panel):
         config['instrument port'] = self.instportTxt.GetValue()
         config['pixel scale x'] = self.pixelscalexTxt.GetValue()
         config['pixel scale y'] = self.pixelscaleyTxt.GetValue()
+        config['Observer'] = self.observerTxt.GetValue()
                 
         config.write()
 
@@ -1392,8 +1449,7 @@ class PageFour(wx.Panel):
         dlg = wx.MessageDialog(self, "Preferences Saved!", 'Information',  
                                wx.OK|wx.ICON_INFORMATION)
         dlg.ShowModal()        
-        self.EndModal(0)
-
+        
 class PageFive(wx.Panel):
     def __init__(self, parent, *args, **kwargs):
         super(PageFive, self).__init__(parent)
@@ -1434,6 +1490,36 @@ class PageFive(wx.Panel):
         
         self.SetSizer(mainSizer)
 
+    def open_log(self):
+        logtime = time.strftime("%a%d%b%Y-%H:%M:%S", time.gmtime())
+        loggerfile = settings.save_folder+logtime+".log"
+        self.logfile = open(loggerfile, 'a')
+        self.logfile.write('Starting up ' + logtime + '\n')
+    
+    def close_log(self):
+        log.close()
+        
+    def on_log_button(self, event):
+        localtime = time.asctime(time.gmtime())
+        note = self.obs_log.GetValue()
+        self.log.AppendText(str(datetime.utcnow()) + '\n        ' + note + '\n\n')
+        self.write_log(str(datetime.utcnow()) + '  ' + note)
+        wx.TextCtrl.Clear(self.obs_log)
+        
+    def log_evt(self, msg):
+        self.log.AppendText(str(datetime.utcnow()) + '\n        ' + msg.data + '\n')
+        self.write_log(str(datetime.utcnow()) + '  ' + msg.data)
+        self.parent.SetStatusText(msg.data)
+    
+    
+    def write_log(self, note):
+        #insert newline every 80 characters
+        nlnote = self.insert_newlines(note)
+        self.logfile.write('\n' + nlnote + '\n')
+
+    def insert_newlines(self, string):
+        dedented_text = textwrap.dedent(string).strip()
+        return textwrap.fill(dedented_text, initial_indent='', subsequent_indent='    ', width=80)
 
 class MainFrame(wx.Frame):
     def __init__(self):
@@ -1482,9 +1568,6 @@ class MainFrame(wx.Frame):
         # Attributes
         FileMenu = wx.Menu()
         about_item   = FileMenu.Append(wx.ID_ABOUT, text="&About NESSI Controller")
-        open_item    = FileMenu.Append(wx.ID_OPEN, text="&Open Configuration...")
-        save_as_item = FileMenu.Append(wx.ID_SAVEAS, text="&Save Configuration As...")
-        prefs_item   = FileMenu.Append(wx.ID_PREFERENCES, text="&Preferences") 
         quit_item    = FileMenu.Append(wx.ID_EXIT, text="&Quit")
         
         # Event Handlers
