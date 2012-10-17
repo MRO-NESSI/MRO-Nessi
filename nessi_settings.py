@@ -11,6 +11,7 @@ Syntax notes:
     The port listings are based on locations in Ubuntu, this may vary slightly 
     depending on the linux distro used.
 """
+import os
 
 ##This sets the label names for the power buttons, 0-7
 relay_labels = ['Alta U6:', 'MVBlueFox:', 'Pyxis Rotator:', 'Apogee FW:', 'Laser:', 'Linear Stage:', 'Mask Wheel:', 'Filter Wheel:']
@@ -44,3 +45,21 @@ rot_port = '/dev/ttyUSB2'
 
 ##linear focusing stage serial port
 focus_port = '/dev/ttyUSB3'
+
+##Telescope INDI server
+scope = '192.168.0.2'
+scope_port = 7624
+
+##Instrument INDI server
+indi = 'localhost'
+indi_port = 7624
+
+##Save Folder
+save_folder = os.getenv("HOME")+'/InstLog/'
+
+##instrument port 1(right Nasmyth), -1(left Nasmyth), 0(other)
+tport = 1
+
+##pixel scale (deg/pixel)
+CDELT1 = 6.472222222222E-05 
+CDELT2 = 6.472222222222E-05

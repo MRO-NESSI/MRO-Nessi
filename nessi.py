@@ -20,12 +20,15 @@ import pprint
 import cStringIO
 import wx
 import ds9
+import usb.core
+import usb.util
 
 # Drivers
 import FLI
 
 # Custom settings for GUI
 import nessi_settings as settings
+import prefcontrol
 
 from wx.lib.stattext import GenStaticText
 import threading
@@ -42,7 +45,7 @@ from matplotlib.backends.backend_wxagg import \
     FigureCanvasWxAgg as FigCanvas, \
     NavigationToolbar2WxAgg as NavigationToolbar
 import pylab
-
+from guider import GuideThread, SeriesExpThread
 # Set the system path to the root directory of the Nessi set of libraries so we 
 # can import our library modules in a consistent manner.
 #sys.path[0] = os.path.split(os.path.abspath(sys.path[0]))[0]
@@ -56,6 +59,46 @@ import Image
 random.seed()
 
 DEBUG = False
+
+##################Master Dictionary for Instrument State########################
+
+inditelhost = settings.scope
+
+obspars = {'title':'Guide Camera', 'imgtyp':'object', 'telescop':'MRO 2.4-meter', 'projid':'NESSI', 'observers':''}
+
+# keyword data
+keywords = {"observers" : obspars["observers"],
+            "projid"    : obspars["projid"],
+            "telescop"  : obspars["telescop"],
+            "filename"  : "default",
+            "imagetype" : obspars["imgtyp"],
+            "title"     : obspars["title"] ,
+            "ra"        : "TCS down" ,  # set for now; overwrite 
+            "dec"       : "TCS down",   #  if inditelhost is set
+            "airmass"   : "TCS down",       
+            "telalt"    : "TCS down",
+            "telaz"     : "TCS down",
+            "focus"     : "TCS down",
+            "pa"        : "TCS down",
+            "jd"        : "TCS down",
+            "gdate"     : "TCS down",
+            "windvel"   : "No Env data",
+            "windgust"  : "No Env data",
+            "winddir"   : "No Env data",
+            "filter"    : "TCS down",
+            "guidefw"   : "None",
+            "mask"      : "TCS down",
+            "CTYPE1"    : "RA---TAN",
+            "CTYPE2"    : "DEC--TAN",
+            "CRPIX1"    : 512.0,
+            "CRPIX2"    : 512.0,
+            "CDELT1"    : settings.CDELT1, 
+            "CDELT2"    : settings.CDELT2,
+            "CRVAL1"    : 0.0, 
+            "CRVAL2"    : 0.0,
+            "CROTA2"    : 0.0
+            }
+
 
 class FilterPanelOne(wx.Panel):
     """This panel controls the FLI filter wheel """
@@ -367,9 +410,8 @@ class GuidePanelSettings(wx.Panel):
         self.seriesstatus = threading.Event()
         #True if waiting for camera to show up on USB bus
         self.looking = True
-        # Attributes
         #camera instance
-        self.c = None
+        self.cam0 = None
                 
         #guide
         self.star1 = wx.StaticText(self, label="Star 1: ")
@@ -393,18 +435,16 @@ class GuidePanelSettings(wx.Panel):
         #exp
         self.exp_text = wx.StaticText(self, -1, label="Exposure (s):")
         self.exposure = wx.TextCtrl(self, -1, '', size=(50,-1), style=wx.TE_NO_VSCROLL)
-        self.exposure.SetValue('0.03')
+        self.exposure.SetValue('0.25')
         self.take = wx.Button(self, size=(100, -1), label="Take Image")
-        self.binH_text = wx.StaticText(self, -1, label="BinH: ")
-        self.binH = wx.SpinCtrl(self, id=-1, value='', min=1, max=10, initial=1, size=(40, -1))
-        self.binV_text = wx.StaticText(self, -1, label="BinV: ")
-        self.binV = wx.SpinCtrl(self, id=-1, value='', min=1, max=10, initial=1, size=(40, -1))
-                
-        self.series = wx.SpinCtrl(self, id=-1, value='', min=1, max=1000, initial=1, size=(50, -1))
+        self.bin_text = wx.StaticText(self, -1, label="Bin (NxN): ")
+        self.bin = wx.SpinCtrl(self, id=-1, value='', min=1, max=4, initial=1, size=(40, -1))
+               
+        self.series = wx.SpinCtrl(self, id=-1, value='', min=1, max=1000, initial=3, size=(50, -1))
         self.series_text = wx.StaticText(self, -1, label="Series: ")
         self.scadence_text = wx.StaticText(self, -1, label="Cadence (s):")
         self.scadence = wx.TextCtrl(self, -1, '', size=(50,-1), style=wx.TE_NO_VSCROLL)
-        self.scadence.SetValue('10.0')
+        self.scadence.SetValue('2.0')
         self.take_series = wx.ToggleButton(self, 2, size=(100, -1), label="Take Series")
         self.sname = wx.TextCtrl(self, -1, 'img', size=(130,-1), style=wx.TE_NO_VSCROLL)
         self.sname_text = wx.StaticText(self, -1, label="Series Name: ")
@@ -424,13 +464,20 @@ class GuidePanelSettings(wx.Panel):
         self.Bind(wx.EVT_TOGGLEBUTTON, self.OnGuide, id=1)
         self.Bind(wx.EVT_BUTTON, self.Expose, self.take)
         self.Bind(wx.EVT_TOGGLEBUTTON, self.ExposeSeries, id=2)
+        self.Bind(wx.EVT_BUTTON, self.SetPoint, self.curr_setpoint_button)
         
         self.Bind(wx.EVT_CHECKBOX, self.GuideLog, self.log_onoff)
         
-        self.Bind(wx.EVT_SPINCTRL, self.roiBinH, self.binH)
-        self.Bind(wx.EVT_SPINCTRL, self.roiBinV, self.binV)
+        self.Bind(wx.EVT_SPINCTRL, self.Bin, self.bin)
+
+        # Start up image display
+        self.d = ds9.ds9()
+        self.d.set("width 538")
+        self.d.set("height 528")
+        # Look for camera and initialize it
+        self.__OnPower()
         
-    def OnPower(self):
+    def __OnPower(self):
         while self.looking:
             dev = usb.core.find(idVendor=0x0f18, idProduct=0x000a)
             if DEBUG: print dev
@@ -440,7 +487,11 @@ class GuidePanelSettings(wx.Panel):
             if dev != None:
                 self.looking = False
         self.c_power = True
-        self.c = Camera()
+        cams = FLI.camera.USBCamera.find_devices()
+        self.cam0 = cams[0]
+        self.cam0.set_bit_depth("16bit")
+        temp = self.cam0.get_temperature()
+        self.curr_temp.SetLabel(str(temp) + u'\N{DEGREE SIGN}' + 'C  ')
         
     def OffPower(self):
         self.c_power = False
@@ -459,10 +510,8 @@ class GuidePanelSettings(wx.Panel):
         exp_sz.Add(self.exp_text, pos=(0,0), span=(1,1), flag=wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
         exp_sz.Add(self.exposure, pos=(0,1), span=(1,1), flag=wx.ALIGN_CENTER_VERTICAL)
         exp_sz.Add(self.take, pos=(0,2), span=(1,1), flag=wx.ALIGN_CENTER_VERTICAL)
-        exp_sz.Add(self.binH_text, pos=(0,3), span=(1,1), flag=wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-        exp_sz.Add(self.binH, pos=(0,4), span=(1,1), flag=wx.ALIGN_CENTER_VERTICAL)
-        exp_sz.Add(self.binV_text, pos=(1,3), span=(1,1), flag=wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
-        exp_sz.Add(self.binV, pos=(1,4), span=(1,1), flag=wx.ALIGN_CENTER_VERTICAL)
+        exp_sz.Add(self.bin_text, pos=(0,3), span=(1,1), flag=wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
+        exp_sz.Add(self.bin, pos=(0,4), span=(1,1), flag=wx.ALIGN_CENTER_VERTICAL)
         
         exp_sz.Add(self.series_text, pos=(1,0), span=(1,1), flag=wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_RIGHT)
         exp_sz.Add(self.series, pos=(1,1), span=(1,1), flag=wx.ALIGN_CENTER_VERTICAL)
@@ -503,7 +552,7 @@ class GuidePanelSettings(wx.Panel):
         sizer.Add(wx.StaticLine(self),   pos=(1,0), span=(1,3), flag=wx.EXPAND|wx.BOTTOM)
         sizer.Add(stat_sz,      pos=(2,0), span=(1,1))
         sizer.Add(wx.StaticLine(self, -1, style=wx.LI_VERTICAL),   pos=(2,1), span=(1,1), flag=wx.EXPAND)
-        sizer.Add(guide_sz,     pos=(2,2), span=(1,1))
+        sizer.Add(guide_sz,     pos=(2,2), span=(1,1), flag=wx.EXPAND)
         
         boxSizer.Add(sizer, flag=wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_CENTER_HORIZONTAL)
         self.SetSizerAndFit(boxSizer)
@@ -511,7 +560,7 @@ class GuidePanelSettings(wx.Panel):
         # Set up a timer to update camera info
         TIMER_ID = 130 # Random number; it doesn't matter
         self.timer = wx.Timer(self, TIMER_ID)
-        self.timer.Start(20000) # poll every 20 seconds
+        self.timer.Start(10000) # poll every 20 seconds
         wx.EVT_TIMER(self, TIMER_ID, self.on_timer)
 
     def on_timer(self, event):
@@ -520,43 +569,41 @@ class GuidePanelSettings(wx.Panel):
                 pass
             else:
                 #get current temp
-                temp = round(self.status['temperatureCCD'], 3)
-                self.curr_temp.SetLabel(str(temp) + u'\N{DEGREE SIGN}' + 'C  ' + sym)
+                temp = self.cam0.get_temperature()
+                self.curr_temp.SetLabel(str(temp) + u'\N{DEGREE SIGN}' + 'C  ')
                             
         except ValueError:
             pass
         
     @threadtools.callafter
-    def DisplayImage(self, event, wximage):
-        self.img = pic.overlay(wximage, NORTH_ANG, s1, s2)
-        self.sBmp.SetBitmap(pic.PilImageToWxBitmap(self.img))
-        self.AdjContBri(event)
+    def DisplayImage(self, event, image):
+        image[:] = np.fliplr(image)[:]
+        self.d.set_np2arr(image)
+#        self.d.set("orient x")
+        self.d.set("zoom to fit")
+#        self.img = pic.overlay(wximage, NORTH_ANG, s1, s2)
+#        self.sBmp.SetBitmap(pic.PilImageToWxBitmap(self.img))
+#        self.AdjContBri(event)
 
     def Expose(self, event):
         """take an exposure with current settings"""
-        # get updated header info
-        global keywords
-        #TelescopePanel.scope_update(self.parent.TelescopePanel)
-        if self.rb_light.GetValue():
-            light = True
-            keywords["imagetype"] = "Light"
-        if self.rb_dark.GetValue():
-            light = False
-            keywords["imagetype"] = "Dark"
-        if self.rb_flat.GetValue():
-            light = True
-            keywords["imagetype"] = "Flat"
-        self.c.expose(float(self.exposure.GetValue()), light)
-        self.status = self.c.camState()
-        self.c.getImage()
-        #get fits for archival purposes and update header
-        self.fits = self.c.imageFits()
+#        # get updated header info
+#        global keywords
+#        #TelescopePanel.scope_update(self.parent.TelescopePanel)
+#        if self.rb_light.GetValue():
+#            light = True
+#            keywords["imagetype"] = "Light"
+#        if self.rb_dark.GetValue():
+#            light = False
+#            keywords["imagetype"] = "Dark"
+#        if self.rb_flat.GetValue():
+#            light = True
+#            keywords["imagetype"] = "Flat"
+        self.cam0.set_exposure(int(1000*float(self.exposure.GetValue())))
+        self.image = self.cam0.take_photo()
         #get name for header
         name = self.sname.GetValue()
-        self.fits = pic.UpdateFitsHeader(self.fits, keywords, name)
-        #get png for display purposes
-        self.image = self.c.imagePng().resize((self.max_size,self.max_size))
-        self.image = self.image.rotate(180)
+#        self.fits = pic.UpdateFitsHeader(self.fits, keywords, name)
         #send image to the display
         self.DisplayImage(event, self.image)
         autosave = self.autosave_cb.GetValue()
@@ -576,27 +623,21 @@ class GuidePanelSettings(wx.Panel):
             self.seriesstatus.set()
             self.exp_series_thread.start()
         else:
-            pub.sendMessage("LOG EVENT", "Series Stopped...")
-            self.take_series.SetLabel("Take Series")
-            self.take_series.SetForegroundColour((0,0,0))
-            self.seriesstatus.clear()
-            self.exp_series_thread.join()
+            self.SeriesCancel("Series Stopped...")
+#            pub.sendMessage("LOG EVENT", "Series Stopped...")
+#            self.take_series.SetLabel("Take Series")
+#            self.take_series.SetForegroundColour((0,0,0))
+#            self.seriesstatus.clear()
+#            self.exp_series_thread.join()
             
-    def roiBinH(self, event):
-        h = self.binH.GetValue()
-        self.c.roiBinningH(h)
-        self.c.roiPixelsH(1024/h)
-        self.roiH.SetValue(1024/h)
-        
-    def roiBinV(self, event):
-        v = self.binV.GetValue()
-        self.c.roiBinningV(v)
-        self.c.roiPixelsV(1024/v)
-        self.roiV.SetValue(1024/v)
+    def Bin(self, event):
+        h = self.bin.GetValue()
+        self.cam0.set_image_binning(h,h)
         
     def SetPoint(self, event):
-        temp = self.c.coolerSetPoint()
-        
+        temp = int(self.curr_setpoint.GetValue())
+        self.cam0.set_temperature(temp)
+                
     def ChooseStar1(self, event):
         global s1
         s1 = event.GetPosition()
@@ -660,13 +701,15 @@ class GuidePanelSettings(wx.Panel):
         
     @threadtools.callafter
     def SeriesUpdate(self, image, total):
-        pub.sendMessage("LOG EVENT", "Image " + str(image) + " of " + str(total)) 
+        pub.sendMessage("change_statusbar", "Image " + str(image+1) + " of " + str(total)) 
         
     @threadtools.callafter
     def SeriesCancel(self, error):
         pub.sendMessage("LOG EVENT", error)
+        pub.sendMessage("change_statusbar", error)
         self.take_series.SetLabel("Take Series")
         self.take_series.SetForegroundColour((0,0,0))
+        self.take_series.SetValue(False)
         self.seriesstatus.clear()
         self.exp_series_thread.join()
         
@@ -788,7 +831,7 @@ class GuideInfoPanel(wx.Panel):
         self.curr_centroids = wx.StaticText(self, label="s1 = (0,0)  s2 = (0,0)")
         
         self.plotCanvas = GuidePlotPanel(self)
-        self.reset = wx.Button(self, size=(50,20), label="Reset Plot")
+        self.reset = wx.Button(self, size=(50,-1), label="Reset Plot")
         #self.guide_hist = wx.StaticBitmap(self)
         #self.guide_hist.SetFocus()
         #self.guide_hist.SetBitmap(wx.Bitmap('guide_err.png'))
@@ -1197,7 +1240,7 @@ class PageThree(wx.Panel):
         
         # Attributes
         self.Guide = GuidePanelSettings(self)
-                
+        self.parent = parent        
         self.__DoLayout()
 
     def __DoLayout(self):
@@ -1221,6 +1264,177 @@ class PageThree(wx.Panel):
         boxSizer.Add(sizer, wx.EXPAND)
         self.SetSizerAndFit(boxSizer)
 
+class PageFour(wx.Panel):
+    def __init__(self, parent, *args, **kwargs):
+        super(PageFour, self).__init__(parent)
+        
+        # Attributes
+                
+        self.scopeLbl = wx.StaticText(self, wx.ID_ANY, "Telescope Server:")
+        self.scopeTxt = wx.TextCtrl(self, wx.ID_ANY, "")
+        self.scopeTxt.Disable()
+ 
+        self.scopeportLbl = wx.StaticText(self, wx.ID_ANY, "Telescope Port:")
+        self.scopeportTxt = wx.TextCtrl(self, wx.ID_ANY, "")
+        self.scopeportTxt.Disable()
+ 
+        self.savefolderLbl = wx.StaticText(self, wx.ID_ANY, "Save Folder:")
+        self.savefolderTxt = wx.TextCtrl(self, wx.ID_ANY, "")
+        self.savefolderTxt.Disable()
+ 
+        self.instportLbl = wx.StaticText(self, wx.ID_ANY, "Instrument Port:")
+        self.instportTxt = wx.TextCtrl(self, wx.ID_ANY, "")
+        self.instportTxt.Disable()
+        
+        self.pixelscalexLbl = wx.StaticText(self, wx.ID_ANY, "Guide Camera Pixel Scale X (deg/pixel):")
+        self.pixelscalexTxt = wx.TextCtrl(self, wx.ID_ANY, "")
+        self.pixelscalexTxt.Disable()
+        
+        self.pixelscaleyLbl = wx.StaticText(self, wx.ID_ANY, "Guide Camera Pixel Scale Y (deg/pixel):")
+        self.pixelscaleyTxt = wx.TextCtrl(self, wx.ID_ANY, "")
+        self.pixelscaleyTxt.Disable()
+        
+        self.editbtn = wx.Button(self, label="Edit")
+        self.editadvbtn = wx.Button(self, label="Advanced")
+        self.savebtn = wx.Button(self, label="Save")
+        
+        self.widgets = [self.savefolderTxt, self.instportTxt, self.pixelscalexTxt, self.pixelscaleyTxt]
+        self.advwidgets = [self.scopeTxt, self.scopeportTxt, self.savefolderTxt, self.instportTxt, self.pixelscalexTxt, self.pixelscaleyTxt]
+        
+        # Layout
+        self.__DoLayout()
+
+        # Handlers
+        self.Bind(wx.EVT_BUTTON, self.editPreferences, self.editbtn)
+        self.Bind(wx.EVT_BUTTON, self.editAdvPreferences, self.editadvbtn)
+        self.Bind(wx.EVT_BUTTON, self.savePreferences, self.savebtn)
+   
+    def __DoLayout(self):
+        mainSizer = wx.BoxSizer(wx.VERTICAL)
+        prefSizer = wx.FlexGridSizer(cols=2, hgap=5, vgap=5)
+        prefSizer.AddGrowableCol(1)
+ 
+        prefSizer.Add(self.scopeLbl, 0, wx.ALIGN_RIGHT | wx.ALIGN_CENTER_VERTICAL)
+        prefSizer.Add(self.scopeTxt, 0, wx.EXPAND)
+        prefSizer.Add(self.scopeportLbl, 0, wx.ALIGN_RIGHT | wx.ALIGN_CENTER_VERTICAL)
+        prefSizer.Add(self.scopeportTxt, 0, wx.EXPAND)
+        prefSizer.Add(self.savefolderLbl, 0, wx.ALIGN_RIGHT | wx.ALIGN_CENTER_VERTICAL)
+        prefSizer.Add(self.savefolderTxt, 0, wx.EXPAND)
+        prefSizer.Add(self.instportLbl, 0, wx.ALIGN_RIGHT | wx.ALIGN_CENTER_VERTICAL)
+        prefSizer.Add(self.instportTxt, 0, wx.EXPAND)
+        prefSizer.Add(self.pixelscalexLbl, 0, wx.ALIGN_RIGHT | wx.ALIGN_CENTER_VERTICAL)
+        prefSizer.Add(self.pixelscalexTxt, 0, wx.EXPAND)
+        prefSizer.Add(self.pixelscaleyLbl, 0, wx.ALIGN_RIGHT | wx.ALIGN_CENTER_VERTICAL)
+        prefSizer.Add(self.pixelscaleyTxt, 0, wx.EXPAND)
+        prefSizer.Add(self.editbtn, 0, wx.ALIGN_RIGHT | wx.ALIGN_CENTER_VERTICAL)
+        prefSizer.Add(self.savebtn, 0, wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL)
+        prefSizer.Add(self.editadvbtn, 0, wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL)
+                
+        mainSizer.Add(prefSizer, 0, wx.EXPAND|wx.ALL, 5)
+        
+        self.SetSizer(mainSizer)
+ 
+        # ---------------------------------------------------------------------
+        # load preferences
+        self.loadPreferences()
+ 
+    #----------------------------------------------------------------------
+    def loadPreferences(self):
+        """
+        Load the preferences and fill the text controls
+        """
+        config = prefcontrol.getConfig()
+        scope = config['scope server']
+        scopeport = config['scope port']
+        savefolder = config['savefolder']
+        instport = config['instrument port']
+        pixelscalex = config['pixel scale x']
+        pixelscaley = config['pixel scale y']
+ 
+        self.scopeTxt.SetValue(scope)
+        self.scopeportTxt.SetValue(scopeport)
+        self.savefolderTxt.SetValue(savefolder)
+        self.instportTxt.SetValue(instport)
+        self.pixelscalexTxt.SetValue(pixelscalex)
+        self.pixelscaleyTxt.SetValue(pixelscaley)
+ 
+    #----------------------------------------------------------------------
+    def editPreferences(self, event):
+        """Allow a user to edit the preferences"""
+        for widget in self.widgets:
+            widget.Enable()
+            
+    #----------------------------------------------------------------------
+    def editAdvPreferences(self, event):
+        """Allow an admin to edit the preferences"""
+        for widget in self.advwidgets:
+            widget.Enable()        
+        
+    #----------------------------------------------------------------------
+    def savePreferences(self, event):
+        """
+        Save the preferences
+        """
+        config = prefcontrol.getConfig()
+ 
+        config['scope server'] = str(self.scopeTxt.GetValue())
+        config['scope port'] = self.scopeportTxt.GetValue()
+        config['savefolder'] = str(self.savefolderTxt.GetValue())
+        config['instrument port'] = self.instportTxt.GetValue()
+        config['pixel scale x'] = self.pixelscalexTxt.GetValue()
+        config['pixel scale y'] = self.pixelscaleyTxt.GetValue()
+                
+        config.write()
+
+        for widget in self.advwidgets:
+            widget.Disable() 
+ 
+        dlg = wx.MessageDialog(self, "Preferences Saved!", 'Information',  
+                               wx.OK|wx.ICON_INFORMATION)
+        dlg.ShowModal()        
+        self.EndModal(0)
+
+class PageFive(wx.Panel):
+    def __init__(self, parent, *args, **kwargs):
+        super(PageFive, self).__init__(parent)
+        
+        # Attributes
+        self.logTxt = wx.StaticText(self, wx.ID_ANY, "Instrument Log:")
+        self.log = wx.TextCtrl(self, -1, size=(-1,130), style=wx.TE_MULTILINE|wx.TE_READONLY)
+        self.log.SetBackgroundColour('#B0D6B0')
+        self.obs_logTxt = wx.StaticText(self, wx.ID_ANY, "Observing Comments:")
+        self.obs_log = wx.TextCtrl(self, -1, size=(-1,75), style=wx.TE_MULTILINE)
+        self.log_button = wx.Button(self, label="Log")
+        
+        self.guidelogTxt = wx.StaticText(self, wx.ID_ANY, "Guiding Log:")
+        self.guidelog = wx.TextCtrl(self, -1, size=(-1,130), style=wx.TE_MULTILINE|wx.TE_READONLY)
+        self.guidelog.SetBackgroundColour('#B0D6B0')
+        # Layout       
+        self.__DoLayout()
+
+    def __DoLayout(self):
+        mainSizer = wx.BoxSizer(wx.VERTICAL)
+        instSizer = wx.FlexGridSizer(cols=1, hgap=5, vgap=5)
+        instSizer.AddGrowableCol(0)
+        
+        guideSizer = wx.FlexGridSizer(cols=1, hgap=5, vgap=5)
+        guideSizer.AddGrowableCol(0)
+        
+        instSizer.Add(self.logTxt, 0, wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL)
+        instSizer.Add(self.log, 0, wx.EXPAND | wx.ALIGN_CENTER_VERTICAL)
+        instSizer.Add(self.obs_logTxt, 0, wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL)
+        instSizer.Add(self.obs_log, 0, wx.EXPAND)
+        instSizer.Add(self.log_button, 0, wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL)
+                    
+        guideSizer.Add(self.guidelogTxt, 0, wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL)
+        guideSizer.Add(self.guidelog, 0, wx.EXPAND | wx.ALIGN_CENTER_VERTICAL)            
+                        
+        mainSizer.Add(instSizer, 0, wx.EXPAND|wx.ALL, 5)
+        mainSizer.Add(guideSizer, 0, wx.EXPAND|wx.ALL, 5)
+        
+        self.SetSizer(mainSizer)
+
+
 class MainFrame(wx.Frame):
     def __init__(self):
         wx.Frame.__init__(self, None, title="NESSI Controller", size=(850,875))
@@ -1236,22 +1450,31 @@ class MainFrame(wx.Frame):
         page1 = PageOne(nb)
         page2 = PageTwo(nb)
         page3 = PageThree(nb)
+        page4 = PageFour(nb)
+        page5 = PageFive(nb)
 
         # add the pages to the notebook with the label to show on the tab
         nb.AddPage(page1, "Overview")
         nb.AddPage(page2, "K-Mirror")
         nb.AddPage(page3, "Guiding")
+        nb.AddPage(page4, "Settings")
+        nb.AddPage(page5, "Log")
 
         # Add icon
-        path = os.path.abspath("./nessi.png")
+        path = "nessi.png"
         icon = wx.Icon(path, wx.BITMAP_TYPE_PNG)
         self.SetIcon(icon)
+        
+        pub.subscribe(self.change_statusbar, 'change_statusbar')
         
         # finally, put the notebook in a sizer for the panel to manage
         # the layout
         sizer = wx.BoxSizer()
         sizer.Add(nb, 1, wx.EXPAND)
         p.SetSizer(sizer)
+        
+    def change_statusbar(self, msg):
+        self.SetStatusText(msg.data)
         
     def create_menus(self):
         menuBar = wx.MenuBar()
