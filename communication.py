@@ -26,9 +26,9 @@ con1.set_configuration()
 
 # This code iterates over some properties of the devices.  I do not use these too much except ep.bEndointAddress which is 0x02 for both of them.  These can be accessed individually using assignments like cfg=con0[0], intf=[(0,0)], ep=intf[2], etc. the direct assignments are useful when testing things real time in the python interpreter.
 print 'con0'
-print con0.bLength
-print con0.bNumConfigurations
-print con0.bDeviceClass
+print 'bLength', con0.bLength
+print 'NumConfigs', con0.bNumConfigurations
+print 'DeviceClass', con0.bDeviceClass
 for cfg in con0:
     print str(cfg.bConfigurationValue)
     for intf in cfg:
@@ -37,9 +37,9 @@ for cfg in con0:
             print '\t\t' + str(ep.bEndpointAddress)
 
 print 'con1'
-print con1.bLength
-print con1.bNumConfigurations
-print con1.bDeviceClass
+print 'bLength',con1.bLength
+print 'NumConfigs', con1.bNumConfigurations
+print 'DeviceClass', con1.bDeviceClass
 for cfg in con1:
     print str(cfg.bConfigurationValue)
     for intf in cfg:
@@ -48,19 +48,19 @@ for cfg in con1:
             print '\t\t' + str(ep.bEndpointAddress)
 
 # Now I define some messages.  These should be hex arrays.  The values below are just samples from the manual.  I do not know if they are correct.  These need to obey intels endianness so the the hex string 0xC350 would look like [0x50, 0xC3, 0x00, 0x00] in a 4 byte array.  The convention used is outlined in the APT_Communications_Protocol_Rev 6.pdf available on their website.
-msg1=[0x10, 0x02, 0x00, 0x01, 0x21, 0x01]
+msg1=[0x23, 0x02, 0x00, 0x00, 0x50, 0x01]
 msg2=[0x48, 0x04, 0x01, 0x00, 0xA2, 0x01, 0x01, 0x00, 0x50, 0xC3, 0x00, 0x00]
 
 # Now I am trying to write a message to each of the controllers and print the number of bytes written. The inputs are the endpoint address of each controller which is ep.bEndpointAddress=0x02 for both.
-s0=con0.write(0x02, msg1)
-s1=con1.write(0x02, msg1)
+s0=con0.write(0x02, msg1, 0)
+s1=con1.write(0x02, msg1, 0)
 print s0, s1
 
-t0=con0.write(0x02, msg2)
-t1=con1.write(0x02, msg2)
+t0=con0.write(0x02, msg2, 0)
+t1=con1.write(0x02, msg2, 0)
 print t0, t1
 
 # Now I am trying to read the buffer for each device as ideally msg2 would have returned some data.  I am reading off 20 bytes from each controller.
-w0=con0.read(0x02, 20)
-w1=con1.read(0x02, 20)
+w0=con0.read(0x81, 30)
+w1=con1.read(0x81, 30)
 print w0, w1
