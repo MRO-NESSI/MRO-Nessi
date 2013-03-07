@@ -1,0 +1,8 @@
+in order to access the thorlabs controllers via pyUSB, the udev rules need to be modified.
+
+Making sure all users are added to the "users" group, I added the following rule to /etc/udev/rules.d/80-thorlabs.rules
+
+SYSFS{idVendor}=="0403", SYSFS{idProduct}=="faf0", MODE="0666", GROUP="users"
+
+you then have to restart udev (sudo /etc/init.d/udev restart)  and unplug/replug the controllers.
+
