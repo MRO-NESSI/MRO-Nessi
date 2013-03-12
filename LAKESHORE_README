@@ -9,13 +9,13 @@ after restarting udev (sudo /etc/init.d/udev restart) and restarting the control
 There is a cp210x driver included in the kernel, but the device vendor and product id's are not included in the list of
 supported devices.  Therefore we must add this and recompile the kernel.
 
-# get the required dependencies:
+# get the required dependencies:  **current** is current version, i.e. -3.0.0-26
 
 sudo apt-get install build-essential linux-source
-cp /usr/src/linux-source-3.2.0.tar.bz2 .
-bunzip2 linux-source-3.2.0.tar.bz2
-tar xf linux-source-3.2.0.tar
-cd linux-source-3.2.0/
+cp /usr/src/linux-source-**current**.tar.bz2 .
+bunzip2 linux-source-**current**.tar.bz2
+tar xf linux-source-**current**.tar
+cd linux-source-**current**/
 
 #backup the original file
 
@@ -24,24 +24,23 @@ cp drivers/usb/serial/cp210x.c drivers/usb/serial/cp210x.c.orig
 #add the missing device (where the description string is copied from the windows driver, I think anything would work here), as verified using diff:
 
 diff drivers/usb/serial/cp210x.c drivers/usb/serial/cp210x.c.orig
-109d108
-< { USB_DEVICE(0x10C4, 0x8281) }, /* Nanotec Plug & Drive */
 
+< { USB_DEVICE(0x1FB9, 0x0301) }, /* Lakeshore 336 Temperature Controller */
 
 make oldconfig
 make prepare
 make scripts
 # here I am skipping the error producing commands and go straight to the solution
 
-cp /usr/src/linux-headers-3.2.0-26-generic/Module.symvers .
+cp /usr/src/linux-headers-**current**/Module.symvers .
 make -i M=./drivers/usb/serial
 
 #backup the original module
 
-sudo cp /lib/modules/3.2.0-26-generic/kernel/drivers/usb/serial/cp210x.ko /lib/modules/3.2.0-26-generic/kernel/drivers/usb/serial/cp210x.ko.orig
+sudo cp /lib/modules/**current**/kernel/drivers/usb/serial/cp210x.ko /lib/modules/**current**/kernel/drivers/usb/serial/cp210x.ko.orig
 #and override using the new one:
 
-sudo cp drivers/usb/serial/cp210x.ko /lib/modules/3.2.0-26-generic/kernel/drivers/usb/serial/cp210x.ko
+sudo cp drivers/usb/serial/cp210x.ko /lib/modules/**current**/kernel/drivers/usb/serial/cp210x.ko
 I finally ran (without experiencing the problem the original post reports):
 
 sudo modprobe cp210x

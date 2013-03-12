@@ -21,12 +21,26 @@ class tc:
     def __del__(self):
         """Perform cleanup operations."""
         self.ser.close()
+        
+    def completion(self):
+        """Generic function that waits to read a completion command."""
+        while True:
+            ch = self.ser.readline()
+            if ch != '': 
+                break
+        return ch
 
-    def get_status_update(self):
+    def identify(self):
         """Get the current status of the temperature controller"""
-        #send status update request
-        self.ser.write('\x90\x04\x01\x00\x50\x01')
-        if DEBUG: print 'Status update requested'
+        #send identify request
+        self.ser.write('*IDN?\n')
+        if DEBUG: print 'Identify Device:'
+        return self.completion()
+    
+    def kelvin(self,port='a'):
+        """Get the current temps in Kelvin."""
+        self.ser.write('KRDG?' + port + '\n')
+        if DEBUG: print 'Return Kelvin:'
         return self.completion()
         
         
