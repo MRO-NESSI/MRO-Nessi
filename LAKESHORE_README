@@ -1,0 +1,59 @@
+Installation instructions.
+
+create /etc/udev/rules.d/70-lakeshore.rules
+
+ATTRS{idVendor}=="1fb9", ATTRS{idProduct}=="0301",  MODE="0666", GROUP="users", SYMLINK+="ttylakeshore"
+
+after restarting udev (sudo /etc/init.d/udev restart) and restarting the controller, you should see /dev/ttylakeshore
+
+There is a cp210x driver included in the kernel, but the device vendor and product id's are not included in the list of
+supported devices.  Therefore we must add this and recompile the kernel.
+
+# get the required dependencies:
+
+sudo apt-get install build-essential linux-source
+cp /usr/src/linux-source-3.2.0.tar.bz2 .
+bunzip2 linux-source-3.2.0.tar.bz2
+tar xf linux-source-3.2.0.tar
+cd linux-source-3.2.0/
+
+#backup the original file
+
+cp drivers/usb/serial/cp210x.c drivers/usb/serial/cp210x.c.orig
+
+#add the missing device (where the description string is copied from the windows driver, I think anything would work here), as verified using diff:
+
+diff drivers/usb/serial/cp210x.c drivers/usb/serial/cp210x.c.orig
+109d108
+< { USB_DEVICE(0x10C4, 0x8281) }, /* Nanotec Plug & Drive */
+
+
+make oldconfig
+make prepare
+make scripts
+# here I am skipping the error producing commands and go straight to the solution
+
+cp /usr/src/linux-headers-3.2.0-26-generic/Module.symvers .
+make -i M=./drivers/usb/serial
+
+#backup the original module
+
+sudo cp /lib/modules/3.2.0-26-generic/kernel/drivers/usb/serial/cp210x.ko /lib/modules/3.2.0-26-generic/kernel/drivers/usb/serial/cp210x.ko.orig
+#and override using the new one:
+
+sudo cp drivers/usb/serial/cp210x.ko /lib/modules/3.2.0-26-generic/kernel/drivers/usb/serial/cp210x.ko
+I finally ran (without experiencing the problem the original post reports):
+
+sudo modprobe cp210x
+
+The output of dmesg:
+[20125.994339] usbcore: registered new interface driver usbserial
+[20125.994354] USB Serial support registered for generic
+[20125.994393] usbcore: registered new interface driver usbserial_generic
+[20125.994395] usbserial: USB Serial Driver core
+[20126.001548] USB Serial support registered for cp210x
+[20126.001578] cp210x 8-1:1.0: cp210x converter detected
+[20126.116744] usb 8-1: reset full-speed USB device number 9 using uhci_hcd
+[20126.260010] usb 8-1: cp210x converter now attached to ttyUSB0
+[20126.260035] usbcore: registered new interface driver cp210x
+[20126.260038] cp210x: v0.09:Silicon Labs CP210x RS232 serial adaptor driver
