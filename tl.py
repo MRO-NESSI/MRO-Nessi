@@ -39,7 +39,7 @@ class tlabs:
             if ch != '': 
                 break
         
-        return ch.encode('hex')
+        return ch.encode('hex'), ch
     
     def home(self):
         """Home stage."""
@@ -52,13 +52,18 @@ class tlabs:
         The conversion factor is:  34,304 encoder counts/revolution of lead screw, 
         which moves the lead screw by 1mm, or 1mm/34,304 counts = 29nm/encoder count.
         The command expects input in encoder counts."""
+        #get current position to make sure move doesn't drive to limit
+        
+        #if relative move will place it at a limit, move to just before the limit
+        
         #convert distance in um to counts, make sure it is an integer.
-        counts = int(distance / 0.02915111) #um per count
+        intcounts = int(distance / 0.02915111) #um per count
         #convert to hex
-        counts = pack('<i', counts)
+        counts = pack('<L', intcounts)
+        if DEBUG: print counts
         #write move command
         self.ser.write('\x48\x04\x06\x00\x50\x01\x01\x00' + counts)
-        if DEBUG: print 'Start relative move by: ', counts, ' counts.'
+        if DEBUG: print 'Start relative move by: ', intcounts, ' counts, ', distance, 'um.'
         #wait for completion command
         return self.completion()  
         
@@ -68,21 +73,26 @@ class tlabs:
         which moves the lead screw by 1mm, or 1mm/34,304 counts = 29nm/encoder count.
         The command expects input in encoder counts."""
         #convert distance in um to counts, make sure it is an integer.
-        counts = int(position / 0.02915111) #um per count
+        intcounts = int(position / 0.02915111) #um per count
         #convert to hex
-        counts = pack('<i', counts)
+        counts = pack('<L', intcounts)
+        if DEBUG: print counts
         #write move command
         self.ser.write('\x53\x04\x06\x00\x50\x01\x01\x00' + counts)
-        if DEBUG: print 'Start absolute move to: ', counts, ' counts.'
+        if DEBUG: print 'Start absolute move to: ', position, 'um.'
         #wait for completion command
         return self.completion()
         
     def get_status_update(self):
-        """Get the current status of the actuator, including positin, encoder count,
+        """Get the current status of the actuator, including position, encoder count,
         and other status messages, such as limit switch activated, in motion, etc."""
         #send status update request
         self.ser.write('\x90\x04\x01\x00\x50\x01')
         if DEBUG: print 'Status update requested'
-        return self.completion()
+        status = self.completion()
+        #format the status as a dictionary
+        
+        #return the dictionary    
+        return status
         
         

@@ -45,6 +45,8 @@ I finally ran (without experiencing the problem the original post reports):
 
 sudo modprobe cp210x
 
+Add cp210x to /etc/modules in order to have it autoload every time the computer starts.
+
 The output of dmesg:
 [20125.994339] usbcore: registered new interface driver usbserial
 [20125.994354] USB Serial support registered for generic
