@@ -52,12 +52,12 @@ msg1=[0x23, 0x02, 0x00, 0x00, 0x50, 0x01]
 msg2=[0x48, 0x04, 0x01, 0x00, 0xA2, 0x01, 0x01, 0x00, 0x50, 0xC3, 0x00, 0x00]
 
 # Now I am trying to write a message to each of the controllers and print the number of bytes written. The inputs are the endpoint address of each controller which is ep.bEndpointAddress=0x02 for both.
-s0=con0.write(0x02, msg1, 0)
-s1=con1.write(0x02, msg1, 0)
+s0=con0.write(0x02, msg1)
+s1=con1.write(0x02, msg1)
 print s0, s1
 
-t0=con0.write(0x02, msg2, 0)
-t1=con1.write(0x02, msg2, 0)
+t0=con0.write(0x02, msg2)
+t1=con1.write(0x02, msg2)
 print t0, t1
 
 # Now I am trying to read the buffer for each device as ideally msg2 would have returned some data.  I am reading off 20 bytes from each controller.
