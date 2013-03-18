@@ -1,0 +1,14 @@
+In order to access the thorlabs controllers via pyUSB, the udev rules need to be modified.
+
+Making sure all users are added to the "users" group, I added the following rules to /etc/udev/rules.d/80-thorlabs.rules
+
+ATTRS{idVendor}=="0403", ATTRS{idProduct}=="faf0", ATTRS{serial}=="83840902",  MODE="0666", GROUP="users", SYMLINK+="ttyREI12"
+
+ATTRS{idVendor}=="0403", ATTRS{idProduct}=="faf0", ATTRS{serial}=="83841481",  MODE="0666", GROUP="users", SYMLINK+="ttyREI34"
+
+you then have to restart udev (sudo /etc/init.d/udev restart)  and unplug/replug the controllers.
+
+The key parts of these commands are the serial attr, which makes sure the correct controller is identified consistently and associated with the 
+correct symlink, either ttyREI12 or ttyREI34.
+
+LS 2013-03-08
