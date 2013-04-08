@@ -60,7 +60,7 @@ class tlabs:
         intcounts = int(distance / 0.02915111) #um per count
         #convert to hex
         counts = pack('<L', intcounts)
-        if DEBUG: print counts
+        if DEBUG: print str(counts)
         #write move command
         self.ser.write('\x48\x04\x06\x00\x50\x01\x01\x00' + counts)
         if DEBUG: print 'Start relative move by: ', intcounts, ' counts, ', distance, 'um.'
