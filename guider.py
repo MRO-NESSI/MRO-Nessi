@@ -24,7 +24,14 @@ import wx
 # Set the system path to the root directory of the Nessi set of libraries so we 
 # can import our library modules in a consistent manner.
 #sys.path[0] = os.path.split(os.path.abspath(sys.path[0]))[0]
-import nessi_settings as settings
+
+# Preferences 
+import prefcontrol
+config = prefcontrol.getConfig()
+scope = config['scope server']
+scopeport = config['scope port']
+savefolder = config['savefolder']
+        
 from indiclient import *
 
 #for comminicating between panels
@@ -210,10 +217,10 @@ def move_scope(newra, newdec):
     newra = newra/15.0
     try:
         new = str(newra) + ';' + str(newdec)
-        if DEBUG: print 'setINDI -h ' + settings.scope + ' \"Telescope.SetRaDec2k.RA2k;Dec2k=' + new + '\"'
-        subprocess.Popen('setINDI -h ' + settings.scope + ' \"Telescope.SetRaDec2k.RA2k;Dec2k=' + new + '\"', shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE) 
+        if DEBUG: print 'setINDI -h ' + scope + ' \"Telescope.SetRaDec2k.RA2k;Dec2k=' + new + '\"'
+        subprocess.Popen('setINDI -h ' + scope + ' \"Telescope.SetRaDec2k.RA2k;Dec2k=' + new + '\"', shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE) 
         #refresh with new data
-        indi=indiclient(settings.scope,7624)
+        indi=indiclient(scope,7624)
         indi.set_timeout_handler(timeout_handler)
         teldata = indi.get_vector("Telescope","Pointing") 
         #ra
@@ -330,7 +337,7 @@ class GuideThread(threading.Thread):
             
     def open_guidelog(self):
         logtime = time.strftime("%a%d%b%Y-%H:%M:%S", time.gmtime())
-        loggerfile = settings.save_folder+'guide'+logtime+".log"
+        loggerfile = savefolder+'guide'+logtime+".log"
         self.logfile = open(loggerfile, 'a')
         self.logfile.write('Starting up ' + logtime + '\n' +"First Line is Master Centroid" + '\n' + 'Centroid X    ' + 'Centroid Y    ' + 'X error       ' + 'Y error       ' + 'Time (GMT)')
     

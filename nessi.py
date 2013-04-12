@@ -492,7 +492,7 @@ class GuidePanelSettings(wx.Panel):
             if dev is None:
                 time.sleep(0.5)
                 if DEBUG: print time.time()
-                if time.time()-startlook > 10:
+                if time.time()-startlook > 5:
                     self.looking = False
                     break
             if dev != None:
@@ -1590,7 +1590,7 @@ class MainFrame(wx.Frame):
         info.SetName('NESSI Controller')
         info.SetVersion('0.1')
         info.SetDescription('NESSI Controller is an interface to the New Mexico Tech Extrasolar Spectroscopic Survey Instrument. Email lschmidt@nmt.edu with questions.')
-        info.SetCopyright('(C) 2011 Luke Schmidt, Matt Napolitano, NMT/MRO')
+        info.SetCopyright('(C) 2013 Luke Schmidt, Matt Napolitano, NMT/MRO')
 
         wx.AboutBox(info)
 
