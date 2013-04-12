@@ -3,7 +3,7 @@ import os
 import sys
  
 appPath = os.path.abspath(os.path.dirname(os.path.join(sys.argv[0])))
-inifile = os.path.join(appPath, "example.ini")
+inifile = os.path.join(appPath, "nessisettings.ini")
  
 ########################################################################
 def createConfig():

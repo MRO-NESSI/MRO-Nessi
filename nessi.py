@@ -484,21 +484,26 @@ class GuidePanelSettings(wx.Panel):
         self.__OnPower()
         
     def __OnPower(self):
+        startlook = time.time()
         while self.looking:
             dev = usb.core.find(idVendor=0x0f18, idProduct=0x000a)
             if DEBUG: print dev
+            
             if dev is None:
                 time.sleep(0.5)
                 if DEBUG: print time.time()
+                if time.time()-startlook > 10:
+                    self.looking = False
+                    break
             if dev != None:
                 self.looking = False
-        self.c_power = True
-        cams = FLI.camera.USBCamera.find_devices()
-        self.cam0 = cams[0]
-        self.cam0.set_bit_depth("16bit")
-        temp = self.cam0.get_temperature()
-        self.curr_temp.SetLabel(str(temp) + u'\N{DEGREE SIGN}' + 'C  ')
-        
+                self.c_power = True
+                cams = FLI.camera.USBCamera.find_devices()
+                self.cam0 = cams[0]
+                self.cam0.set_bit_depth("16bit")
+                temp = self.cam0.get_temperature()
+                self.curr_temp.SetLabel(str(temp) + u'\N{DEGREE SIGN}' + 'C  ')
+                
     def OffPower(self):
         self.c_power = False
         self.looking = True
