@@ -7,7 +7,7 @@
 """
 
 __author__ = 'Luke Schmidt, Matt Napolitano'
-__date__ = '2012'
+__date__ = '2013'
 
 #Live update plotting of temps with matplot lib from code by Eli Bendersky
 #http://eli.thegreenplace.net/2008/08/01/matplotlib-with-wxpython-guis/
