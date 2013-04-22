@@ -1,15 +1,23 @@
 #!/usr/bin/env python
-
 import serial
-import time
-import sys
 from struct import pack, unpack
+import sys
+
+from handlers import *
 
 DEBUG = True
 
 class tlabs:
     """Represents the Thorlabs TDC001 controller."""
     
+    tlabs_commands = {
+        'Identify'      : '\x23\x02\x00\x00\x50\x01',
+        'Home'          : '\x43\x04\x01\x00\x50\x01',
+        'Status'        : '\x90\x04\x01\x00\x50\x01',
+        'Move Absolute' : '\x48\x04\x06\x00\x50\x01\x01\x00',
+        'Move Relative' : '\x48\x04\x06\x00\x50\x01\x01\x00',
+        }
+
     def __init__(self, port=0):
         """Performs necessary startup procedures."""
         if port == 0:
@@ -25,27 +33,23 @@ class tlabs:
         """Perform cleanup operations."""
         self.ser.close()
 
-    def identify(self):
-        """Flash light on front."""
-        self.ser.write('\x23\x02\x00\x00\x50\x01')
-        if DEBUG: print "DEBUG: Flash"
-    
+
+    @timeout(15)
     def completion(self):
         """Generic function that waits to read a completion command such as, home
         finished, move complete, etc."""
-        now = time.time()
         while True:
             ch = self.ser.readline()
             if ch != '': 
                 break
-        
         return ch.encode('hex'), ch
-    
-    def home(self):
-        """Home stage."""
-        self.ser.write('\x43\x04\x01\x00\x50\x01')
-        if DEBUG: print 'DEBUG: Home Stage'
-        return self.completion()
+
+    def send_command(self, command):
+        self.ser.write(tlabs.tlabs_commands[command])
+        try:
+            return self.completion()
+        except TimeoutError:
+            return None
             
     def move_relative(self,distance=0):
         """Move the stage a relative distance.  Input is in microns, signed integer.
@@ -82,7 +86,10 @@ class tlabs:
         if DEBUG: print 'Start absolute move to: ', position, 'um.'
         #wait for completion command
         return self.completion()
-        
+    
+
+
+'''    
     def get_status_update(self):
         """Get the current status of the actuator, including position, encoder count,
         and other status messages, such as limit switch activated, in motion, etc."""
@@ -96,3 +103,14 @@ class tlabs:
         return status
         
         
+    def identify(self):
+        """Flash light on front."""
+        self.ser.write('\x23\x02\x00\x00\x50\x01')
+        if DEBUG: print "DEBUG: Flash"
+
+    def home(self):
+        """Home stage."""
+        self.ser.write('\x43\x04\x01\x00\x50\x01')
+        if DEBUG: print 'DEBUG: Home Stage'
+        return self.completion()
+'''
