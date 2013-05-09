@@ -1,21 +1,34 @@
 #!/usr/bin/env python
-
 import serial
-import time
-import sys
 from struct import pack, unpack
+import sys
+
+from handlers import *
 
 DEBUG = True
 
 class tlabs:
     """Represents the Thorlabs TDC001 controller."""
-    
+
+    #TODO: This should be a simplified dynamic structure
+    tlabs_commands = {
+        #COMMAND           #SIGNAL HEADER                     #Has exit status
+        'Identify'      : ('\x23\x02\x00\x00\x50\x01',         False),
+        'Home'          : ('\x43\x04\x01\x00\x50\x01',         True),
+        'Status'        : ('\x90\x04\x01\x00\x50\x01',         True),
+        'Move Absolute' : ('\x48\x04\x06\x00\x50\x01\x01\x00', True),
+        'Move Relative' : ('\x48\x04\x06\x00\x50\x01\x01\x00', True),
+        }
+
+    #IMP: Consider makeing hidden?
+    ports = {0: '/dev/ttyREI12', 1: '/dev/ttyREI34'}
+
     def __init__(self, port=0):
-        """Performs necessary startup procedures."""
-        if port == 0:
-            self.__port = '/dev/ttyREI12'
-        if port == 1:
-            self.__port = '/dev/ttyREI34'
+        """Build controller, and establish connection."""
+        try:
+            self.__port = tlabs.ports[port]
+        except:
+            raise InvalidPortException()
         # Establish a connection to the KMtronic relay board
         self.ser = serial.Serial(port=self.__port, baudrate=115200, bytesize=serial.EIGHTBITS,
                                  parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE,
@@ -25,27 +38,19 @@ class tlabs:
         """Perform cleanup operations."""
         self.ser.close()
 
-    def identify(self):
-        """Flash light on front."""
-        self.ser.write('\x23\x02\x00\x00\x50\x01')
-        if DEBUG: print "DEBUG: Flash"
-    
-    def completion(self):
+    def read_exit_status(self):
         """Generic function that waits to read a completion command such as, home
         finished, move complete, etc."""
-        now = time.time()
         while True:
             ch = self.ser.readline()
             if ch != '': 
                 break
-        
         return ch.encode('hex'), ch
-    
-    def home(self):
-        """Home stage."""
-        self.ser.write('\x43\x04\x01\x00\x50\x01')
-        if DEBUG: print 'DEBUG: Home Stage'
-        return self.completion()
+
+    def send_command(self, command):
+        command = tlabs.tlabs_commands[command]
+        self.ser.write(command[0])
+        return self.read_exit_status() if command[1] else None
             
     def move_relative(self,distance=0):
         """Move the stage a relative distance.  Input is in microns, signed integer.
@@ -59,13 +64,18 @@ class tlabs:
         #convert distance in um to counts, make sure it is an integer.
         intcounts = int(distance / 0.02915111) #um per count
         #convert to hex
+<<<<<<< HEAD
         counts = pack('<L', intcounts)
         if DEBUG: print str(counts)
+=======
+        counts = pack('>L', intcounts)
+        if DEBUG: print counts
+>>>>>>> c6c71dcd8f193ca3fd3f2551a1e20d51519a4bdd
         #write move command
         self.ser.write('\x48\x04\x06\x00\x50\x01\x01\x00' + counts)
         if DEBUG: print 'Start relative move by: ', intcounts, ' counts, ', distance, 'um.'
         #wait for completion command
-        return self.completion()  
+        return self.read_exit_status()
         
     def move_absolute(self,position=0):
         """Move the stage to an absolute position.  Input is in microns, signed integer.
@@ -75,12 +85,13 @@ class tlabs:
         #convert distance in um to counts, make sure it is an integer.
         intcounts = int(position / 0.02915111) #um per count
         #convert to hex
-        counts = pack('<L', intcounts)
+        counts = pack('>L', intcounts)
         if DEBUG: print counts
         #write move command
         self.ser.write('\x53\x04\x06\x00\x50\x01\x01\x00' + counts)
         if DEBUG: print 'Start absolute move to: ', position, 'um.'
         #wait for completion command
+<<<<<<< HEAD
         return self.completion()
         
     def get_status_update(self):
@@ -96,3 +107,6 @@ class tlabs:
         return status
         
         
+=======
+        return self.read_exit_status()
+>>>>>>> c6c71dcd8f193ca3fd3f2551a1e20d51519a4bdd
