@@ -13,11 +13,13 @@ Matt Napolitano
 Created 05/13/2013
 Questions can be directed to mnapolitano@mro.nmt.edu
 
-!!! IMPORTANT !!!
-This program has a known failure mode where the program can crash and shut down and the motors will not stop.
-Until the problem is fixed have someone near the emergency stop button on the controller while using this program. 
-Restarting the program will reset the motors and the program should be functional again.
-Please record what action was being taken during the crash to help us diagnose the problem.
+!!! IMPORTANT !!!  
+This program has a known failure mode where the program can
+crash and shut down and the motors will not stop.  Until the problem is fixed
+have someone near the emergency stop button on the controller while using this
+program.  Restarting the program will reset the motors and the program should be
+functional again.  Please record what action was being taken during the crash to
+help us diagnose the problem.
 
 
 
@@ -48,11 +50,12 @@ Please record what action was being taken during the crash to help us diagnose t
 ------------------------------
 1 Start Up
 ------------------------------
-First check that the Newport XPS controller is powered on and connected to the control computer.
-Check that the appropriate motors are connected to the controller.
-To run the program type 'python dewar_tab.py' in a terminal.	
-The program will take approximately thirty seconds to start. 
-Only one mode should be used at a time to prevent interfering instructions.
+
+First check that the Newport XPS controller is powered on and connected to the
+control computer.  Check that the appropriate motors are connected to the
+controller.  To run the program type 'python dewar_tab.py' in a terminal.  The
+program will take approximately thirty seconds to start.  Only one mode should
+be used at a time to prevent interfering instructions.
 
 ------------------------------
 2 Tab One: K-Mirror

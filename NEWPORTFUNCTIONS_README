@@ -13,7 +13,8 @@ Matt Napolitano
 Created 06/19/2012
 Questions can be directed to mnapolit@nmt.edu
 
-This readme describes the functionality of the module newportfunctions.py.
+This readme describes the functionality of the module
+newportfunctions.py.
 
 0 GLOSSARY
 -------------------
@@ -32,10 +33,12 @@ This readme describes the functionality of the module newportfunctions.py.
 1 FUNCTIONS
 -------------------
 1.1 InitializeSockets(VALUE)
-	This function opens sockets recursively until either 100 or VALUE is reached.
-	If the user gives anything other than an integer for VALUE then the program will print an error.
-	Each socket returns an integer valued socket ID which is then appended to socketid(2.1).
-	If the socket ID returned is -1 then the program has a communication problem and will exit.
+	This function opens sockets recursively until either 100 or
+	VALUE is reached.  If the user gives anything other than an
+	integer for VALUE then the program will print an error.  Each
+	socket returns an integer valued socket ID which is then
+	appended to socketid(2.1).  If the socket ID returned is -1
+	then the program has a communication problem and will exit.
 	This function does not return anything.
 
 1.2 Close()
@@ -46,8 +49,9 @@ This readme describes the functionality of the module newportfunctions.py.
 
 1.5 Emergency()
 	This function sends the kill all command to the controller.
-	It uses the zeroth socket ID and is the only function that will.
-	When this command has been sent, all groups need to be reinitialized before the can be used again.
+	It uses the zeroth socket ID and is the only function that
+	will.  When this command has been sent, all groups need to be
+	reinitialized before the can be used again.
 
 1.6 Move(SOCKET,GROUP,POSITIONER,MOVETYPE,MOVEMENT)
 
@@ -56,8 +60,8 @@ This readme describes the functionality of the module newportfunctions.py.
 2 VARIABLES
 -------------------
 2.1 socketid
-	This variable contains a list of socket IDs cooresponding to unique sockets.
-	This list may have up to 100 elements.
-	This list is zero indexed.
-	The zeroth id element is reserved for the emergency stop function.	
+	This variable contains a list of socket IDs cooresponding to
+	unique sockets.  This list may have up to 100 elements.  This
+	list is zero indexed.  The zeroth id element is reserved for
+	the emergency stop function.
 

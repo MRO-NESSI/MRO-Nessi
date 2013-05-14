@@ -17,22 +17,22 @@ Questions can be directed to mnapolit@nmt.edu
 0 GLOSSARY
 -------------------
 1 Layout
-	1.1 Control
-		1.1.1 Move Relative Radio Button
-		1.1.2 Move Absolute Radio Button
-		1.1.3 Position Spinner
-		1.1.4 Velocity Spinner
-		1.1.5 Acceleration Spinner
-		1.1.6 Minimum Jerk Time Spinner
-		1.1.7 Maximum Jerk Time Spinner
-		1.1.8 Execute Button
-	1.2 Information
-		1.2.1 Position Readout
-		1.2.2 Velocity Readout
-		1.2.3 Manual Read Button
-	1.3 Emergency
-		1.3.1 Kill All Button
-	
+    1.1 Control
+        1.1.1 Move Relative Radio Button
+        1.1.2 Move Absolute Radio Button
+        1.1.3 Position Spinner
+        1.1.4 Velocity Spinner
+        1.1.5 Acceleration Spinner
+        1.1.6 Minimum Jerk Time Spinner
+        1.1.7 Maximum Jerk Time Spinner
+        1.1.8 Execute Button
+    1.2 Information
+        1.2.1 Position Readout
+        1.2.2 Velocity Readout
+        1.2.3 Manual Read Button
+    1.3 Emergency
+        1.3.1 Kill All Button
+    
 2 Control Panel
 
 3 Information Panel
@@ -41,92 +41,136 @@ Questions can be directed to mnapolit@nmt.edu
 
 5 Bugs/Problems
 -------------------
-	
+    
 1 LAYOUT
 -------------------
-						              GUI
+                                      GUI
 |-----------------------------------------------------------------------------------|
-|                           K-Mirror Testing Program							 	|
+|                           K-Mirror Testing Program                                |
 |-----------------------------------------------------------------------------------|
-|					              Control	(1.1)			 					 	|
-|																				 	|
-| O Move Relative (1.1.1) Position				    Acceleration                 	|
-|						--------------				--------------               	|
-| 					   | 00.000000 |  | deg(1.1.3) | 00.000000 |  | deg/s^2 (1.1.5) |
-|						--------------				--------------               	|
-| 													                             	|
-| O Move Absolute (1.1.2) Velocity				    Min Jerk Time                	|
-|						--------------				--------------               	|
-| -------------		   | 00.000000 |  |deg/s(1.1.4)| 00.000000 |  | sec  (1.1.6)   	|
-||   Execute   |(1.1.8)	--------------				--------------               	|
-| -------------									                          		   	|
-|                                                   Max Jerk Time                	|
-|												    --------------               	|
-|                                                  | 00.000000 |  | sec  (1.1.7)   	|
-|                                                   --------------               	|
-|																				 	|
+|                                  Control    (1.1)                                 |
+|                                                                                   |
+| O Move Relative (1.1.1) Position                    Acceleration                  |
+|                       --------------                --------------                |
+|                       | 00.000000 |  | deg(1.1.3) | 00.000000 |  | deg/s^2 (1.1.5)|
+|                       --------------                --------------                |
+|                                                                                   |
+| O Move Absolute (1.1.2) Velocity                    Min Jerk Time                 |
+|                         --------------               --------------               |
+| -------------          | 00.000000 |  |deg/s(1.1.4) | 00.000000 |  | sec  (1.1.6) |
+||   Execute   |(1.1.8)   --------------               --------------               |
+| -------------                                                                     |
+|                                                     Max Jerk Time                 |
+|                                                     --------------                |
+|                                                    | 00.000000 |  | sec  (1.1.7)  |
+|                                                     --------------                |
+|                                                                                   |
 |-----------------------------------------------------------------------------------|
-|					             Information (1.2)				                 	|             
-|				Position				      Velocity	                         	|
-|			  --------------				--------------               		 	|
-| 			 | 00.000000    | deg (1.2.1)  | 00.000000    | deg/s   (1.2.2)		 	|
-|			  --------------				--------------               		 	|
-|																				 	|
-|							  ----------------									 	|
-|				 			 |  Manual Read	  |	(1.2.3)							 	|
-|							  ----------------									 	|
-|																				 	|
+|                                 Information (1.2)                                 |
+|                Position                      Velocity                             |
+|              --------------                --------------                         |
+|              | 00.000000    | deg (1.2.1)  | 00.000000    | deg/s   (1.2.2)       |
+|              --------------                --------------                         |
+|                                                                                   |
+|                              ----------------                                     |
+|                              |  Manual Read      |    (1.2.3)                     |
+|                              ----------------                                     |
+|                                                                                   |
 |-----------------------------------------------------------------------------------|
-|					              Emergency	(1.3)								 	|
-|				  			   ---------------									 	|
-|				              |	  KILL ALL	  |	(1.3.1)							 	|
-|				               ---------------									 	|
-|																				 	|
+|                                  Emergency    (1.3)                               |
+|                                 ---------------                                   |
+|                              |      KILL ALL      |    (1.3.1)                    |
+|                               ---------------                                     |
+|                                                                                   |
 |-----------------------------------------------------------------------------------|
 
 -------------------
-	
+    
 2 CONTROL PANEL
 -------------------
 
-This panel contains the controls for basic motion including motion type, motion parameters, and motion initiation.
+This panel contains the controls for basic motion including motion
+type, motion parameters, and motion initiation.
 
-This program allows the user to define what type of motion the motor will execute, either Relative or Absolute motion. This choice is controlled by the radio buttons (1) and (2). 
-Relative motion is defined as moving X degrees from the current position.
-Absolute motion is defined as moving to position X where the home position is defined as 00.00 degrees.
-Positive is defined as Clockwise when the motor is viewed from above and the home indicator is on top.
-Position (4) allows the user to define where the motor will move to.  Positions plus or minus 170 degrees from  home are valid.
-Velocity (3) allows the user to define the speed the motor should rotate at and speeds between 0 and 80 degrees per second are valid.
-Acceleration (5) allows the user to define the acceleration of the motor. #More information coming.#
-Min Jerk Time (6) and Max Jerk Time (7) allow the user to define min and max jerk times. #More information coming.#
-The execute button (8) initiates the motion defined by the user.
+This program allows the user to define what type of motion the motor
+will execute, either Relative or Absolute motion. This choice is
+controlled by the radio buttons (1) and (2).
+
+* Relative motion is defined as moving X degrees from the current
+position.
+
+* Absolute motion is defined as moving to position X where the home
+position is defined as 00.00 degrees.
+
+* Positive is defined as Clockwise when the motor is viewed from above
+and the home indicator is on top.
+
+* Position (4) allows the user to define where the motor will move to.
+Positions plus or minus 170 degrees from home are valid.
+
+* Velocity (3) allows the user to define the speed the motor should
+rotate at and speeds between 0 and 80 degrees per second are valid.
+
+* Acceleration (5) allows the user to define the acceleration of the
+motor. #More information coming.#
+
+* Min Jerk Time (6) and Max Jerk Time (7) allow the user to define min
+and max jerk times. #More information coming.#
+
+* The execute button (8) initiates the motion defined by the user.
 -------------------
 
 3 INFORMATION PANEL
 -------------------
 
 This panel has a read out of some motion characteristics.
-Position (9) is a readout of the current position of the motor.
-Velocity (10) is a readout of the current velocity of the motor.
+
+* Position (9) is a readout of the current position of the motor.
+* Velocity (10) is a readout of the current velocity of the motor.
+
 These will automatically update when motion is initiated.
-Manual Read (11) will manually update readouts (9) and (10).
+
+* Manual Read (11) will manually update readouts (9) and (10).
 -------------------
 
 4 EMERGENCY PANEL
 -------------------
 
 This panel contains the emergency stop button.
-KILL ALL (12) is the emergency stop button.  When pressed it will interrupt all motion and send the kill command to all motors.  The motors must be reinitialized before motion can be performed if the kill command is sent.  This can be done by restarting the program. There is also a stop all button on the motor controller (Newport XPS Controller) that will also stop all motion.  It is recommended that the software stop be used first.
+
+KILL ALL (12) is the emergency stop button.  When pressed it will
+interrupt all motion and send the kill command to all motors.  The
+motors must be reinitialized before motion can be performed if the
+kill command is sent.  This can be done by restarting the
+program. There is also a stop all button on the motor controller
+(Newport XPS Controller) that will also stop all motion.  It is
+recommended that the software stop be used first.  
 -------------------
 
 5 BUGS/PROBLEMS
 -------------------
 
-	-If the Information thread has not finished when the program is closed it will exit with an error.  This is being addressed by the one second delay built into the closing sequence.
+    -If the Information thread has not finished when the program is
+     closed it will exit with an error.  This is being addressed by
+     the one second delay built into the closing sequence.
 
-	-The readout of the velocity is very sporadic. It is unknown whether this is actually happening, if it is a problem with the probe, or if it is a problem with the program. This is being looked into.
+    -The readout of the velocity is very sporadic. It is unknown
+     whether this is actually happening, if it is a problem with the
+     probe, or if it is a problem with the program. This is being
+     looked into.
 
-	-If the program does not exit properly, i.e. needs to be terminated mid-motion, the motors will not be able to be killed (which is part of the start up procedure) and the program will not be able to be restarted without a hard restart of the controller. It is possible just disconnecting it from ethernet will work, this has not been tried yet. An error during exit will not cause this problem.
+    -If the program does not exit properly, i.e. needs to be
+     terminated mid-motion, the motors will not be able to be killed
+     (which is part of the start up procedure) and the program will
+     not be able to be restarted without a hard restart of the
+     controller. It is possible just disconnecting it from ethernet
+     will work, this has not been tried yet. An error during exit will
+     not cause this problem.
 
-	-There exists an error of unknown origin. The program has undergone a segmentation fault while running an extended test (rotating the stage 60 deg/hr to see how the data readouts were handeling it). I was forced to restart the controller due to the above mentioned error.  While running a second long test, no problems occured. This is being investigated further.
+    -There exists an error of unknown origin. The program has
+     undergone a segmentation fault while running an extended test
+     (rotating the stage 60 deg/hr to see how the data readouts were
+     handeling it). I was forced to restart the controller due to the
+     above mentioned error.  While running a second long test, no
+     problems occured. This is being investigated further.
 
