@@ -64,13 +64,8 @@ class tlabs:
         #convert distance in um to counts, make sure it is an integer.
         intcounts = int(distance / 0.02915111) #um per count
         #convert to hex
-<<<<<<< HEAD
-        counts = pack('<L', intcounts)
-        if DEBUG: print str(counts)
-=======
         counts = pack('>L', intcounts)
         if DEBUG: print counts
->>>>>>> c6c71dcd8f193ca3fd3f2551a1e20d51519a4bdd
         #write move command
         self.ser.write('\x48\x04\x06\x00\x50\x01\x01\x00' + counts)
         if DEBUG: print 'Start relative move by: ', intcounts, ' counts, ', distance, 'um.'
@@ -91,22 +86,4 @@ class tlabs:
         self.ser.write('\x53\x04\x06\x00\x50\x01\x01\x00' + counts)
         if DEBUG: print 'Start absolute move to: ', position, 'um.'
         #wait for completion command
-<<<<<<< HEAD
-        return self.completion()
-        
-    def get_status_update(self):
-        """Get the current status of the actuator, including position, encoder count,
-        and other status messages, such as limit switch activated, in motion, etc."""
-        #send status update request
-        self.ser.write('\x90\x04\x01\x00\x50\x01')
-        if DEBUG: print 'Status update requested'
-        status = self.completion()
-        #format the status as a dictionary
-        
-        #return the dictionary    
-        return status
-        
-        
-=======
         return self.read_exit_status()
->>>>>>> c6c71dcd8f193ca3fd3f2551a1e20d51519a4bdd
