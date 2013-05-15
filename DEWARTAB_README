@@ -30,22 +30,27 @@ help us diagnose the problem.
 
 2 Tab One: K-Mirror
 	2.1 Basic Operations
-	2.2 Parameters
-	2.3 Profile
+	2.2 Layout
+	2.3 Parameters
+	2.4 Profile
 
 3 Tab Two: Movement
 	3.1 Basic Operations
-	3.2 Parameters
-	3.3 Control Panel
-	3.4 Information Panel
-	3.5 Emergency Panel
+	3.2 Layout
+	3.3 Parameters
+	3.4 Control Panel
+	3.5 Information Panel
+	3.6 Emergency Panel
 
 4 Tab Three: Dewar
 	4.1 Basic Operations
+	4.2 Layout
 
 5 Tab Four: Rotation
 	5.1 Basic Operations
-	5.2 Parameters
+	5.2 Layout
+	5.3 Parameters
+
 
 ------------------------------
 1 Start Up
@@ -60,4 +65,138 @@ be used at a time to prevent interfering instructions.
 ------------------------------
 2 Tab One: K-Mirror
 ------------------------------
+
+2.1 Basic Operations
+
+This tab is designed to allow testing of the Newport rotation stage.  This tab
+operates the motor in continuous rotation mode (jog mode) and allows for on 
+the fly changing of the velocity of the motor.  There is an option to use an 
+already defined motion profile or to manually change the velocities.  This tab
+does not allow the user to send the motor to a pre-defined position.  The user
+is also given the option to enable or disable the jog mode on the motor.  This
+mode of operation can only be used if the jog mode has been enabled for the
+motor.  This tab also has a stop button that will set the velocity to zero and
+will stop the profile from executing. This tab also includes an emergency stop
+button.  This button will send a kill all command to all motors connecte to 
+the XPS controller.  This is designed to fill the same role as the kill all
+button on the controller.  The program will need to be restarted if this 
+command is used.
+
+2.2 Layout
+
+                                      GUI
+|-----------------------------------------------------------------------------------|
+|                                   K-Mirror                                        |
+|-----------------------------------------------------------------------------------|
+|                                     jog                                           |
+|                                                                                   |
+| O do not use profile                    Acceleration                              |
+| O use profile                           ----------------                          |
+|  -------------                         | 0.000000    |  |   deg/s^2               |
+| | Toggle Mode |                         ----------------                          |
+|  -------------                          Velocity                                  |
+|  -------------                          ----------------                          |
+| |             |                        | 0.000000    |  |   deg/s                 |
+|  -------------                          ----------------                          |
+|  ----------------                       -------------                             | 
+| | Set Parameters |                     |     Stop    |                            |
+|  ----------------                       -------------                             |
+|-----------------------------------------------------------------------------------|
+|                                  Emergency                                        |
+|                               --------------------                                |
+|                              |      KILL ALL      |                               |
+|                               --------------------                                |
+|                                                                                   |
+|-----------------------------------------------------------------------------------|
+
+
+2.3 Parameters
+
+There are four different parameters that the user can set.  They are velocity,
+acceleration, profile use, and jog mode state.  
+
+The velocity and acceleration parameters take input using a float spinner.  
+This object allows for the input of arbitrary floating point numbers.  The
+value can be entered by typing it or using the up/down arrows on the input 
+box.  When using the arrows the value will increment by ones.  If the shift 
+button is held while the arrows are used the value will increment by twos.  If
+the control button is held while using the arrows the value will increment by
+tens.  These spinners allow for the input of arbitrary decimal values.  
+
+The profile use parameter is used to set whether or not the pre-generated 
+motion profile will be used.  The input for this option is a pair of radio 
+buttons.  They are labled "use profile" and "do not use profile" and only one 
+may be selected at a time.  By default the "use profile" option is selected. 
+
+The jog mode state parameter is either enabled or disabled and determines if 
+the motor can be used in a continuous rotation state. The state will be 
+displayed below the toggle button.  The default state is disabled though the
+display will be blank until it is toggled. 
+
+2.4 Profile
+
+The pre defined motion profile is generated by taking a list of the from -100
+to 100 in integers and applying a gaussian function to them.  The function is
+defined as 5*exp(-(x*.03)**2/2).  This list of values is iterated over with a
+delay of .5 seconds between each step.  At each step the velocity of the motor
+is set to the value of the list.  The lowest velocity, at the end points, is 
+.055 deg/s and the highest velocity, in the center, is 5 deg/s.  At present it
+is not possible to change the scaling factor from the user interface.  It must
+be changed in the code.  This is a feature that can be added upon request.
+
+------------------------------
+3 Tab Two: Movement
+------------------------------
+
+3.1 Basic Operation
+
+This tab is designed to allow testing of the Newport rotation stage.  This tab
+allows for non-continuous motion.  This means that motion parameters cannot be 
+changed once motion is initiated.  This tab allows for motion to a choosen 
+position, either absolute or relative, given several motion parameters.  The
+user can adjust velocity, acceleration, and jerk parameters.  This tab also 
+shows current position and velocity information of the motor while moving.  It 
+also includesan emergency stop button to kill all motion. 
+
+3.2 Layout
+
+                                      GUI
+|-----------------------------------------------------------------------------------|
+|                                   Movement                                        |
+|-----------------------------------------------------------------------------------|
+|                                  Control                                          |
+|                                                                                   |
+| O Move Relative         Position                    Acceleration                  |
+|                       --------------                --------------                |
+|                      | 00.000000 |  | deg          | 00.000000 |  | deg/s^2       |
+|                       --------------                --------------                |
+|                                                                                   |
+| O Move Absolute         Velocity                    Min Jerk Time                 |
+|                         --------------               --------------               |
+| -------------          | 00.000000 |  |deg/s        | 00.000000 |  | sec          |
+||   Execute   |          --------------               --------------               |
+| -------------                                                                     |
+|                                                     Max Jerk Time                 |
+|                                                     --------------                |
+|                                                    | 00.000000 |  | sec           |
+|                                                     --------------                |
+|                                                                                   |
+|-----------------------------------------------------------------------------------|
+|                                 Information                                       |
+|                Position                      Velocity                             |
+|              --------------                --------------                         |
+|             | 00.000000    | deg          | 00.000000    | deg/s                  |
+|              --------------                --------------                         |
+|                                                                                   |
+|                              ----------------                                     |
+|                             |  Manual Read   |                                    |
+|                              ----------------                                     |
+|                                                                                   |
+|-----------------------------------------------------------------------------------|
+|                                  Emergency                                        |
+|                               ---------------                                     |
+|                              |   KILL ALL    |                                    |
+|                               ---------------                                     |
+|                                                                                   |
+|-----------------------------------------------------------------------------------|
 

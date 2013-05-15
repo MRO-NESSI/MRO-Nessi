@@ -19,7 +19,7 @@ def OnFail():
 # Preparing an array to use for rotataion testing
 diff_array=[]
 for i in range(-100,101):
-	diff_array.append(15*math.exp(-(i*.03)**2/2))
+	diff_array.append(5*math.exp(-(i*.03)**2/2))
 	
 x=xps.XPS()
 open_sockets=[]
@@ -126,16 +126,21 @@ class NotebookDemo(wx.Notebook):
 		self.AddPage(self.tabTwo, "Dewar")
 		self.tabThree = RotationWindow(self)
 		self.AddPage(self.tabThree, 'Rotation')
+
 class JogWindow(wx.Panel):
 	def __init__(self,*args,**kwargs):
 		super(JogWindow,self).__init__(*args,**kwargs)
 		self.panel_zero=Jog(self)
+		self.panel_one=Emergency(self)
+		self.line_zero=wx.StaticLine(self,style=wx.LI_HORIZONTAL)
 		self.__DoLayout()
 		self.SetInitialSize()
 
 	def __DoLayout(self):
 		sizer=wx.GridBagSizer()
 		sizer.Add(self.panel_zero,(0,0),(1,1),wx.ALIGN_CENTER_HORIZONTAL|wx.CENTER)
+		sizer.Add(self.line_zero,(1,0),(1,1),wx.EXPAND,border=5)
+		sizer.Add(self.panel_one,(2,0),(1,1),wx.ALIGN_CENTER_HORIZONTAL|wx.CENTER)
 		self.SetSizer(sizer)
 
 
@@ -243,6 +248,8 @@ class Emergency(wx.Panel):
 		'''Initialization of the Emergency panel.'''
 		super(Emergency,self).__init__(*args,**kwargs)
 ###		self.mode='Enable'
+		self.SocketID=open_sockets.pop()
+		used_sockets.append(self.SocketID)
 		self.title=wx.StaticText(self,label='Emergency')
 		# This defines the button characteristics for the 'kill all' button.
 		self.kill_group=wx.Button(self,label='KILL ALL')
@@ -268,11 +275,8 @@ class Emergency(wx.Panel):
 	# Defining what the button in the emergency panel will do.
 	def OnButton(self,event):
 		'''This button will send the emergency stop command to all running motors.'''
-		# This defines which channel the controller and panel will communicate over.
-		SocketID=socket[0]
-		print SocketID
 		# This is the kill all command.
-		kill=x.KillAll(SocketID)
+		kill=x.KillAll(self.SocketID)
 		# This checks to insure the kill command worked.  If it did not work, the standard error handler is called.
 		if kill[0] != 0:
 			XPSErrorHandler(SocketID, kill[0], 'KillAll')
@@ -870,7 +874,7 @@ class ProfileThread(thr.Thread):
 		for i in range(201):
 			if self.state == 1:				
 				print 'working'
-				time.sleep(1)
+				time.sleep(.5)
 				self.Gset=x.GroupJogParametersSet(self.socket, self.group,[diff_array[i]],[300])
 				if self.Gset[0] != 0:
 					XPSErrorHandler(self.SocketID1, self.Gset[0], 'GroupJogParametersSet')
