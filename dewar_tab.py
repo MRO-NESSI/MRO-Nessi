@@ -7,6 +7,8 @@ import XPS_C8_drivers as xps
 import threading as thr
 import time
 import math
+# need to decide how to import this module
+#from handlers import *
 from configobj import ConfigObj
 
 from wx.lib.pubsub import Publisher
@@ -25,15 +27,22 @@ x=xps.XPS()
 open_sockets=[]
 used_sockets=[]
 cfg = ConfigObj('nessisettings.ini')
-for i in range(int(cfg['general']['sockets'])):
-	open_sockets.append(x.TCP_ConnectToServer('192.168.0.254',5001,1))
 
-# Checking the status of the connections.
-for i in range(int(cfg['general']['sockets'])):
-	if open_sockets[i] == -1:
-		OnFail()
-	else:
-		pass
+#@timeout(30)
+def fill_socket_list():
+	for i in range(int(cfg['general']['sockets'])):
+		open_sockets.append(x.TCP_ConnectToServer('192.168.0.254',5001,1))
+	
+	# Checking the status of the connections.
+	for i in range(int(cfg['general']['sockets'])):
+		if open_sockets[i] == -1:
+			OnFail()
+		else:
+			pass
+try:
+	fill_socket_list()
+except:
+	pass
 
 # General error handling for the Newport controller functions
 def XPSErrorHandler(socket,code,name):
