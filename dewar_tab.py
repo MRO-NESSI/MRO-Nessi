@@ -91,6 +91,8 @@ class KMirrorFrame(wx.Frame):
 		super(KMirrorFrame,self).__init__(*args,**kwargs)
 		# These are the panels to be included in the frame.
 		self.notebook = NotebookDemo(self)
+		self.SocketID=open_sockets.pop()
+		used_sockets.append(self.SocketID)
 		self.__DoLayout()
 		self.SetInitialSize()
 		# This binds the close event to the OnCLose function.
@@ -116,10 +118,15 @@ class KMirrorFrame(wx.Frame):
 			event.Veto()
 		elif result == wx.YES:
 			# This will let the close event occur after it sends the stop flag for the threads and closes the connections to the controller.
-			event.Skip()
-			Publisher().sendMessage(('flag'),0)
-			time.sleep(1)
-			Close()
+			kill=x.KillAll(self.SocketID)
+		# This checks to insure the kill command worked.  If it did not work, the standard error handler is called.
+			if kill[0] != 0:
+				XPSErrorHandler(SocketID, kill[0], 'KillAll')
+			else:
+				event.Skip()
+				Publisher().sendMessage(('flag'),0)
+				time.sleep(1)
+				Close()
 		else:
 			# Vetoing the close event.
 			event.Veto()
@@ -852,22 +859,27 @@ class SpinThread(thr.Thread):
 		
 		time.sleep(1)
 		
-		while self.state != 1:
+		while self.state == 0:
 			time.sleep(.15)
 			value = x.GPIODigitalGet(self.socket, 'GPIO4.DI')
-			print value
+			print value, bin(value[1])[::-1], self.state, bin(value[1])[::-1][8]
 			if value[0] != 0:
 				XPSErrorHandler(self.socket,value[0],'GPIODigitalGet')
-			elif value[1] == 1 or value[1] == 8 or value[1] == 16 or value[1] == 32:
-				self.state=self.state+1
+			elif bin(value[1])[::-1][8] == '1':
+				self.state=1
+			elif bin(value[1])[::-1][9] == '0':
+				self.state=2
+			elif bin(value[1])[::-1][10] == 'b':
+				self.state=3
 			else:
-				pass
+				print 'passed'
 			
 		self.stop=x.GroupSpinModeStop(self.socket, self.group, 800)
 		if self.stop[0] != 0:
 			XPSErrorHandler(self.socket, self.stop[0], 'GroupSpinModeStop')
 		else:
 			Publisher().sendMessage(('probotix_state'),0)
+
 
 class ProfileThread(thr.Thread):
 	def __init__(self,socket,group):
