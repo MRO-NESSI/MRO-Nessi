@@ -164,12 +164,16 @@ class RotationWindow(wx.Panel):
 	def __init__(self,*args,**kwargs):
 		super(RotationWindow,self).__init__(*args,**kwargs)
 		self.panel_zero=Spin(self)
+		self.panel_one=Emergency(self)
+		self.line_zero=wx.StaticLine(self,style=wx.LI_HORIZONTAL)
 		self.__DoLayout()
 		self.SetInitialSize()
 
 	def __DoLayout(self):
 		sizer=wx.GridBagSizer()
 		sizer.Add(self.panel_zero,(0,0),(1,1),wx.ALIGN_CENTER_HORIZONTAL|wx.CENTER)
+		sizer.Add(self.line_zero,(1,0),(1,1),wx.EXPAND,border=5)
+		sizer.Add(self.panel_one,(2,0),(1,1),wx.ALIGN_CENTER_HORIZONTAL|wx.CENTER)
 		self.SetSizer(sizer)
 
 
@@ -209,6 +213,8 @@ class DewarWindow(wx.Panel):
 		self.panel4=ProbotixPanel(self)
 		self.panel5=ProbotixPanel(self)
 		self.panel6=ProbotixPanel(self)
+		self.panel0=Emergency(self)
+		self.line0=wx.StaticLine(self,style=wx.LI_HORIZONTAL)
 		self.__DoLayout()
 		self.SetInitialSize()
 
@@ -216,10 +222,10 @@ class DewarWindow(wx.Panel):
 		sizer=wx.GridBagSizer()
 		sizer.Add(self.panel1,(0,0))
 		sizer.Add(self.panel2,(0,1))
-		sizer.Add(self.panel3,(0,2))
-		sizer.Add(self.panel4,(1,0))
-		sizer.Add(self.panel5,(1,1))
-		sizer.Add(self.panel6,(1,2))
+		sizer.Add(self.panel3,(1,0))
+		sizer.Add(self.panel4,(1,1))
+		sizer.Add(self.line0,(3,0),(1,2),wx.EXPAND,border=5)
+		sizer.Add(self.panel0,(2,0),(1,1),wx.ALIGN_CENTER_HORIZONTAL|wx.CENTER)
 		self.SetSizer(sizer)
 
 class ProbotixPanel(wx.Panel):
@@ -865,11 +871,11 @@ class SpinThread(thr.Thread):
 			print value, bin(value[1])[::-1], self.state, bin(value[1])[::-1][8]
 			if value[0] != 0:
 				XPSErrorHandler(self.socket,value[0],'GPIODigitalGet')
-			elif bin(value[1])[::-1][8] == '1':
+			elif format(value[1],"016b")[::-1][8] == '1':
 				self.state=1
-			elif bin(value[1])[::-1][9] == '0':
+			elif format(value[1],"016b")[::-1][9] == '0':
 				self.state=2
-			elif bin(value[1])[::-1][10] == 'b':
+			elif format(value[1],"016b")[::-1][10] == '0':
 				self.state=3
 			else:
 				print 'passed'
