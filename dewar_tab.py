@@ -206,13 +206,10 @@ class DewarWindow(wx.Panel):
 	# A panel to hold the dewar controls.
 	def __init__(self,*args,**kwargs):
 		super(DewarWindow,self).__init__(*args,**kwargs)
-		#self.info={'name':'button!'}
-		self.panel1=ProbotixPanel(self)
-		self.panel2=ProbotixPanel(self)
-		self.panel3=ProbotixPanel(self)
-		self.panel4=ProbotixPanel(self)
-		self.panel5=ProbotixPanel(self)
-		self.panel6=ProbotixPanel(self)
+		self.panel1=ProbotixPanel(self,name = 'mask')
+		self.panel2=ProbotixPanel(self,name = 'filter1')
+		self.panel3=ProbotixPanel(self,name = 'filter2')
+		self.panel4=ProbotixPanel(self,name = 'grism')
 		self.panel0=Emergency(self)
 		self.line0=wx.StaticLine(self,style=wx.LI_HORIZONTAL)
 		self.__DoLayout()
@@ -231,16 +228,20 @@ class DewarWindow(wx.Panel):
 class ProbotixPanel(wx.Panel):
 	def __init__(self,*args,**kwargs):
 		super(ProbotixPanel,self).__init__(*args,**kwargs)
-		print args
-		self.info={'name':'Button!','wheel1':[60,'grism1'],'wheel2':[60,'grism2'],'wheel3':[60,'grism3'],'wheel4':[60,'grism4'],'wheel5':[60,'grism5'],'wheel6':[60,'grism6'],'wheel7':[60,'grism7'],'wheel8':[60,'grism8']}
+		self.wheel=cfg[kwargs['name']]
+		self.name = self.wheel['name']
+		self.choices=[]
+		self.positions = {}
 
 		try:
-			self.choices=[self.info['wheel1'][1],self.info['wheel2'][1],self.info['wheel3'][1],self.info['wheel4'][1],self.info['wheel5'][1],self.info['wheel6'][1],self.info['wheel7'][1],self.info['wheel8'][1]]
-		except KeyError:
+			for i in range(8):
+				self.choices.append(self.wheel['pos'+str(i)])
+				self.positions[self.wheel['pos'+str(i)]]=str(i)
+		except:
 			self.choices=[]
 
 		try:
-			self.move=wx.Button(self,label='Move '+self.info['name'])
+			self.move=wx.Button(self,label='Move '+self.name)
 		except KeyError:
 			self.move=wx.Button(self,label='blank')		
 
@@ -255,6 +256,7 @@ class ProbotixPanel(wx.Panel):
 
 
 	def OnSelect(self,event):
+			print self.positions
 			pass
 
 	def __DoLayout(self):
@@ -854,29 +856,34 @@ class InfoThread(thr.Thread):
 
 
 class SpinThread(thr.Thread):
-	def __init__(self,socket,group):
+	'''A thread that monitors The Newport GPIO for a bit flip that indicates a motor needs to be stopped.
+	Inputs:	socket, group, bit, val.
+	
+	socket: The socket that will be used to connect to the Newport controller.
+	group: 	The group that contains the motor that is being monitored.
+	bit: 	Which bit to check from the GPIO return.
+	val:	What value indicates a motor has reached a slot.
+	slot:	How many slots away from the start position the target position is.
+	'''
+	def __init__(self,socket,group,bit,val,slot):
 		super(SpinThread,self).__init__()
-		# Defining the necessary information for the newport controller. 
 		self.socket=socket
 		self.group=group
+		self.bit=bit
+		self.val=val
+		self.slot=slot
 		self.state=0
+		
 
 	def run(self):
-		
 		time.sleep(1)
-		
 		while self.state == 0:
 			time.sleep(.15)
 			value = x.GPIODigitalGet(self.socket, 'GPIO4.DI')
-			print value, bin(value[1])[::-1], self.state, bin(value[1])[::-1][8]
 			if value[0] != 0:
 				XPSErrorHandler(self.socket,value[0],'GPIODigitalGet')
-			elif format(value[1],"016b")[::-1][8] == '1':
-				self.state=1
-			elif format(value[1],"016b")[::-1][9] == '0':
-				self.state=2
-			elif format(value[1],"016b")[::-1][10] == '0':
-				self.state=3
+			elif format(value[1],"016b")[::-1][self.bit] == self.val:
+				self.state = self.state+1
 			else:
 				print 'passed'
 			
