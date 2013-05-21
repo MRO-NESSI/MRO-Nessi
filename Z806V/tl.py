@@ -23,7 +23,7 @@ class TLabs:
     def __init__(self, port=0):
         """Build controller, and establish connection."""
         try:
-            self.__port = tlabs.ports[port]
+            self.__port = TLabs.ports[port]
         except:
             raise InvalidPortException()
         # Establish a connection to the KMtronic relay board
@@ -53,7 +53,10 @@ class TLabs:
             ch = self.ser.readline()
             if ch != '': 
                 break
-        return ch.encode('hex'), ch
+        ch = ch.encode('hex')
+        return [ch[i] + ch[i+1] for i in range(0,len(ch)-1,2)]
+    
+    
 
     def send_command(self, command):
         """Send a command to the controller.
@@ -61,7 +64,7 @@ class TLabs:
         returns the exit status, if the command returns one. Otherwise
         none.
         """
-        command = tlabs.commands[command]
+        command = TLabs.commands[command]
         self.ser.write(command[0])
         return self.read_exit_status() if command[1] else None
             
@@ -83,10 +86,10 @@ class TLabs:
         #convert distance in um to counts, make sure it is an integer.
         intcounts = int(distance / 0.02915111) #um per count
         #convert to hex
-        counts = pack('>L', intcounts)
+        counts = pack('<l', intcounts)
         if DEBUG: print counts
         #write move command
-        self.ser.write('\x48\x04\x06\x00\x50\x01\x01\x00' + counts)
+        self.ser.write('\x48\x04\x06\x00\xd0\x01\x00\x01' + counts)
         if DEBUG: print 'Start relative move by: ', intcounts, ' counts, ', distance, 'um.'
         #wait for completion command
         return self.read_exit_status()
