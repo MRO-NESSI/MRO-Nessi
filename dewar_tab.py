@@ -70,9 +70,9 @@ def XPSErrorHandler(socket,code,name):
 def Close():
 	'''This function closes the connections to the newport controller.'''
 	for i in range(len(open_sockets)):
-		x.TCP_CloseSocket(i)
+		x.TCP_CloseSocket(open_sockets[i])
 	for i in range(len(used_sockets)):
-		x.TCP_CloseSocket(i)
+		x.TCP_CloseSocket(used_sockets[i])
 	
 class KMirrorApp(wx.App):
 	'''The K-Mirror testing app.'''	
@@ -231,12 +231,32 @@ class ProbotixPanel(wx.Panel):
 		self.wheel=cfg[kwargs['name']]
 		self.name = self.wheel['name']
 		self.choices=[]
-		self.positions = {}
+		self.slots={}
+		self.position=0
+		self.Group=self.name
+		self.Positioner=self.Group+'.P1'
+		self.home=[0]
+		self.SocketID1=open_sockets.pop()
+		used_sockets.append(self.SocketID1)
+		Publisher().subscribe(self.update,(self.wheel['name']+'_state'))
+
+		self.GKill=x.GroupKill(self.SocketID1, self.Group)
+		if self.GKill[0] != 0:
+     			XPSErrorHandler(self.SocketID1, self.GKill[0], 'GroupKill')
+
+		self.GInit=x.GroupInitialize(self.SocketID1, self.Group)
+		if self.GInit[0] != 0:
+     			XPSErrorHandler(self.SocketID1, self.GInit[0], 'GroupInitialize')
+     
+		self.GHomeSearch=x.GroupHomeSearchAndRelativeMove(self.SocketID1, self.Group,self.home)
+		print self.GHomeSearch
+		if self.GHomeSearch[0] != 0:
+     			XPSErrorHandler(self.SocketID1, self.GHomeSearch[0], 'GroupHomeSearchAndRelativeMove')
 
 		try:
 			for i in range(8):
 				self.choices.append(self.wheel['pos'+str(i)])
-				self.positions[self.wheel['pos'+str(i)]]=str(i)
+				self.slots[self.wheel['pos'+str(i)]]=str(i)
 		except:
 			self.choices=[]
 
@@ -252,11 +272,11 @@ class ProbotixPanel(wx.Panel):
 		self.SetInitialSize()
 
 	def OnButton(self,event):
+			diff=8-self.position+self.slots['PUT THE SELECTED SLOT HERE']
 			pass
 
 
 	def OnSelect(self,event):
-			print self.positions
 			pass
 
 	def __DoLayout(self):
@@ -264,6 +284,10 @@ class ProbotixPanel(wx.Panel):
 			sizer.Add(self.option,(0,0))
 			sizer.Add(self.move,(1,0))
 			self.SetSizer(sizer)
+	
+	def update(self,wheel_state)
+		diff=wheel_state.data
+		self.position=(self.position+diff)%8
 
 class Emergency(wx.Panel):
 	'''The Emergency controller panel, which changes which allows for an emergency stop of all motor movement.  The functions of this panel are blocking, but this does not affect functionality as no other commands need to be sent simultaneously and doing so could cause problems.'''
@@ -920,7 +944,51 @@ class ProfileThread(thr.Thread):
 
 	def update(self,profile_state):
 		self.state=profile_state.data
+		
+
+class WheelThread(thr.Thread):
+	def __init__(self,socket,group,position,bit,val):
+		super(WheelThread,self).__init__()	
+		self.position=position
+		self.group=group
+		self.socket=socket
+		self.val=val
+		self.bit=bit
+		self.state=0
+
+	def run(self):
+		time.sleep(1)
+
+		while self.state < self.position-1:
+			time.sleep(.15)
+			value = x.GPIODigitalGet(self.socket, 'GPIO4.DI')
+			if value[0] != 0:
+				XPSErrorHandler(self.socket,value[0],'GPIODigitalGet')
+			elif format(value[1],"016b")[::-1][self.bit] == self.val:
+				time.sleep(1)
+				self.state = self.state+1
+			else:
+				print 'passed'
 			
+		while self.state != self.position:
+			time.sleep(.15)
+			value = x.GPIODigitalGet(self.socket, 'GPIO4.DI')
+			if value[0] != 0:
+				XPSErrorHandler(self.socket,value[0],'GPIODigitalGet')
+			elif format(value[1],"016b")[::-1][self.bit] == self.val:
+				self.state = self.state+1
+			else:
+				print 'passed'
+
+		self.stop=x.GroupSpinModeStop(self.socket, self.group, 800)
+		if self.stop[0] != 0:
+			XPSErrorHandler(self.socket, self.stop[0], 'GroupSpinModeStop')
+		
+		elif format(value[1],"016b")[::-1][self.bit] != self.val:		
+			print 'motion failed, home and then reinitiate move'
+
+		else:
+			Publisher().sendMessage((self.group+'_state'),self.state)
 		
 
 if __name__=='__main__':
