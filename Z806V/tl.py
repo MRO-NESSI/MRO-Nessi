@@ -1,29 +1,23 @@
 #!/usr/bin/env python
 import serial
-from struct import pack, unpack
-import sys
-
-from handlers import *
-
-DEBUG = True
+from struct import pack
 
 class TLabs:
     """Represents a Thorlabs TDC001 controller."""
+
+    #TX Header Info
+    _source     = '\x01'
+    _dest       = '\x50'
+    _dest_ord   = '\xd0'    #_dest | 0x80
+    _channel    = '\x01'
+    _chan_ident = '\x01\x00'
     
-    commands = { 
-        #COMMAND          #SIGNAL HEADER           #Has exit status
-        'Identify'     : ('\x23\x02\x00\x00\x50\x01',         False), 
-        'Home'         : ('\x43\x04\x01\x00\x50\x01',         True), 
-        'Status'       : ('\x90\x04\x01\x00\x50\x01',         True), 
-        'Move Absolute': ('\x48\x04\x06\x00\x50\x01\x01\x00', True),
-        'Move Relative': ('\x48\x04\x06\x00\x50\x01\x01\x00', True),
-    }
-    ports = {0: '/dev/ttyREI12', 1: '/dev/ttyREI34'}
+    _ports = {0: '/dev/ttyREI12', 1: '/dev/ttyREI34'}
 
     def __init__(self, port=0):
         """Build controller, and establish connection."""
         try:
-            self.__port = TLabs.ports[port]
+            self.__port = TLabs._ports[port]
         except:
             raise InvalidPortException()
         # Establish a connection to the KMtronic relay board
@@ -41,13 +35,9 @@ class TLabs:
         """Reads exit status from controller.
 
         Generic function to read from the serial port.
-        Reads untill an empty line is read.
+        Returns the first non-empty line
 
-        returns (hex, characters)
-        """
-        """
-        TODO: This only returns one line. It may need to be
-        examined
+        returns an array of bytes, little-endian.
         """
         while True:
             ch = self.ser.readline()
@@ -55,19 +45,38 @@ class TLabs:
                 break
         ch = ch.encode('hex')
         return [ch[i] + ch[i+1] for i in range(0,len(ch)-1,2)]
-    
-    
 
-    def send_command(self, command):
-        """Send a command to the controller.
-        
-        returns the exit status, if the command returns one. Otherwise
-        none.
+    def identify(self):
+        """Flash motor controller."""
         """
-        command = TLabs.commands[command]
-        self.ser.write(command[0])
-        return self.read_exit_status() if command[1] else None
-            
+        See MGMSG_MOD_IDENTIFY
+        Page 19 - APT_Communications_Protocol_Rev 6
+        """
+        tx = '\x23\x02\x00\x00' + TLabs._dest + TLabs._source
+        self.ser.write(tx)
+        return
+
+    def home(self):
+        """Home the motor."""
+        """
+        See MGMSG_MOT_MOVE_HOME
+        Page 50 - APT_Communications_Protocol_Rev 6
+        """
+        tx = '\x43\x04' + TLabs._channel + '\x00' + TLabs._dest + TLabs._source
+        self.ser.write(tx)
+        return self.read_exit_status()
+
+    def status(self):
+        """Returns the status of the motor."""
+        """
+        See MGMSG_MOT_REQ_DCSTATUSUPDATE
+        Page 91 - APT_Communications_Protocol_Rev 6
+        """
+        #TODO: Interpret this and return a dictionary, rather that... this shit.
+        tx = '\x90\x04' + TLabs._channel + '\x00' + TLabs._dest + TLabs._source
+        self.ser.write(tx)
+        return self.read_exit_status()
+
     def move_relative(self,distance=0):
         """Move the stage a relative distance.  
 
@@ -80,18 +89,17 @@ class TLabs:
           34,304 (encoder counts)/(revolution of lead screw) 
           29 (nm)/(encoder count)
         The command expects input in encoder counts.
+
+        See MGMSG_MOT_MOVE_RELATIVE
+        Page 51 - APT_Communications_Protocol_Rev 6
         """
-        #get current position to make sure move doesn't drive to limit
-        #TODO:IS THAT NECESSARY?
         #convert distance in um to counts, make sure it is an integer.
         intcounts = int(distance / 0.02915111) #um per count
         #convert to hex
         counts = pack('<l', intcounts)
-        if DEBUG: print counts
-        #write move command
-        self.ser.write('\x48\x04\x06\x00\xd0\x01\x00\x01' + counts)
-        if DEBUG: print 'Start relative move by: ', intcounts, ' counts, ', distance, 'um.'
-        #wait for completion command
+        tx = '\x48\x04\x06\x00' + TLabs._dest_ord + TLabs._source
+        tx = tx + TLabs._chan_ident + counts
+        self.ser.write(tx)
         return self.read_exit_status()
         
     def move_absolute(self,position=0):
@@ -106,14 +114,51 @@ class TLabs:
           34,304 (encoder counts)/(revolution of lead screw) 
           29 (nm)/(encoder count)
         The command expects input in encoder counts.
+
+        See MGMSG_MOT_MOVE_ABSOLUTE
+        Page 54 - APT_Communications_Protocol_Rev 6
         """
         #convert distance in um to counts, make sure it is an integer.
         intcounts = int(position / 0.02915111) #um per count
         #convert to hex
-        counts = pack('>L', intcounts)
-        if DEBUG: print counts
+        counts = pack('<l', intcounts)
         #write move command
-        self.ser.write('\x53\x04\x06\x00\x50\x01\x01\x00' + counts)
-        if DEBUG: print 'Start absolute move to: ', position, 'um.'
-        #wait for completion command
+        tx = '\x53\x04\x06\x00' + TLabs._dest_ord + TLabs._source
+        tx = tx + TLabs._chan_ident + counts
+        self.ser.write(tx)
         return self.read_exit_status()
+    
+class InvalidPortException(Exception):
+    def __init__(self, value = 'Port not valid'):
+        self.value = value
+    def __str__(self):
+        return repr(self.value)
+
+if __name__ == '__main__':
+    #Init Motors
+    m1 = TLabs(port=0)
+    m2 = TLabs(port=1)
+
+    #m1
+    print 'Test port 0...'
+    m1.identify()
+    print 'Port 0 is flashing...'
+    print 'Hit ENTER when confirmed...'
+    raw_input()
+    print 'm1 is homing...'
+    m1.home()
+    print 'Hit ENTER when confirmed...'
+    raw_input()
+
+    #m2
+    print 'Test port 1...'
+    m2.identify()
+    print 'Port 1 is flashing...'
+    print 'Hit ENTER when confirmed...'
+    raw_input()
+    print 'm2 is homing...'
+    m2.home()
+    print 'Hit ENTER when confirmed...'
+    raw_input()
+    
+    
