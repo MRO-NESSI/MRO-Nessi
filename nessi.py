@@ -13,45 +13,45 @@ __date__ = '2013'
 #http://eli.thegreenplace.net/2008/08/01/matplotlib-with-wxpython-guis/
 
 # General Modules
-import os, sys
-import random
-import time
-import pprint
-import cStringIO
+#import os, sys
+#import random
+#import time
+#import pprint
+#import cStringIO
 import wx
-import usb.core
-import usb.util
-import numpy as np
-import math
-from datetime import datetime
+#import usb.core
+#import usb.util
+#import numpy as np
+#import math
+#from datetime import datetime
 
 # Threading and Multiprocess
-import threading
-import subprocess
-import threadtools #module from wxPython Cookbook by Cody Precord
+#import threading
+#import subprocess
+#import threadtools #module from wxPython Cookbook by Cody Precord
 
 # Images
-import ds9
+#import ds9
 
 # Preferences for GUI
-import prefcontrol
+#import prefcontrol
 
 # Communicating between panels
 from wx.lib.pubsub import Publisher as pub
 
 # Plotting
-import matplotlib
-matplotlib.interactive( True )
-matplotlib.use( 'WXAgg' )
+#import matplotlib
+#matplotlib.interactive( True )
+#matplotlib.use( 'WXAgg' )
 
-from matplotlib.figure import Figure
-from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigCanvas, NavigationToolbar2WxAgg as NavigationToolbar
-import pylab
+#from matplotlib.figure import Figure
+#from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigCanvas, NavigationToolbar2WxAgg as NavigationToolbar
+#import pylab
 
 # Drivers and Custom Modules
-import FLI
-from guider import GuideThread, SeriesExpThread
-from driver_telescope import ScopeData
+#import FLI
+#from guider import GuideThread, SeriesExpThread
+#from driver_telescope import ScopeData
 
 #from wx.lib.stattext import GenStaticText
 #image manipulation
@@ -63,7 +63,7 @@ from driver_telescope import ScopeData
 #sys.path[0] = os.path.split(os.path.abspath(sys.path[0]))[0]
 #import all of the control libraries
 
-random.seed()
+#random.seed()
 
 DEBUG = False
 
