@@ -285,7 +285,7 @@ class ProbotixPanel(wx.Panel):
 			sizer.Add(self.move,(1,0))
 			self.SetSizer(sizer)
 	
-	def update(self,wheel_state)
+	def update(self,wheel_state):
 		diff=wheel_state.data
 		self.position=(self.position+diff)%8
 
