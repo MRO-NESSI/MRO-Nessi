@@ -1195,7 +1195,7 @@ class SchematicPanel(wx.Panel):
         # Attributes
         self.schematic = wx.StaticBitmap(self)
         self.schematic.SetFocus()
-        self.schematic.SetBitmap(wx.Bitmap('NESSI.png'))
+        self.schematic.SetBitmap(wx.Bitmap('media/nessi_fullimage.png'))
         
         # Layout
         self.__DoLayout()
@@ -1552,7 +1552,7 @@ class MainFrame(wx.Frame):
         nb.AddPage(page5, "Log")
 
         # Add icon
-        path = "nessi.png"
+        path = "media/nessi.png"
         icon = wx.Icon(path, wx.BITMAP_TYPE_PNG)
         self.SetIcon(icon)
         
