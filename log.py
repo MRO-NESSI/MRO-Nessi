@@ -1,8 +1,8 @@
 import wx
 
-class PageFive(wx.Panel):
+class LogPanel(wx.Panel):
     def __init__(self, parent, *args, **kwargs):
-        super(PageFive, self).__init__(parent)
+        super(LogPanel, self).__init__(parent)
         
         # Attributes
         self.logTxt = wx.StaticText(self, wx.ID_ANY, "Instrument Log:")

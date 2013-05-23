@@ -1,8 +1,8 @@
 import wx
 
-class PageTwo(wx.Panel):
+class KMirrorPanel(wx.Panel):
     def __init__(self, parent, *args, **kwargs):
-        super(PageTwo, self).__init__(parent)
+        super(KMirrorPanel, self).__init__(parent)
         
         # Attributes
         self.t = wx.StaticText(self, -1, "K-Mirror Control", (40,40))

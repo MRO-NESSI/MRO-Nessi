@@ -10,9 +10,9 @@ from kmirrorpanel import KmirrorPanel
 from maskpanel import MaskPanel
 from schematicpanel import SchematicPanel
 
-class PageOne(wx.Panel):
+class OverviewPanel(wx.Panel):
     def __init__(self, parent, *args, **kwargs):
-        super(PageOne, self).__init__(parent)
+        super(OverviewPanel, self).__init__(parent)
         
         # Attributes
         self.Schematic = SchematicPanel(self)

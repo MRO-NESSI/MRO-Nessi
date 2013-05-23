@@ -2,9 +2,9 @@ import prefcontrol
 import wx
 
 
-class PageFour(wx.Panel):
+class SettingsPanel(wx.Panel):
     def __init__(self, parent, *args, **kwargs):
-        super(PageFour, self).__init__(parent)
+        super(SettingsPanel, self).__init__(parent)
         
         # Attributes
                 

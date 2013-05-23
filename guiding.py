@@ -2,9 +2,9 @@ import wx
 
 from guidepanelsettings import GuidePanelSettings
 
-class PageThree(wx.Panel):
+class GuidingPanel(wx.Panel):
     def __init__(self, parent, *args, **kwargs):
-        super(PageThree, self).__init__(parent)
+        super(GuidingPanel, self).__init__(parent)
         
         # Attributes
         self.Guide = GuidePanelSettings(self)

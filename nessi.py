@@ -12,11 +12,11 @@ __date__ = '2013'
 import wx
 from wx.lib.pubsub import Publisher as pub
 
-from pageone import PageOne
-from pagetwo import PageTwo
-from pagethree import PageThree
-from pagefour import PageFour
-from pagefive import PageFive
+from overview import OverviewPanel
+from kmirror import KMirrorPanel
+from guiding import GuidingPanel
+from settings import SettingsPanel
+from log import LogPanel
 
 DEBUG = False
 
@@ -72,11 +72,11 @@ class MainNessiFrame(wx.Frame):
         nb = wx.Notebook(p, style=wx.NB_RIGHT)
 
         #Make tabs
-        page1 = PageOne(nb)
-        page2 = PageTwo(nb)
-        page3 = PageThree(nb)
-        page4 = PageFour(nb)
-        page5 = PageFive(nb)
+        page1 = OverviewPanel(nb)
+        page2 = KMirrorPanel(nb)
+        page3 = GuidingPanel(nb)
+        page4 = SettingsPanel(nb)
+        page5 = LogPanel(nb)
 
         #Add tabs to notebook
         nb.AddPage(page1, "Overview")
