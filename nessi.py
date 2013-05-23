@@ -2,68 +2,15 @@
 """
  Control software for NESSI
  
- author:       Luke Schmidt, Matt Napolitano
+ author:       Luke Schmidt, Matt Napolitano, Tyler Cecil
  author_email: lschmidt@nmt.edu
 """
 
-__author__ = 'Luke Schmidt, Matt Napolitano'
+__author__ = 'Luke Schmidt, Matt Napolitano, Tyler Cecil'
 __date__ = '2013'
 
-#Live update plotting of temps with matplot lib from code by Eli Bendersky
-#http://eli.thegreenplace.net/2008/08/01/matplotlib-with-wxpython-guis/
-
-# General Modules
-#import os, sys
-#import random
-#import time
-#import pprint
-#import cStringIO
 import wx
-#import usb.core
-#import usb.util
-#import numpy as np
-#import math
-#from datetime import datetime
-
-# Threading and Multiprocess
-#import threading
-#import subprocess
-#import threadtools #module from wxPython Cookbook by Cody Precord
-
-# Images
-#import ds9
-
-# Preferences for GUI
-#import prefcontrol
-
-# Communicating between panels
 from wx.lib.pubsub import Publisher as pub
-
-# Plotting
-#import matplotlib
-#matplotlib.interactive( True )
-#matplotlib.use( 'WXAgg' )
-
-#from matplotlib.figure import Figure
-#from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigCanvas, NavigationToolbar2WxAgg as NavigationToolbar
-#import pylab
-
-# Drivers and Custom Modules
-#import FLI
-#from guider import GuideThread, SeriesExpThread
-#from driver_telescope import ScopeData
-
-#from wx.lib.stattext import GenStaticText
-#image manipulation
-#import Image
-#import backend.pic as pic
-
-# Set the system path to the root directory of the Nessi set of libraries so we 
-# can import our library modules in a consistent manner.
-#sys.path[0] = os.path.split(os.path.abspath(sys.path[0]))[0]
-#import all of the control libraries
-
-#random.seed()
 
 from pageone import PageOne
 from pagetwo import PageTwo
@@ -71,11 +18,9 @@ from pagethree import PageThree
 from pagefour import PageFour
 from pagefive import PageFive
 
-
 DEBUG = False
 
 ################# Master Dictionary for Instrument State #######################
-
 keywords = {"OBSERVER"  : "Observer",
             "INST"      : "NESSI",
             "TELESCOP"  : "MRO 2.4m",
@@ -112,25 +57,28 @@ keywords = {"OBSERVER"  : "Observer",
             "CROTA2"    : 0.0
             }
                         
-class MainFrame(wx.Frame):
+class MainNessiFrame(wx.Frame):
+    """Main Window for Nessi Controll Software."""
+
     def __init__(self):
         wx.Frame.__init__(self, None, title="NESSI Controller", size=(850,875))
 
-        # Here we create a panel and a notebook on the panel
+        #Build Frame
         self.create_menus()
         self.CreateStatusBar()
         
+        #Init Notebook panel
         p = wx.Panel(self)
         nb = wx.Notebook(p, style=wx.NB_RIGHT)
 
-        # create the page windows as children of the notebook
+        #Make tabs
         page1 = PageOne(nb)
         page2 = PageTwo(nb)
         page3 = PageThree(nb)
         page4 = PageFour(nb)
         page5 = PageFive(nb)
 
-        # add the pages to the notebook with the label to show on the tab
+        #Add tabs to notebook
         nb.AddPage(page1, "Overview")
         nb.AddPage(page2, "K-Mirror")
         nb.AddPage(page3, "Guiding")
@@ -144,8 +92,7 @@ class MainFrame(wx.Frame):
         
         pub.subscribe(self.change_statusbar, 'change_statusbar')
         
-        # finally, put the notebook in a sizer for the panel to manage
-        # the layout
+        #Place notebook panel into a sizer
         sizer = wx.BoxSizer()
         sizer.Add(nb, 1, wx.EXPAND)
         p.SetSizer(sizer)
@@ -180,8 +127,7 @@ class MainFrame(wx.Frame):
 
         wx.AboutBox(info)
 
-
 if __name__ == "__main__":
     app = wx.App()
-    MainFrame().Show()
+    MainNessiFrame().Show()
     app.MainLoop()
