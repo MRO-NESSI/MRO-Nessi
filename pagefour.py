@@ -1,3 +1,6 @@
+import prefcontrol
+import wx
+
 
 class PageFour(wx.Panel):
     def __init__(self, parent, *args, **kwargs):

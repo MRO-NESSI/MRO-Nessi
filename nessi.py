@@ -65,6 +65,13 @@ from wx.lib.pubsub import Publisher as pub
 
 #random.seed()
 
+from pageone import PageOne
+from pagetwo import PageTwo
+from pagethree import PageThree
+from pagefour import PageFour
+from pagefive import PageFive
+
+
 DEBUG = False
 
 ################# Master Dictionary for Instrument State #######################

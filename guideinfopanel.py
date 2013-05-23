@@ -1,3 +1,8 @@
+import wx
+from wx.lib.pubsub import Publisher as pub
+
+from guideplotpanel import GuidePlotPanel
+
 class GuideInfoPanel(wx.Panel):
     """This panel shows information on the guide camera system."""
     def __init__(self, parent, *args, **kwargs):

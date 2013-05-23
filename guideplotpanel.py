@@ -1,3 +1,9 @@
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigCanvas
+import pylab
+import wx
+from wx.lib.pubsub import Publisher as pub
+
 class GuidePlotPanel(wx.Panel):
     def __init__(self, parent, *args, **kwargs):
         super(GuidePlotPanel, self).__init__(parent)

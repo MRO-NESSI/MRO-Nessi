@@ -1,3 +1,5 @@
+import wx
+
 class PageFive(wx.Panel):
     def __init__(self, parent, *args, **kwargs):
         super(PageFive, self).__init__(parent)

@@ -1,3 +1,5 @@
+import wx
+
 class FilterPanelOne(wx.Panel):
     """This panel controls the FLI filter wheel """
     def __init__(self, parent, *args, **kwargs):

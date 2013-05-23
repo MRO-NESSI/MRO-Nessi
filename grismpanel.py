@@ -1,3 +1,5 @@
+import wx
+
 class GrismPanel(wx.Panel):
     """This panel controls the Grism wheel"""
     def __init__(self, parent, *args, **kwargs):

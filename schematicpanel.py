@@ -1,3 +1,5 @@
+import wx
+
 class SchematicPanel(wx.Panel):
     """This panel shows the NESSI instrument diagram."""
     def __init__(self, parent, *args, **kwargs):

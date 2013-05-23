@@ -1,3 +1,5 @@
+import wx
+
 class KmirrorPanel(wx.Panel):
     """This panel shows information and controls relevant to the Kmirror.
 

@@ -1,3 +1,15 @@
+import wx
+
+from filterpanelone import FilterPanelOne
+from filterpaneltwo import FilterPanelTwo
+from focusREI12 import FocusREI12
+from focusREI34 import FocusREI34
+from grismpanel import GrismPanel
+from guideinfopanel import GuideInfoPanel
+from kmirrorpanel import KmirrorPanel
+from maskpanel import MaskPanel
+from schematicpanel import SchematicPanel
+
 class PageOne(wx.Panel):
     def __init__(self, parent, *args, **kwargs):
         super(PageOne, self).__init__(parent)

@@ -1,3 +1,5 @@
+import wx
+
 class MaskPanel(wx.Panel):
     """This panel controls the mask wheel."""
     def __init__(self, parent, *args, **kwargs):

@@ -1,3 +1,12 @@
+import ds9
+import threading
+import threadtools
+import time
+import usb.core
+import wx
+
+DEBUG = False
+
 class GuidePanelSettings(wx.Panel):
     """This panel controls the guide camera settings"""
     def __init__(self, parent, *args, **kwargs):

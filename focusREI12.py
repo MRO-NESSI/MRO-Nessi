@@ -1,3 +1,5 @@
+import wx
+
 class FocusREI12(wx.Panel):
     """This panel controls the position of REI1-2 """
     def __init__(self, parent, *args, **kwargs):
