@@ -1,8 +1,7 @@
 import wx
 
-from filterpanel import Wheel
-from focusREI12 import FocusREI12
-from focusREI34 import FocusREI34
+from filterpanel import FilterPanelOne
+from focusREI import FocusREIPanel
 from grismpanel import GrismPanel
 from guideinfopanel import GuideInfoPanel
 from kmirrorpanel import KmirrorPanel
@@ -23,8 +22,8 @@ class OverviewPanel(wx.Panel):
         self.Grism = Wheel(self, 'grism')
         self.Kmirror = KmirrorPanel(self)
         self.GuideInfo = GuideInfoPanel(self)
-        self.FocusREI12 = FocusREI12(self)
-        self.FocusREI34 = FocusREI34(self)
+        self.FocusREI12 = FocusREIPanel(self, 'Focus REI-1-2')
+        self.FocusREI34 = FocusREIPanel(self, 'Focus REI-3-4')
         
         self.__DoLayout()
 
