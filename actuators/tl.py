@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import serial
-from struct import pack
+from struct import pack, unpack
 
 class TLabs:
     """Represents a Thorlabs TDC001 controller."""
@@ -40,11 +40,11 @@ class TLabs:
         returns an array of bytes, little-endian.
         """
         while True:
-            ch = self.ser.readline()
-            if ch != '': 
+            l = self.ser.readline()
+            if l != '': 
                 break
-        ch = ch.encode('hex')
-        return [ch[i] + ch[i+1] for i in range(0,len(ch)-1,2)]
+        h = l.encode('hex')
+        return [h[i] + h[i+1] for i in range(0,len(h)-1,2)], l
 
     def identify(self):
         """Flash motor controller."""
@@ -75,7 +75,13 @@ class TLabs:
         #TODO: Interpret this and return a dictionary, rather that... this shit.
         tx = '\x90\x04' + TLabs._channel + '\x00' + TLabs._dest + TLabs._source
         self.ser.write(tx)
-        return self.read_exit_status()
+        stat_string = self.read_exit_status()[1]
+        stat = {}
+        stat['Chan Ident'], stat['Position'], stat['Velocity'], _ ,stat['Status Bits'] \
+            = unpack('<HlHHI', stat_string[6:])
+        stat['Position'] = stat['Position'] * 0.02915111
+        return stat
+
 
     def move_relative(self,distance=0):
         """Move the stage a relative distance.  
@@ -94,7 +100,7 @@ class TLabs:
         Page 51 - APT_Communications_Protocol_Rev 6
         """
         #convert distance in um to counts, make sure it is an integer.
-        intcounts = int(distance / 0.02915111) #um per count
+        intcounts = round(distance / 0.02915111) #um per count
         #convert to hex
         counts = pack('<l', intcounts)
         tx = '\x48\x04\x06\x00' + TLabs._dest_ord + TLabs._source
@@ -119,7 +125,7 @@ class TLabs:
         Page 54 - APT_Communications_Protocol_Rev 6
         """
         #convert distance in um to counts, make sure it is an integer.
-        intcounts = int(position / 0.02915111) #um per count
+        intcounts = round(position / 0.02915111) #um per count
         #convert to hex
         counts = pack('<l', intcounts)
         #write move command
