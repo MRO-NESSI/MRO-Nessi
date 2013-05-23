@@ -1,14 +1,16 @@
 import wx
 
-class FilterPanelTwo(wx.Panel):
+class FilterPanelOne(wx.Panel):
     """This panel controls the FLI filter wheel """
-    def __init__(self, parent, *args, **kwargs):
-        super(FilterPanelTwo, self).__init__(parent) 
+    def __init__(self, parent, name, filters):
+        super(FilterPanelOne, self).__init__(parent) 
         
         self.parent = parent
 
         # Attributes
-        self.filters = ['Open', 'Open', 'Open', 'Open']
+        self.filters = filters # ['J', 'H', 'K', 'Open']
+        
+        self.name = name
     
         self.curr_filter_text = wx.StaticText(self, label="Current Filter:")
         self.curr_filter = wx.StaticText(self, label="Checking...")
@@ -31,7 +33,7 @@ class FilterPanelTwo(wx.Panel):
         ## 1 |   select_button   |    filter_choice    |
         ##   +-------------------+---------------------+
     def __DoLayout(self):
-        sbox = wx.StaticBox(self, label="Filter Wheel Two")
+        sbox = wx.StaticBox(self, label=self.name)
         boxSizer = wx.StaticBoxSizer(sbox, wx.HORIZONTAL)
         sizer = wx.GridBagSizer(vgap=2, hgap=2)
 
@@ -61,4 +63,4 @@ class FilterPanelTwo(wx.Panel):
             self.curr_filter.SetLabel(self.filters[selected])
         except ValueError:
             pass
-
+        
