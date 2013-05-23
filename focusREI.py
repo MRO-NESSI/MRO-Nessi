@@ -1,12 +1,13 @@
 import wx
 
-class FocusREI12(wx.Panel):
+class FocusREIPanel(wx.Panel):
     """This panel controls the position of REI1-2 """
-    def __init__(self, parent, *args, **kwargs):
-        super(FocusREI12, self).__init__(parent) 
+    def __init__(self, parent, name):
+        super(FocusREIPanel, self).__init__(parent) 
         
         self.parent = parent
-
+    
+        self.name = name
         # Attributes    
         self.curr_pos_label = wx.StaticText(self, label="Position " + u'\u03bc' + "m:")
         self.curr_pos = wx.StaticText(self, label="...")
@@ -34,7 +35,7 @@ class FocusREI12(wx.Panel):
         ## 1 |     in_button     |      out_button     |
         ##   +-------------------+---------------------+
     def __DoLayout(self):
-        sbox = wx.StaticBox(self, label="Focus REI-1-2")
+        sbox = wx.StaticBox(self, label=self.name)
         boxSizer = wx.StaticBoxSizer(sbox, wx.HORIZONTAL)
         sizer = wx.GridBagSizer(vgap=2, hgap=2)
 
