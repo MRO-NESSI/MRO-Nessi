@@ -1,6 +1,6 @@
 import wx
 
-from filterpanel import FilterPanelOne
+from filterpanel import FilterWheelPanel
 from focusREI import FocusREIPanel
 from grismpanel import GrismPanel
 from guideinfopanel import GuideInfoPanel
@@ -14,12 +14,12 @@ class OverviewPanel(wx.Panel):
         
         # Attributes
         self.Schematic = SchematicPanel(self)
-        self.Mask = Wheel(self, 'mask')
+        self.Mask = FilterWheelPanel(self, 'mask')
 #        self.FilterOne = FilterPanelOne(self)
 #        self.FilterTwo = FilterPanelTwo(self)
-        self.FilterOne = Wheel(self, 'filter1')
-        self.FilterTwo = Wheel(self, 'filter2')
-        self.Grism = Wheel(self, 'grism')
+        self.FilterOne = FilterWheelPanel(self, 'filter1')
+        self.FilterTwo = FilterWheelPanel(self, 'filter2')
+        self.Grism = FilterWheelPanel(self, 'grism')
         self.Kmirror = KmirrorPanel(self)
         self.GuideInfo = GuideInfoPanel(self)
         self.FocusREI12 = FocusREIPanel(self, 'Focus REI-1-2')
