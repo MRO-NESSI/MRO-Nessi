@@ -3,10 +3,10 @@ from configobj import ConfigObj
 from wx.lib.pubsub import Publisher as pub
 cfg = ConfigObj('nessisettings.ini')
 
-class FilterWheelPanel(wx.Panel):
+class WheelPanel(wx.Panel):
     """This panel controls the FLI filter wheel """
     def __init__(self, parent, name):
-        super(FilterWheelPanel, self).__init__(parent) 
+        super(WheelPanel, self).__init__(parent) 
         
         self.parent = parent
         

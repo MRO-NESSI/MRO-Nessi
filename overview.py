@@ -1,11 +1,11 @@
 import wx
 
-from filterpanel import FilterWheelPanel
+from filterpanel import WheelPanel
 from focusREI import FocusREIPanel
-from grismpanel import GrismPanel
+#from grismpanel import GrismPanel
 from guideinfopanel import GuideInfoPanel
 from kmirrorpanel import KmirrorPanel
-from maskpanel import MaskPanel
+#from maskpanel import MaskPanel
 from schematicpanel import SchematicPanel
 
 class OverviewPanel(wx.Panel):
@@ -14,16 +14,16 @@ class OverviewPanel(wx.Panel):
         
         # Attributes
         self.Schematic = SchematicPanel(self)
-        self.Mask = FilterWheelPanel(self, 'mask')
+        self.Mask = WheelPanel(self, 'mask')
 #        self.FilterOne = FilterPanelOne(self)
 #        self.FilterTwo = FilterPanelTwo(self)
-        self.FilterOne = FilterWheelPanel(self, 'filter1')
-        self.FilterTwo = FilterWheelPanel(self, 'filter2')
-        self.Grism = FilterWheelPanel(self, 'grism')
+        self.FilterOne = WheelPanel(self, 'filter1')
+        self.FilterTwo = WheelPanel(self, 'filter2')
+        self.Grism = WheelPanel(self, 'grism')
         self.Kmirror = KmirrorPanel(self)
         self.GuideInfo = GuideInfoPanel(self)
-        self.FocusREI12 = FocusREIPanel(self, 'Focus REI-1-2', 0)
-        self.FocusREI34 = FocusREIPanel(self, 'Focus REI-3-4', 1)
+#        self.FocusREI12 = FocusREIPanel(self, 'Focus REI-1-2', 0)
+#        self.FocusREI34 = FocusREIPanel(self, 'Focus REI-3-4', 1)
         
         self.__DoLayout()
 
@@ -43,10 +43,10 @@ class OverviewPanel(wx.Panel):
         
         # Add controls to gridbag
         sizer.Add(self.Kmirror, pos=(0,0), span=(1,1), flag=wx.LEFT|wx.ALIGN_CENTER_VERTICAL)
-        sizer.Add(self.FocusREI12, pos=(0,1), span=(1,1), flag=wx.LEFT|wx.ALIGN_BOTTOM)
+#        sizer.Add(self.FocusREI12, pos=(0,1), span=(1,1), flag=wx.LEFT|wx.ALIGN_BOTTOM)
         sizer.Add(self.GuideInfo, pos=(1,2), span=(1,1), flag=wx.LEFT|wx.ALIGN_CENTER_VERTICAL)
         sizer.Add(self.Schematic, pos=(1,0), span=(6,2), flag=wx.LEFT|wx.ALIGN_CENTER_VERTICAL)
-        sizer.Add(self.FocusREI34, pos=(2,2), span=(1,1), flag=wx.LEFT|wx.ALIGN_BOTTOM)
+#        sizer.Add(self.FocusREI34, pos=(2,2), span=(1,1), flag=wx.LEFT|wx.ALIGN_BOTTOM)
         sizer.Add(self.Mask, pos=(3,2), span=(1,1), flag=wx.LEFT|wx.ALIGN_CENTER_VERTICAL)
         sizer.Add(self.FilterOne, pos=(4,2), span=(1,1), flag=wx.LEFT|wx.ALIGN_CENTER_VERTICAL)
         sizer.Add(self.FilterTwo, pos=(5,2), span=(1,1), flag=wx.LEFT|wx.ALIGN_CENTER_VERTICAL)
