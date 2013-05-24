@@ -1,6 +1,6 @@
 import wx
 
-from actuators.tl import TLabs
+from actuators.tl import TLabs, run_async
 
 class FocusREIPanel(wx.Panel):
     """This panel controls the position of REI1-2 """
@@ -33,11 +33,7 @@ class FocusREIPanel(wx.Panel):
         self.goto_button.Bind(wx.EVT_BUTTON, self.onGoto)
 
         #Init Motor
-        self.motor = TLabs(port)
-        self.motor.home()
-        position = self.motor.status()['Position']
-        self.curr_pos.SetLabel(str(position))
-
+        self.initMotor(port)
 
         ## Layout for this panel:
         ##
@@ -66,7 +62,8 @@ class FocusREIPanel(wx.Panel):
         sizer.SetMinSize(wx.Size(150, -1))
         boxSizer.Add(sizer, flag=wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_CENTER_HORIZONTAL)
         self.SetSizerAndFit(boxSizer)
-        
+
+    @run_async
     def onOut(self, event):
         self.curr_pos.SetLabel('...')
         step = self.step_size.GetValue() 
@@ -74,7 +71,7 @@ class FocusREIPanel(wx.Panel):
         position = self.motor.status()['Position']
         self.curr_pos.SetLabel(str(position))
 
-
+    @run_async
     def onIn(self, event):
         self.curr_pos.SetLabel('...')
         step = self.step_size.GetValue() 
@@ -82,6 +79,7 @@ class FocusREIPanel(wx.Panel):
         position = self.motor.status()['Position']
         self.curr_pos.SetLabel(str(position))
     
+    @run_async
     def onGoto(self, event):
         self.curr_pos.SetLabel('...')
         loc = self.goto_value.GetValue()
@@ -91,5 +89,12 @@ class FocusREIPanel(wx.Panel):
         except:
             wx.MessageBox('Please select a valid number!', 
                           'INVALID FOCUS POSITION!', wx.OK | wx.ICON_ERROR)
+        position = self.motor.status()['Position']
+        self.curr_pos.SetLabel(str(position))
+
+    @run_async
+    def initMotor(self, port):
+        self.motor = TLabs(port)
+        self.motor.home()
         position = self.motor.status()['Position']
         self.curr_pos.SetLabel(str(position))
