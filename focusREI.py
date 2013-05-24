@@ -1,13 +1,15 @@
 import wx
 
+from actuators.tl import TLabs
+
 class FocusREIPanel(wx.Panel):
     """This panel controls the position of REI1-2 """
-    def __init__(self, parent, name):
+    def __init__(self, parent, name, port):
         super(FocusREIPanel, self).__init__(parent) 
         
         self.parent = parent
-    
-        self.name = name
+        self.name = name        
+
         # Attributes    
         self.curr_pos_label = wx.StaticText(self, label="Position " + u'\u03bc' + "m:")
         self.curr_pos = wx.StaticText(self, label="...")
@@ -16,16 +18,27 @@ class FocusREIPanel(wx.Panel):
         self.goto_value = wx.TextCtrl(self, -1, '', size=(50,-1), style=wx.TE_NO_VSCROLL)
         
         self.in_button = wx.Button(self, label=u'\u21e6' + " In", size=(50,-1))
+        self.out_button = wx.Button(self, label="Out " + u'\u21e8', size=(50,-1))
+        
         self.step_size = wx.SpinCtrl(self, -1, '', (-1, -1),  (50, -1))
         self.step_size.SetRange(1, 1000)
         self.step_size.SetValue(0)
-        self.out_button = wx.Button(self, label="Out " + u'\u21e8', size=(50,-1))
         
         # Layout
         self.__DoLayout()
         
         # Event Handlers
-        
+        self.out_button.Bind(wx.EVT_BUTTON, self.onOut)
+        self.in_button.Bind(wx.EVT_BUTTON, self.onIn)
+        self.goto_button.Bind(wx.EVT_BUTTON, self.onGoto)
+
+        #Init Motor
+        self.motor = TLabs(port)
+        self.motor.home()
+        position = self.motor.status()['Position']
+        self.curr_pos.SetLabel(str(position))
+
+
         ## Layout for this panel:
         ##
         ##    0                      1
@@ -54,3 +67,29 @@ class FocusREIPanel(wx.Panel):
         boxSizer.Add(sizer, flag=wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_CENTER_HORIZONTAL)
         self.SetSizerAndFit(boxSizer)
         
+    def onOut(self, event):
+        self.curr_pos.SetLabel('...')
+        step = self.step_size.GetValue() 
+        self.motor.move_relative(step)
+        position = self.motor.status()['Position']
+        self.curr_pos.SetLabel(str(position))
+
+
+    def onIn(self, event):
+        self.curr_pos.SetLabel('...')
+        step = self.step_size.GetValue() 
+        self.motor.move_relative(-1*step)
+        position = self.motor.status()['Position']
+        self.curr_pos.SetLabel(str(position))
+    
+    def onGoto(self, event):
+        self.curr_pos.SetLabel('...')
+        loc = self.goto_value.GetValue()
+        try:
+            loc = int(loc)
+            self.motor.move_absolute(loc)        
+        except:
+            wx.MessageBox('Please select a valid number!', 
+                          'INVALID FOCUS POSITION!', wx.OK | wx.ICON_ERROR)
+        position = self.motor.status()['Position']
+        self.curr_pos.SetLabel(str(position))

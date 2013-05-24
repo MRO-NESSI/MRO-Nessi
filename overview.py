@@ -22,8 +22,8 @@ class OverviewPanel(wx.Panel):
         self.Grism = FilterWheelPanel(self, 'grism')
         self.Kmirror = KmirrorPanel(self)
         self.GuideInfo = GuideInfoPanel(self)
-        self.FocusREI12 = FocusREIPanel(self, 'Focus REI-1-2')
-        self.FocusREI34 = FocusREIPanel(self, 'Focus REI-3-4')
+        self.FocusREI12 = FocusREIPanel(self, 'Focus REI-1-2', 0)
+        self.FocusREI34 = FocusREIPanel(self, 'Focus REI-3-4', 1)
         
         self.__DoLayout()
 
