@@ -1,6 +1,41 @@
 #!/usr/bin/env python
 import serial
 from struct import pack, unpack
+from threading import Lock
+
+def run_async(func):
+    """
+    run_async(func)
+    function decorator, intended to make "func" run in a separate
+    thread (asynchronously).
+    Returns the created Thread object
+
+    E.g.:
+    @run_async
+    def task1():
+    do_something
+
+    @run_async
+    def task2():
+    do_something_too
+
+    t1 = task1()
+    t2 = task2()
+    ...
+    t1.join()
+    t2.join()
+    """
+    from threading import Thread
+    from functools import wraps
+
+    @wraps(func)
+    def async_func(*args, **kwargs):
+        func_hl = Thread(target = func, args = args, kwargs = kwargs)
+        func_hl.start()
+        return func_hl
+
+    return async_func
+
 
 class TLabs:
     """Represents a Thorlabs TDC001 controller."""
@@ -26,6 +61,7 @@ class TLabs:
                                  parity=serial.PARITY_NONE,
                                  stopbits=serial.STOPBITS_ONE,
                                  timeout=1, rtscts=True)
+        self.lock = Lock()
         
     def __del__(self):
         """Perform cleanup operations."""
@@ -55,16 +91,17 @@ class TLabs:
         tx = '\x23\x02\x00\x00' + TLabs._dest + TLabs._source
         self.ser.write(tx)
         return
-
+    
     def home(self):
         """Home the motor."""
         """
         See MGMSG_MOT_MOVE_HOME
         Page 50 - APT_Communications_Protocol_Rev 6
         """
-        tx = '\x43\x04' + TLabs._channel + '\x00' + TLabs._dest + TLabs._source
-        self.ser.write(tx)
-        return self.read_exit_status()
+        with self.lock:
+            tx = '\x43\x04' + TLabs._channel + '\x00' + TLabs._dest + TLabs._source
+            self.ser.write(tx)
+            return self.read_exit_status()
 
     def status(self):
         """Returns the status of the motor."""
@@ -72,16 +109,15 @@ class TLabs:
         See MGMSG_MOT_REQ_DCSTATUSUPDATE
         Page 91 - APT_Communications_Protocol_Rev 6
         """
-        #TODO: Interpret this and return a dictionary, rather that... this shit.
-        tx = '\x90\x04' + TLabs._channel + '\x00' + TLabs._dest + TLabs._source
-        self.ser.write(tx)
-        stat_string = self.read_exit_status()[1]
-        stat = {}
-        stat['Chan Ident'], stat['Position'], stat['Velocity'], _ ,stat['Status Bits'] \
-            = unpack('<HlHHI', stat_string[6:])
-        stat['Position'] = stat['Position'] * 0.02915111
-        return stat
-
+        with self.lock:
+            tx = '\x90\x04' + TLabs._channel + '\x00' + TLabs._dest + TLabs._source
+            self.ser.write(tx)
+            stat_string = self.read_exit_status()[1]
+            stat = {}
+            stat['Chan Ident'], stat['Position'], stat['Velocity'], _ ,stat['Status Bits'] \
+                = unpack('<HlHHI', stat_string[6:])
+            stat['Position'] = stat['Position'] * 0.02915111
+            return stat
 
     def move_relative(self,distance=0):
         """Move the stage a relative distance.  
@@ -99,15 +135,16 @@ class TLabs:
         See MGMSG_MOT_MOVE_RELATIVE
         Page 51 - APT_Communications_Protocol_Rev 6
         """
+        with self.lock:
         #convert distance in um to counts, make sure it is an integer.
-        intcounts = round(distance / 0.02915111) #um per count
+            intcounts = round(distance / 0.02915111) #um per count
         #convert to hex
-        counts = pack('<l', intcounts)
-        tx = '\x48\x04\x06\x00' + TLabs._dest_ord + TLabs._source
-        tx = tx + TLabs._chan_ident + counts
-        self.ser.write(tx)
-        return self.read_exit_status()
-        
+            counts = pack('<l', intcounts)
+            tx = '\x48\x04\x06\x00' + TLabs._dest_ord + TLabs._source
+            tx = tx + TLabs._chan_ident + counts
+            self.ser.write(tx)
+            return self.read_exit_status()
+
     def move_absolute(self,position=0):
         """Move the stage an absolute position.
 
@@ -124,15 +161,16 @@ class TLabs:
         See MGMSG_MOT_MOVE_ABSOLUTE
         Page 54 - APT_Communications_Protocol_Rev 6
         """
+        with self.lock:
         #convert distance in um to counts, make sure it is an integer.
-        intcounts = round(position / 0.02915111) #um per count
+            intcounts = round(position / 0.02915111) #um per count
         #convert to hex
-        counts = pack('<l', intcounts)
+            counts = pack('<l', intcounts)
         #write move command
-        tx = '\x53\x04\x06\x00' + TLabs._dest_ord + TLabs._source
-        tx = tx + TLabs._chan_ident + counts
-        self.ser.write(tx)
-        return self.read_exit_status()
+            tx = '\x53\x04\x06\x00' + TLabs._dest_ord + TLabs._source
+            tx = tx + TLabs._chan_ident + counts
+            self.ser.write(tx)
+            return self.read_exit_status()
     
 class InvalidPortException(Exception):
     def __init__(self, value = 'Port not valid'):
