@@ -1,4 +1,5 @@
 import wx
+from wx.lib.pubsub import Publisher as pub
 
 class LogPanel(wx.Panel):
     def __init__(self, parent, *args, **kwargs):
@@ -15,8 +16,12 @@ class LogPanel(wx.Panel):
         self.guidelogTxt = wx.StaticText(self, wx.ID_ANY, "Guiding Log:")
         self.guidelog = wx.TextCtrl(self, -1, size=(-1,130), style=wx.TE_MULTILINE|wx.TE_READONLY)
         self.guidelog.SetBackgroundColour('#B0D6B0')
+
         # Layout       
         self.__DoLayout()
+
+        #Listen for logevents
+        pub.subscribe(self.logevent, "logevent")
 
     def __DoLayout(self):
         mainSizer = wx.BoxSizer(wx.VERTICAL)
@@ -39,6 +44,11 @@ class LogPanel(wx.Panel):
         mainSizer.Add(guideSizer, 0, wx.EXPAND|wx.ALL, 5)
         
         self.SetSizer(mainSizer)
+
+    def logevent(self, msg):
+        print msg
+        pass
+"""
 
     def open_log(self):
         logtime = time.strftime("%a%d%b%Y-%H:%M:%S", time.gmtime())
@@ -71,3 +81,4 @@ class LogPanel(wx.Panel):
         dedented_text = textwrap.dedent(string).strip()
         return textwrap.fill(dedented_text, initial_indent='', subsequent_indent='    ', width=80)
 
+"""
