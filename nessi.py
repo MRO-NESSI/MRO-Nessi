@@ -13,10 +13,10 @@ import wx
 from wx.lib.pubsub import Publisher as pub
 
 from overviewtab.overview import OverviewPanel
-from kmirror import KMirrorPanel
-from guiding import GuidingPanel
-from settings import SettingsPanel
-from log import LogPanel
+from kmirrortab.kmirror import KMirrorPanel
+from guidepaneltab.guiding import GuidingPanel
+from settingstab.settings import SettingsPanel
+from logtab.log import LogPanel
 
 DEBUG = False
 
