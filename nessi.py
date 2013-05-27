@@ -9,6 +9,7 @@
 __author__ = 'Luke Schmidt, Matt Napolitano, Tyler Cecil'
 __date__ = '2013'
 
+import sys
 import wx
 from wx.lib.pubsub import Publisher as pub
 
@@ -62,6 +63,9 @@ class MainNessiFrame(wx.Frame):
 
     def __init__(self):
         wx.Frame.__init__(self, None, title="NESSI Controller", size=(850,875))
+        
+        #add nessi package to path
+        sys.path.append("./")
 
         #Build Frame
         self.create_menus()
