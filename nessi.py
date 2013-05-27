@@ -12,7 +12,7 @@ __date__ = '2013'
 import wx
 from wx.lib.pubsub import Publisher as pub
 
-from overview import OverviewPanel
+from overviewtab.overview import OverviewPanel
 from kmirror import KMirrorPanel
 from guiding import GuidingPanel
 from settings import SettingsPanel
