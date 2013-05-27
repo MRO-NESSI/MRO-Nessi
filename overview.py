@@ -8,10 +8,12 @@ from kmirrorpanel import KmirrorPanel
 #from maskpanel import MaskPanel
 from schematicpanel import SchematicPanel
 
-class OverviewPanel(wx.Panel):
+class OverviewPanel(wx.ScrolledWindow):
     def __init__(self, parent, *args, **kwargs):
         super(OverviewPanel, self).__init__(parent)
         
+        self.SetScrollbars(20,20,55,40)
+
         # Attributes
         self.Schematic = SchematicPanel(self)
         self.Mask = WheelPanel(self, 'mask')
