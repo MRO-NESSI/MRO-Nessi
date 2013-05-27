@@ -9,14 +9,15 @@
 __author__ = 'Luke Schmidt, Matt Napolitano, Tyler Cecil'
 __date__ = '2013'
 
+import sys
 import wx
 from wx.lib.pubsub import Publisher as pub
 
-from overview import OverviewPanel
-from kmirror import KMirrorPanel
-from guiding import GuidingPanel
-from settings import SettingsPanel
-from log import LogPanel
+from overviewtab.overview import OverviewPanel
+from kmirrortab.kmirror import KMirrorPanel
+from guidepaneltab.guiding import GuidingPanel
+from settingstab.settings import SettingsPanel
+from logtab.log import LogPanel
 
 DEBUG = False
 
@@ -62,6 +63,9 @@ class MainNessiFrame(wx.Frame):
 
     def __init__(self):
         wx.Frame.__init__(self, None, title="NESSI Controller", size=(850,875))
+        
+        #add nessi package to path
+        sys.path.append("./")
 
         #Build Frame
         self.create_menus()
