@@ -65,6 +65,8 @@ class FocusREIPanel(wx.Panel):
 
     @run_async
     def onOut(self, event):
+        from nessi import logevent
+        logevent(self.name, 'FOCUSOUT', '', 'THING!')
         self.curr_pos.SetLabel('...')
         step = self.step_size.GetValue() 
         self.motor.move_relative(step)

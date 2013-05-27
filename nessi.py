@@ -10,6 +10,7 @@ __author__ = 'Luke Schmidt, Matt Napolitano, Tyler Cecil'
 __date__ = '2013'
 
 import sys
+import time
 import wx
 from wx.lib.pubsub import Publisher as pub
 
@@ -100,6 +101,7 @@ class MainNessiFrame(wx.Frame):
         sizer = wx.BoxSizer()
         sizer.Add(nb, 1, wx.EXPAND)
         p.SetSizer(sizer)
+        pub.sendMessage("logevent", ("THIS IS A LOG EVENT!", 10))
         
     def change_statusbar(self, msg):
         self.SetStatusText(msg.data)
@@ -127,9 +129,19 @@ class MainNessiFrame(wx.Frame):
         info.SetName('NESSI Controller')
         info.SetVersion('0.1')
         info.SetDescription('NESSI Controller is an interface to the New Mexico Tech Extrasolar Spectroscopic Survey Instrument. Email lschmidt@nmt.edu with questions.')
-        info.SetCopyright('(C) 2013 Luke Schmidt, Matt Napolitano, NMT/MRO')
+        info.SetCopyright('(C) 2013 Luke Schmidt, Matt Napolitano, Tyler Cecil, NMT/MRO')
 
         wx.AboutBox(info)
+
+def logevent(component, event, status, msg):
+    event = {
+        'component':component, 
+        'event'    :    event, 
+        'status'   :   status, 
+        'msg'      :      msg
+        }
+    event['time'] = time.strftime("%b.%d.%Y-%H:%M:%S")
+    pub.sendMessage("logevent", event)
 
 if __name__ == "__main__":
     app = wx.App()
