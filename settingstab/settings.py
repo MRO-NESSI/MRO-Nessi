@@ -6,8 +6,7 @@ class SettingsPanel(wx.Panel):
     def __init__(self, parent, *args, **kwargs):
         super(SettingsPanel, self).__init__(parent)
         
-        # Attributes
-                
+        # Attributes                
         self.scopeLbl = wx.StaticText(self, wx.ID_ANY, "Telescope Server:")
         self.scopeTxt = wx.TextCtrl(self, wx.ID_ANY, "")
         self.scopeTxt.Disable()
@@ -37,10 +36,21 @@ class SettingsPanel(wx.Panel):
         self.observerTxt.Disable()
         
         self.editbtn = wx.Button(self, label="Edit")
-        self.editadvbtn = wx.Button(self, label="Advanced")
+        self.editadvbtn = wx.Button(self, label="Advanced Edit")
         self.savebtn = wx.Button(self, label="Save")
+
+        #[(widget, <bool> advanced?)]
+        self.widgets = [
+            (self.scopeTxt,       True ),
+            (self.scopeportTxt,   True ),
+            (self.savefolderTxt,  False),
+            (self.instportTxt,    False),
+            (self.pixelscalexTxt, False),
+            (self.pixelscaleyTxt, False),
+            (self.observerTxt,    False)
+            ]
         
-        self.widgets = [self.savefolderTxt, self.instportTxt, self.pixelscalexTxt, self.pixelscaleyTxt, self.observerTxt]
+#        self.widgets = [self.savefolderTxt, self.instportTxt, self.pixelscalexTxt, self.pixelscaleyTxt, self.observerTxt]
         self.advwidgets = [self.scopeTxt, self.scopeportTxt, self.savefolderTxt, self.instportTxt, self.pixelscalexTxt, self.pixelscaleyTxt, self.observerTxt]
         
         # Layout
@@ -50,6 +60,10 @@ class SettingsPanel(wx.Panel):
         self.Bind(wx.EVT_BUTTON, self.editPreferences, self.editbtn)
         self.Bind(wx.EVT_BUTTON, self.editAdvPreferences, self.editadvbtn)
         self.Bind(wx.EVT_BUTTON, self.savePreferences, self.savebtn)
+
+        # load preferences
+        self.loadPreferences()
+
    
     def __DoLayout(self):
         mainSizer = wx.BoxSizer(wx.VERTICAL)
@@ -79,8 +93,6 @@ class SettingsPanel(wx.Panel):
         self.SetSizer(mainSizer)
  
         # ---------------------------------------------------------------------
-        # load preferences
-        self.loadPreferences()
  
     #----------------------------------------------------------------------
     def loadPreferences(self):
@@ -108,13 +120,16 @@ class SettingsPanel(wx.Panel):
     def editPreferences(self, event):
         """Allow a user to edit the preferences"""
         for widget in self.widgets:
-            widget.Enable()
+            if widget[1]:
+                widget[0].Disable()
+            else:
+                widget[0].Enable()
             
     #----------------------------------------------------------------------
     def editAdvPreferences(self, event):
         """Allow an admin to edit the preferences"""
-        for widget in self.advwidgets:
-            widget.Enable()        
+        for widget in self.widgets:
+            widget[0].Enable()        
         
     #----------------------------------------------------------------------
     def savePreferences(self, event):
