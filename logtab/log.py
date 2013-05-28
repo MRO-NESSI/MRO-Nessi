@@ -66,7 +66,12 @@ class LogPanel(wx.Panel):
         msg = msg.data
         log_msg = []
         log_msg.append('['+msg['time']+'] '+msg['component']+':'+msg['event'])
-        log_msg.append('\tSTATUS: '+msg['status']+'\n\tINFO: '+msg['msg'])
+        log_msg.append('')
+        if msg['status']:
+            log_msg[1] += '\tSTATUS: '+msg['status']
+        if msg['msg']:
+            if msg['status']: log_msg[1] += '\n'
+            log_msg[1] += '\tINFO: '+msg['msg']
         self.log_evt(log_msg)
 
 def logevent(component, event, status, msg):
@@ -78,7 +83,6 @@ def logevent(component, event, status, msg):
         }
     event['time'] = time.strftime("%b.%d.%Y-%H:%M:%S")
     pub.sendMessage("logevent", event)
-
 
 """
 
