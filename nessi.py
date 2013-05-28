@@ -9,6 +9,7 @@
 __author__ = 'Luke Schmidt, Matt Napolitano, Tyler Cecil'
 __date__ = '2013'
 
+from random import randint
 import sys
 import time
 import wx
@@ -70,7 +71,7 @@ class MainNessiFrame(wx.Frame):
 
         #Build Frame
         self.create_menus()
-        self.CreateStatusBar()
+        self.statusbar=self.CreateStatusBar()
         
         #Init Notebook panel
         p = wx.Panel(self)
@@ -101,10 +102,12 @@ class MainNessiFrame(wx.Frame):
         sizer = wx.BoxSizer()
         sizer.Add(nb, 1, wx.EXPAND)
         p.SetSizer(sizer)
-        pub.sendMessage("logevent", ("THIS IS A LOG EVENT!", 10))
-        
+
+        self.statusbar.SetStatusText("Welcome to NESSI!")
+
     def change_statusbar(self, msg):
-        self.SetStatusText(msg.data)
+        print msg.data
+        self.statusbar.SetStatusText(msg.data)
         
     def create_menus(self):
         menuBar = wx.MenuBar()
@@ -132,16 +135,6 @@ class MainNessiFrame(wx.Frame):
         info.SetCopyright('(C) 2013 Luke Schmidt, Matt Napolitano, Tyler Cecil, NMT/MRO')
 
         wx.AboutBox(info)
-
-def logevent(component, event, status, msg):
-    event = {
-        'component':component, 
-        'event'    :    event, 
-        'status'   :   status, 
-        'msg'      :      msg
-        }
-    event['time'] = time.strftime("%b.%d.%Y-%H:%M:%S")
-    pub.sendMessage("logevent", event)
 
 if __name__ == "__main__":
     app = wx.App()

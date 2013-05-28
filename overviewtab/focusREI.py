@@ -1,6 +1,8 @@
 import wx
 
 from actuators.tl import TLabs, run_async
+from logtab.log import logevent
+
 
 class FocusREIPanel(wx.Panel):
     """This panel controls the position of REI1-2 """
@@ -65,38 +67,51 @@ class FocusREIPanel(wx.Panel):
 
     @run_async
     def onOut(self, event):
-        from nessi import logevent
-        logevent(self.name, 'FOCUSOUT', '', 'THING!')
-        self.curr_pos.SetLabel('...')
+        wx.CallAfter(self.curr_pos.SetLabel, '...')
         step = self.step_size.GetValue() 
+        wx.CallAfter(logevent, self.name, 'Start Focus-Out', 
+                     'position -> %s \t step -> %s' % (self.curr_pos.GetLabel(), step), None)
         self.motor.move_relative(step)
         position = self.motor.status()['Position']
-        self.curr_pos.SetLabel(str(position))
+        wx.CallAfter(logevent, self.name, 'Finished Focus-Out', 
+                     'position -> %f' % position, '')
+        wx.CallAfter(self.curr_pos.SetLabel,str(position))
 
     @run_async
     def onIn(self, event):
-        self.curr_pos.SetLabel('...')
+        wx.CallAfter(self.curr_pos.SetLabel, '...')
         step = self.step_size.GetValue() 
+        wx.CallAfter(logevent, self.name, 'Start Focus-In', 
+                     'position -> %s \t step -> %s' % (self.curr_pos.GetLabel(), step), None)
         self.motor.move_relative(-1*step)
         position = self.motor.status()['Position']
-        self.curr_pos.SetLabel(str(position))
+        wx.CallAfter(logevent, self.name, 'Finished Focus-In', 
+                     'position -> %f' % position, '')
+        wx.CallAfter(self.curr_pos.SetLabel, str(position))
     
     @run_async
     def onGoto(self, event):
-        self.curr_pos.SetLabel('...')
+        wx.CallAfter(self.curr_pos.SetLabel, '...')
         loc = self.goto_value.GetValue()
+        wx.CallAfter(logevent, self.name, 'Start Focus-To', 
+                     'current possition-> %s\tdestination -> %s' % (self.curr_pos.GetLabel(), loc), '')
         try:
-            loc = int(loc)
+            loc = float(loc)
             self.motor.move_absolute(loc)        
         except:
-            wx.MessageBox('Please select a valid number!', 
+            wx.CallAfter(wx.MessageBox,'Please select a valid number!', 
                           'INVALID FOCUS POSITION!', wx.OK | wx.ICON_ERROR)
+            wx.CallAfter(logevent, self.name, 'Focus-To ERROR', 
+                         '',  'INVALID DESTINATION!')
+
         position = self.motor.status()['Position']
-        self.curr_pos.SetLabel(str(position))
+        wx.CallAfter(logevent, self.name, 'End Focus-To', 
+                     'position -> %f' % position, '')
+        wx.CallAfter(self.curr_pos.SetLabel, str(position))
 
     @run_async
     def initMotor(self, port):
         self.motor = TLabs(port)
         self.motor.home()
         position = self.motor.status()['Position']
-        self.curr_pos.SetLabel(str(position))
+        wx.CallAfter(self.curr_pos.SetLabel, str(position))
