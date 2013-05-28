@@ -19,6 +19,7 @@ from kmirrortab.kmirror import KMirrorPanel
 from guidepaneltab.guiding import GuidingPanel
 from settingstab.settings import SettingsPanel
 from logtab.log import LogPanel
+from emergency import EmergencyPanel
 
 DEBUG = False
 
@@ -82,6 +83,7 @@ class MainNessiFrame(wx.Frame):
         page3 = GuidingPanel(nb)
         page4 = SettingsPanel(nb)
         page5 = LogPanel(nb)
+        page6 = EmergencyPanel(nb)
 
         #Add tabs to notebook
         nb.AddPage(page1, "Overview")
@@ -89,6 +91,7 @@ class MainNessiFrame(wx.Frame):
         nb.AddPage(page3, "Guiding")
         nb.AddPage(page4, "Settings")
         nb.AddPage(page5, "Log")
+        nb.AddPage(page6, "Panic")
 
         # Add icon
         path = "media/nessi.png"
@@ -101,9 +104,9 @@ class MainNessiFrame(wx.Frame):
         sizer = wx.BoxSizer()
         sizer.Add(nb, 1, wx.EXPAND)
         p.SetSizer(sizer)
-        pub.sendMessage("logevent", ("THIS IS A LOG EVENT!", 10))
         
     def change_statusbar(self, msg):
+        print 'I did a very cool thing'
         self.SetStatusText(msg.data)
         
     def create_menus(self):
@@ -132,16 +135,6 @@ class MainNessiFrame(wx.Frame):
         info.SetCopyright('(C) 2013 Luke Schmidt, Matt Napolitano, Tyler Cecil, NMT/MRO')
 
         wx.AboutBox(info)
-
-def logevent(component, event, status, msg):
-    event = {
-        'component':component, 
-        'event'    :    event, 
-        'status'   :   status, 
-        'msg'      :      msg
-        }
-    event['time'] = time.strftime("%b.%d.%Y-%H:%M:%S")
-    pub.sendMessage("logevent", event)
 
 if __name__ == "__main__":
     app = wx.App()

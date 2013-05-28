@@ -1,10 +1,11 @@
+import time
 import wx
 from wx.lib.pubsub import Publisher as pub
 
 class LogPanel(wx.Panel):
     def __init__(self, parent, *args, **kwargs):
         super(LogPanel, self).__init__(parent)
-        
+
         # Attributes
         self.logTxt = wx.StaticText(self, wx.ID_ANY, "Instrument Log:")
         self.log = wx.TextCtrl(self, -1, size=(-1,130), style=wx.TE_MULTILINE|wx.TE_READONLY)
@@ -21,7 +22,7 @@ class LogPanel(wx.Panel):
         self.__DoLayout()
 
         #Listen for logevents
-        pub.subscribe(self.logevent, "logevent")
+        pub.subscribe(self.recieve_event, "logevent")
 
     def __DoLayout(self):
         mainSizer = wx.BoxSizer(wx.VERTICAL)
@@ -45,9 +46,40 @@ class LogPanel(wx.Panel):
         
         self.SetSizer(mainSizer)
 
-    def logevent(self, msg):
-        print msg
-        pass
+
+    def log_evt(self, msg):
+        self.log.AppendText(msg[0] + '\n' + msg[1] + '\n')
+        #self.write_log(str(datetime.utcnow()) + '  ' + msg.data)
+        pub.sendMessage('change_statusbar', msg[0])
+
+    def write_log(self, note):
+        #insert newline every 80 characters
+        nlnote = self.insert_newlines(note)
+        self.logfile.write('\n' + nlnote + '\n')
+
+    def insert_newlines(self, string):
+        dedented_text = textwrap.dedent(string).strip()
+        return textwrap.fill(dedented_text, initial_indent='', subsequent_indent='    ', width=80)
+
+
+    def recieve_event(self, msg):
+        msg = msg.data
+        log_msg = []
+        log_msg.append('['+msg['time']+'] '+msg['component']+':'+msg['event'])
+        log_msg.append('\tSTATUS: '+msg['status']+'\n\tINFO: '+msg['msg'])
+        self.log_evt(log_msg)
+
+def logevent(component, event, status, msg):
+    event = {
+        'component':component, 
+        'event'    :    event, 
+        'status'   :   status, 
+        'msg'      :      msg
+        }
+    event['time'] = time.strftime("%b.%d.%Y-%H:%M:%S")
+    pub.sendMessage("logevent", event)
+
+
 """
 
     def open_log(self):
@@ -65,20 +97,4 @@ class LogPanel(wx.Panel):
         self.log.AppendText(str(datetime.utcnow()) + '\n        ' + note + '\n\n')
         self.write_log(str(datetime.utcnow()) + '  ' + note)
         wx.TextCtrl.Clear(self.obs_log)
-        
-    def log_evt(self, msg):
-        self.log.AppendText(str(datetime.utcnow()) + '\n        ' + msg.data + '\n')
-        self.write_log(str(datetime.utcnow()) + '  ' + msg.data)
-        self.parent.SetStatusText(msg.data)
-    
-    
-    def write_log(self, note):
-        #insert newline every 80 characters
-        nlnote = self.insert_newlines(note)
-        self.logfile.write('\n' + nlnote + '\n')
-
-    def insert_newlines(self, string):
-        dedented_text = textwrap.dedent(string).strip()
-        return textwrap.fill(dedented_text, initial_indent='', subsequent_indent='    ', width=80)
-
 """
