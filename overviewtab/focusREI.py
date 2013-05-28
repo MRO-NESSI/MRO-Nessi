@@ -1,6 +1,8 @@
 import wx
 
 from actuators.tl import TLabs, run_async
+from logtab.log import logevent
+
 
 class FocusREIPanel(wx.Panel):
     """This panel controls the position of REI1-2 """
@@ -65,7 +67,6 @@ class FocusREIPanel(wx.Panel):
 
     @run_async
     def onOut(self, event):
-        from nessi import logevent
         logevent(self.name, 'FOCUSOUT', '', 'THING!')
         self.curr_pos.SetLabel('...')
         step = self.step_size.GetValue() 
