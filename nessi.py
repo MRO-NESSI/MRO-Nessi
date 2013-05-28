@@ -9,6 +9,7 @@
 __author__ = 'Luke Schmidt, Matt Napolitano, Tyler Cecil'
 __date__ = '2013'
 
+from random import randint
 import sys
 import time
 import wx
@@ -70,7 +71,7 @@ class MainNessiFrame(wx.Frame):
 
         #Build Frame
         self.create_menus()
-        self.CreateStatusBar()
+        self.statusbar=self.CreateStatusBar()
         
         #Init Notebook panel
         p = wx.Panel(self)
@@ -101,10 +102,12 @@ class MainNessiFrame(wx.Frame):
         sizer = wx.BoxSizer()
         sizer.Add(nb, 1, wx.EXPAND)
         p.SetSizer(sizer)
-        
+
+        self.statusbar.SetStatusText("Welcome to NESSI!")
+
     def change_statusbar(self, msg):
-        print 'I did a very cool thing'
-        self.SetStatusText(msg.data)
+        print msg.data
+        self.statusbar.SetStatusText(msg.data)
         
     def create_menus(self):
         menuBar = wx.MenuBar()
