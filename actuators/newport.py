@@ -43,7 +43,7 @@ def XPSErrorHandler(controller,socket,code,name):
 		
 
 #@threaded
-def WheelThread(controller,wheel,socket,current,position,home):
+def NewportWheelThread(controller,wheel,socket,current,position,home):
 	'''
 A thread that initiates a move in the dewar and then monitors The Newport GPIO for a bit flip that indicates the motor needs to be stopped.
 
@@ -119,16 +119,31 @@ A thread that initiates a move in the dewar and then monitors The Newport GPIO f
 		pass
 
 
-if __name__ == '__main__':
+def NewportInitialize(controller,motor,socket,home_position):
+	'''
+An initialization function for any motor controlled by the XPS controller.
 
-	GKill=x.GroupKill(open_sockets[0], cfg['grism']['group'])
+	Inputs: controller, motor, socket, home_position
+	
+	controller:	[xps]	Which instance of the XPS controller to use.
+	wheel:		[str]	The name of the motor that is being used.  This is for config file purposes.
+	socket:		[int]	Which socket to use to communicate with the XPS controller.
+	current:	[int]	What position the motor is currently at.
+	position:	[int]	What position the motor should move to.
+	home:		[bool]	Determines whether the thread will find the home position or a different position.
+'''
+	GKill=controller.GroupKill(open_sockets[0], cfg[motor]['group'])	
 	if GKill[0] != 0:
 		XPSErrorHandler(open_sockets[0], GKill[0], 'GroupKill')
-	GInit=x.GroupInitialize(open_sockets[0], cfg['grism']['group'])
+	GInit=controller.GroupInitialize(open_sockets[0], cfg[motor]['group'])
 	if GInit[0] != 0:
 		XPSErrorHandler(open_sockets[0], GInit[0], 'GroupInitialize')
-	GHomeSearch=x.GroupHomeSearchAndRelativeMove(open_sockets[0], cfg['grism']['group'],[0])
+	GHomeSearch=controller.GroupHomeSearchAndRelativeMove(open_sockets[0], cfg[motor]['group'],[home_position])
 	print GHomeSearch
 	if GHomeSearch[0] != 0:
 		XPSErrorHandler(open_sockets[0], GHomeSearch[0], 'GroupHomeSearchAndRelativeMove')
-	WheelThread(x,'grism',open_sockets[0],1,4,True)
+
+if __name__ == '__main__':
+
+	NewportInitialize(x,'grism',open_sockets[0],0)
+	NewportWheelThread(x,'grism',open_sockets[0],1,4,True)
