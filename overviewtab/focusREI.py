@@ -67,7 +67,7 @@ class FocusREIPanel(wx.Panel):
 
     @run_async
     def onOut(self, event):
-        logevent(self.name, 'FOCUSOUT', '', 'THING!')
+        wx.CallAfter(logevent, self.name, 'FOCUSOUT', '', 'THING!')
         self.curr_pos.SetLabel('...')
         step = self.step_size.GetValue() 
         self.motor.move_relative(step)
