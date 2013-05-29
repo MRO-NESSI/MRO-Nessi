@@ -1,8 +1,11 @@
+import logging
 import wx
 
 from actuators.tl import TLabs, run_async
-from logtab.log import logevent
 
+
+def logevent(*args):
+    pass
 
 class FocusREIPanel(wx.Panel):
     """This panel controls the position of REI1-2 """
@@ -69,12 +72,12 @@ class FocusREIPanel(wx.Panel):
     def onOut(self, event):
         wx.CallAfter(self.curr_pos.SetLabel, '...')
         step = self.step_size.GetValue() 
-        wx.CallAfter(logevent, self.name, 'Start Focus-Out', 
-                     'position -> %s \t step -> %s' % (self.curr_pos.GetLabel(), step), None)
+        logging.info('TESTing out!')
         self.motor.move_relative(step)
         position = self.motor.status()['Position']
         wx.CallAfter(logevent, self.name, 'Finished Focus-Out', 
                      'position -> %f' % position, '')
+        logging.info('TESTing out! DONE!')
         wx.CallAfter(self.curr_pos.SetLabel,str(position))
 
     @run_async
