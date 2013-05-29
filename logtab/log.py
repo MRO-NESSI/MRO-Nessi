@@ -27,14 +27,14 @@ class LogPanel(wx.Panel):
 
     def __DoLayout(self):
         mainSizer = wx.BoxSizer(wx.VERTICAL)
-        instSizer = wx.FlexGridSizer(cols=1, hgap=5, vgap=5)
-        instSizer.AddGrowableCol(0)
+        instSizer = wx.BoxSizer(wx.VERTICAL)
         
         guideSizer = wx.FlexGridSizer(cols=1, hgap=5, vgap=5)
         guideSizer.AddGrowableCol(0)
+        guideSizer.AddGrowableRow(0)
         
         instSizer.Add(self.logTxt, 0, wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL)
-        instSizer.Add(self.log, 0, wx.EXPAND | wx.ALIGN_CENTER_VERTICAL)
+        instSizer.Add(self.log, 1, wx.EXPAND | wx.ALIGN_CENTER_VERTICAL)
         instSizer.Add(self.obs_logTxt, 0, wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL)
         instSizer.Add(self.obs_log, 0, wx.EXPAND)
         instSizer.Add(self.log_button, 0, wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL)
@@ -42,7 +42,7 @@ class LogPanel(wx.Panel):
         guideSizer.Add(self.guidelogTxt, 0, wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL)
         guideSizer.Add(self.guidelog, 0, wx.EXPAND | wx.ALIGN_CENTER_VERTICAL)            
                         
-        mainSizer.Add(instSizer, 0, wx.EXPAND|wx.ALL, 5)
+        mainSizer.Add(instSizer, 1, wx.EXPAND|wx.ALL, 5)
         mainSizer.Add(guideSizer, 0, wx.EXPAND|wx.ALL, 5)
         
         self.SetSizer(mainSizer)
