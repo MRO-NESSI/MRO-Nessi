@@ -53,7 +53,7 @@ class OverviewPanel(wx.ScrolledWindow):
         sizer.Add(self.FilterOne, pos=(4,2), span=(1,1), flag=wx.LEFT|wx.ALIGN_CENTER_VERTICAL)
         sizer.Add(self.FilterTwo, pos=(5,2), span=(1,1), flag=wx.LEFT|wx.ALIGN_CENTER_VERTICAL)
         sizer.Add(self.Grism, pos=(6,2), span=(1,1), flag=wx.LEFT|wx.ALIGN_CENTER_VERTICAL)
-        sizer.Add(self.Temperature, pos=(0,2), span=(1,2), flag=wx.LEFT|wx.ALIGN_CENTER_VERTICAL)
+        sizer.Add(self.Temperature, pos=(0,2), span=(1,1), flag=wx.LEFT|wx.ALIGN_CENTER_VERTICAL)
         
         # Add the grid bag to the static box and make everything fit
         boxSizer.Add(sizer, wx.EXPAND)
