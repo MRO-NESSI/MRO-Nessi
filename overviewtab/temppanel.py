@@ -63,8 +63,8 @@ class TemperaturePanel(wx.Panel):
     @run_async
     def monitor_loop(self):
         while True:
-            self.temp_a.SetLabel(self.controller.kelvin('a')[1:-2]+'K')
-            self.temp_b.SetLabel(self.controller.kelvin('b')[1:-2]+'K')
-            self.temp_c.SetLabel(self.controller.kelvin('c')[1:-2]+'K')
-            self.temp_d.SetLabel(self.controller.kelvin('d')[1:-2]+'K')
+            wx.CallAfter(self.temp_a.SetLabel, self.controller.kelvin('a')[1:-2]+'K')
+            wx.CallAfter(self.temp_b.SetLabel, self.controller.kelvin('b')[1:-2]+'K')
+            wx.CallAfter(self.temp_c.SetLabel, self.controller.kelvin('c')[1:-2]+'K')
+            wx.CallAfter(self.temp_d.SetLabel, self.controller.kelvin('d')[1:-2]+'K')
             sleep(5)
