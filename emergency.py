@@ -32,5 +32,5 @@ class EmergencyPanel(wx.Panel):
         self.SetSizerAndFit(boxSizer)
 
     def OnButton(self, event):
-		
+        
         pass
