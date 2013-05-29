@@ -11,13 +11,15 @@ class EmergencyPanel(wx.Panel):
         self.thorlabs2 = thorlabs2
         # Attributes
         self.t = wx.StaticText(self, -1, "Emergency", (40,40))
-        self.emergency = wx.Button(self,label='KILL ALL', size=(400,200))
+        self.emergency = wx.Button(self, 1, label='KILL ALL', size=(400,200))
+        self.reset = wx.Button(self, 2, label = 'Reinitialize')
         self.emergency.SetBackgroundColour(wx.Colour(255,0, 0))
         self.emergency.ClearBackground()
         self.emergency.Refresh() 
-        self.font=wx.Font(pointSize = 40, family = wx.FONTFAMILY_DECORATIVE, style = wx.FONTSTYLE_NORMAL, weight = wx.FONTWEIGHT_BOLD)
+        self.font = wx.Font(pointSize = 40, family = wx.FONTFAMILY_DECORATIVE, style = wx.FONTSTYLE_NORMAL, weight = wx.FONTWEIGHT_BOLD)
         self.emergency.SetFont(self.font)  
-        self.Bind(wx.EVT_BUTTON,self.OnButton)
+        self.Bind(wx.EVT_BUTTON, self.OnEmergency, id = 1)
+        self.Bind(wx.EVT_BUTTON, self.OnReset, id = 2)
 
         self.__DoLayout()
 
@@ -29,16 +31,20 @@ class EmergencyPanel(wx.Panel):
         # Add controls to gridbag
         sizer.Add(self.t, pos=(0,0), span=(1,1), flag=wx.LEFT|wx.ALIGN_CENTER_VERTICAL)
         sizer.Add(self.emergency, pos=(1,0),span=(1,1), flag=wx.ALIGN_CENTER_HORIZONTAL|wx.CENTER)
+        sizer.Add(self.reset, pos=(2,0), span=(1,1), flag=wx.ALIGN_CENTER_HORIZONTAL|wx.CENTER)
                 
         # Add the grid bag to the static box and make everything fit
         boxSizer.Add(sizer, wx.EXPAND|wx.CENTER)
         self.SetSizerAndFit(boxSizer)
 
-    def OnButton(self, event):
+    def OnEmergency(self, event):
         kill=self.controller.KillAll(self.socket)
         # This checks to insure the kill command worked.  If it did not work, the standard error handler is called.
         if kill[0] != 0:
             XPSErrorHandler(self.controller, self.socket, kill[0], 'KillAll')
         self.thorlabs1.home()
         self.thorlabs2.home()
+
+    def OnReset(self, event):
+        
         pass
