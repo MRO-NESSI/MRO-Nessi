@@ -9,6 +9,8 @@
 __author__ = 'Luke Schmidt, Matt Napolitano, Tyler Cecil'
 __date__ = '2013'
 
+import logging
+from logging.handlers import TimedRotatingFileHandler
 import sys
 import time
 import wx
@@ -19,9 +21,10 @@ from overviewtab.overview import OverviewPanel
 from kmirrortab.kmirror import KMirrorPanel
 from guidepaneltab.guiding import GuidingPanel
 from settingstab.settings import SettingsPanel
-from logtab.log import LogPanel
+from logtab.log import LogPanel, wxLogHandler, EVT_WX_LOG_EVENT
 from emergency import EmergencyPanel
 import actuators.XPS_C8_drivers as xps
+
 
 DEBUG = False
 
@@ -113,18 +116,46 @@ class MainNessiFrame(wx.Frame):
         icon = wx.Icon(path, wx.BITMAP_TYPE_PNG)
         self.SetIcon(icon)
         
-        pub.subscribe(self.change_statusbar, 'change_statusbar')
-        
         #Place notebook panel into a sizer
         sizer = wx.BoxSizer()
         sizer.Add(nb, 1, wx.EXPAND)
         p.SetSizer(sizer)
 
+        #init status
         self.statusbar.SetStatusText("Welcome to NESSI!")
 
-    def change_statusbar(self, msg):
-        print msg.data
-        self.statusbar.SetStatusText(msg.data)
+        #Logger
+        logging.basicConfig(level=logging.DEBUG)
+
+        logTabFormatter = logging.Formatter('[%(asctime)s] %(filename)s:%(funcName)s - %(message)s')
+        statusbarFormatter = logging.Formatter('[%(asctime)s] %(funcName)s - %(message)s')
+        #logTabFormatter = logging.Formatter('%(asctime) %(filename):%(funcName) - %(message)s')
+        #statusbarFormatter = logging.Formatter('%(asctime) %(message)s')
+        
+        logTabHandler = wxLogHandler(page5)
+        logTabHandler.setFormatter(logTabFormatter)
+        logTabHandler.setLevel(logging.INFO)
+        logging.getLogger('').addHandler(logTabHandler)
+
+        statusbarHandler = wxLogHandler(self)
+        statusbarHandler.setFormatter(statusbarFormatter)
+        statusbarHandler.setLevel(logging.INFO)
+        logging.getLogger('').addHandler(statusbarHandler)
+
+        logfileHandler = logging.handlers.TimedRotatingFileHandler('logfiles/NESSILOG',
+                                                                   when='d')
+        logfileHandler.setLevel(logging.DEBUG)
+        logfileHandler.setFormatter(logTabFormatter)
+        logging.getLogger('').addHandler(logfileHandler)
+
+        self.Bind(EVT_WX_LOG_EVENT, self.onLogEvent)
+
+        logging.info('This is called from nessi')
+
+    def onLogEvent(self, event):
+        msg = event.message.strip('\r') + '\n'
+        self.statusbar.SetStatusText(msg)
+        event.Skip()
         
     def create_menus(self):
         menuBar = wx.MenuBar()

@@ -1,6 +1,45 @@
+import logging
 import time
 import wx
-from wx.lib.pubsub import Publisher as pub
+import wx.lib.newevent
+
+# create event type
+wxLogEvent, EVT_WX_LOG_EVENT = wx.lib.newevent.NewEvent()
+
+
+class wxLogHandler(logging.Handler):
+    """
+    A handler class which sends log strings to a wx object
+    """
+    def __init__(self, wxDest=None):
+        """
+        Initialize the handler
+        @param wxDest: the destination object to post the event to 
+        @type wxDest: wx.Window
+        """
+        logging.Handler.__init__(self)
+        self.wxDest = wxDest
+        self.level = logging.DEBUG
+
+    def flush(self):
+        """
+        does nothing for this handler
+        """
+
+
+    def emit(self, record):
+        """
+        Emit a record.
+        """
+        try:
+            msg = self.format(record)
+            evt = wxLogEvent(message=msg,levelname=record.levelname)            
+            wx.PostEvent(self.wxDest,evt)
+        except (KeyboardInterrupt, SystemExit):
+            raise
+        except:
+            self.handleError(record)
+
 
 class LogPanel(wx.Panel):
     def __init__(self, parent, *args, **kwargs):
@@ -22,9 +61,9 @@ class LogPanel(wx.Panel):
         # Layout       
         self.__DoLayout()
 
-        #Listen for logevents
-        pub.subscribe(self.recieve_event, "logevent")
-
+        #EVT_WX_LOG_EVENT
+        self.Bind(EVT_WX_LOG_EVENT, self.onLogEvent)
+        
     def __DoLayout(self):
         mainSizer = wx.BoxSizer(wx.VERTICAL)
         instSizer = wx.BoxSizer(wx.VERTICAL)
@@ -47,65 +86,14 @@ class LogPanel(wx.Panel):
         
         self.SetSizer(mainSizer)
 
-
+    
     def onLog(self, event):
-        msg = self.obs_log.GetValue()
-        msg = '['+time.strftime("%b.%d.%Y-%H:%M:%S")+']' + 'Observer Note:\n' + msg
-        self.log.AppendText(msg)
+        msg = 'OBSERVER: ' + self.obs_log.GetValue()
+        logging.info(msg)
         self.obs_log.SetValue('')
 
-    def log_evt(self, msg):
-        self.log.AppendText(msg[0] + '\n' + msg[1] + '\n')
-        #self.write_log(str(datetime.utcnow()) + '  ' + msg.data)
-        pub.sendMessage('change_statusbar', msg[0])
-
-    def write_log(self, note):
-        #insert newline every 80 characters
-        nlnote = self.insert_newlines(note)
-        self.logfile.write('\n' + nlnote + '\n')
-
-    def insert_newlines(self, string):
-        dedented_text = textwrap.dedent(string).strip()
-        return textwrap.fill(dedented_text, initial_indent='', subsequent_indent='    ', width=80)
-
-
-    def recieve_event(self, msg):
-        msg = msg.data
-        log_msg = []
-        log_msg.append('['+msg['time']+'] '+msg['component']+':'+msg['event'])
-        log_msg.append('')
-        if msg['status']:
-            log_msg[1] += '\tSTATUS: '+msg['status']
-        if msg['msg']:
-            if msg['status']: log_msg[1] += '\n'
-            log_msg[1] += '\tINFO: '+msg['msg']
-        self.log_evt(log_msg)
-
-def logevent(component, event, status, msg):
-    event = {
-        'component':component, 
-        'event'    :    event, 
-        'status'   :   status, 
-        'msg'      :      msg
-        }
-    event['time'] = time.strftime("%b.%d.%Y-%H:%M:%S")
-    pub.sendMessage("logevent", event)
-
-"""
-
-    def open_log(self):
-        logtime = time.strftime("%a%d%b%Y-%H:%M:%S", time.gmtime())
-        loggerfile = settings.save_folder+logtime+".log"
-        self.logfile = open(loggerfile, 'a')
-        self.logfile.write('Starting up ' + logtime + '\n')
-    
-    def close_log(self):
-        log.close()
+    def onLogEvent(self, event):
+        msg = event.message.strip('\r') + '\n'
+        self.log.AppendText(msg)
+        event.Skip()
         
-    def on_log_button(self, event):
-        localtime = time.asctime(time.gmtime())
-        note = self.obs_log.GetValue()
-        self.log.AppendText(str(datetime.utcnow()) + '\n        ' + note + '\n\n')
-        self.write_log(str(datetime.utcnow()) + '  ' + note)
-        wx.TextCtrl.Clear(self.obs_log)
-"""
