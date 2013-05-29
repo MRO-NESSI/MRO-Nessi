@@ -13,6 +13,7 @@ class LogPanel(wx.Panel):
         self.obs_logTxt = wx.StaticText(self, wx.ID_ANY, "Observing Comments:")
         self.obs_log = wx.TextCtrl(self, -1, size=(-1,75), style=wx.TE_MULTILINE)
         self.log_button = wx.Button(self, label="Log")
+        self.log_button.Bind(wx.EVT_BUTTON, self.onLog)
         
         self.guidelogTxt = wx.StaticText(self, wx.ID_ANY, "Guiding Log:")
         self.guidelog = wx.TextCtrl(self, -1, size=(-1,130), style=wx.TE_MULTILINE|wx.TE_READONLY)
@@ -46,6 +47,12 @@ class LogPanel(wx.Panel):
         
         self.SetSizer(mainSizer)
 
+
+    def onLog(self, event):
+        msg = self.obs_log.GetValue()
+        msg = '['+time.strftime("%b.%d.%Y-%H:%M:%S")+']' + 'Observer Note:\n' + msg
+        self.log.AppendText(msg)
+        self.obs_log.SetValue('')
 
     def log_evt(self, msg):
         self.log.AppendText(msg[0] + '\n' + msg[1] + '\n')
