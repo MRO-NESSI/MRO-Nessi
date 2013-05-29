@@ -83,7 +83,7 @@ class MainNessiFrame(wx.Frame):
         page3 = GuidingPanel(nb)
         page4 = SettingsPanel(nb)
         page5 = LogPanel(nb)
-        page6 = EmergencyPanel(nb)
+        #page6 = EmergencyPanel(nb)
 
         #Add tabs to notebook
         nb.AddPage(page1, "Overview")
@@ -91,7 +91,7 @@ class MainNessiFrame(wx.Frame):
         nb.AddPage(page3, "Guiding")
         nb.AddPage(page4, "Settings")
         nb.AddPage(page5, "Log")
-        nb.AddPage(page6, "Panic")
+        #nb.AddPage(page6, "Panic")
 
         # Add icon
         path = "media/nessi.png"
