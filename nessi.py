@@ -13,6 +13,7 @@ import sys
 import time
 import wx
 from wx.lib.pubsub import Publisher as pub
+from configobj import ConfigObj
 
 from overviewtab.overview import OverviewPanel
 from kmirrortab.kmirror import KMirrorPanel
@@ -59,6 +60,19 @@ keywords = {"OBSERVER"  : "Observer",
             "CRVAL2"    : 0.0,
             "CROTA2"    : 0.0
             }
+
+# General newport information to be passed to all relevant panels.
+cfg = ConfigObj('nessisettings.ini')
+x=xps.XPS()
+open_sockets=[]
+used_sockets=[]
+for i in range(int(cfg['general']['sockets'])):
+    open_sockets.append(x.TCP_ConnectToServer('192.168.0.254',5001,1))
+	
+for i in range(int(cfg['general']['sockets'])):
+	if open_sockets[i] == -1:
+		print 'Error, Sockets not opened.'
+
                         
 class MainNessiFrame(wx.Frame):
     """Main Window for Nessi Controll Software."""
@@ -83,7 +97,7 @@ class MainNessiFrame(wx.Frame):
         page3 = GuidingPanel(nb)
         page4 = SettingsPanel(nb)
         page5 = LogPanel(nb)
-        #page6 = EmergencyPanel(nb)
+        page6 = EmergencyPanel(nb, 'controller', 'socket')
 
         #Add tabs to notebook
         nb.AddPage(page1, "Overview")
@@ -91,7 +105,7 @@ class MainNessiFrame(wx.Frame):
         nb.AddPage(page3, "Guiding")
         nb.AddPage(page4, "Settings")
         nb.AddPage(page5, "Log")
-        #nb.AddPage(page6, "Panic")
+        nb.AddPage(page6, "Panic")
 
         # Add icon
         path = "media/nessi.png"
