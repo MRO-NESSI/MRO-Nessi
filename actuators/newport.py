@@ -163,7 +163,7 @@ This function moves the k-mirror to a choosen position at 10 deg/s.
 '''
 
 
-def NewportKmirrorRotate(controller, socket, motor, jog_state, velocity):
+def NewportKmirrorRotate(controller, socket, motor, jog_state, speed):
     '''
 This function prepares the motor for continuous rotation if it isn't already prepared and then sets a choosen velocity.
 
@@ -181,7 +181,7 @@ This function prepares the motor for continuous rotation if it isn't already pre
             XPSErrorHandler(controller, socket, Gmode[0], 'GroupJogModeEnable')
     else:
         pass
-    
+    velocity = speed*cfg[motor]['direction']
     GJog = controller.GroupJogParametersSet(socket, cfg[motor]['group'], [velocity],[400])
     if GJog[0] != 0:
         XPSErrorHandler(controller, socket, GJog[0], 'GroupJogParametersSet')
@@ -192,3 +192,4 @@ This function prepares the motor for continuous rotation if it isn't already pre
 if __name__ == '__main__':
     NewportInitialize(x, 'grism', open_sockets[0], 0)
     NewportWheelThread(x, 'grism', open_sockets[0], 1, 4, True)
+    

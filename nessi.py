@@ -98,7 +98,7 @@ class MainNessiFrame(wx.Frame):
         page3 = GuidingPanel(nb)
         page4 = SettingsPanel(nb)
         page5 = LogPanel(nb)
-        page6 = EmergencyPanel(nb, 'controller', 'socket')
+        page6 = EmergencyPanel(nb, x, open_sockets[0], page1.FocusREI12.motor, page1.FocusREI34.motor)
 
         #Add tabs to notebook
         nb.AddPage(page1, "Overview")
