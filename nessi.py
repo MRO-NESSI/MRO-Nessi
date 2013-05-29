@@ -63,16 +63,16 @@ keywords = {"OBSERVER"  : "Observer",
             }
 
 # General newport information to be passed to all relevant panels.
-#cfg = ConfigObj('nessisettings.ini')
-#x=xps.XPS()
-#open_sockets=[]
-#used_sockets=[]
-#for i in range(int(cfg['general']['sockets'])):
-#    open_sockets.append(x.TCP_ConnectToServer('192.168.0.254',5001,1))
-#    
-#for i in range(int(cfg['general']['sockets'])):
-#    if open_sockets[i] == -1:
-#        print 'Error, Sockets not opened.'
+cfg = ConfigObj('nessisettings.ini')
+x=xps.XPS()
+open_sockets=[]
+used_sockets=[]
+for i in range(int(cfg['general']['sockets'])):
+    open_sockets.append(x.TCP_ConnectToServer('192.168.0.254',5001,1))
+    
+for i in range(int(cfg['general']['sockets'])):
+    if open_sockets[i] == -1:
+        print 'Error, Sockets not opened.'
 
                         
 class MainNessiFrame(wx.Frame):
