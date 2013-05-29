@@ -2,7 +2,6 @@ import logging
 import time
 import wx
 import wx.lib.newevent
-from wx.lib.pubsub import Publisher as pub
 
 # create event type
 wxLogEvent, EVT_WX_LOG_EVENT = wx.lib.newevent.NewEvent()
@@ -88,11 +87,9 @@ class LogPanel(wx.Panel):
         self.SetSizer(mainSizer)
 
     
-    #TODO: Make this make a log event...
     def onLog(self, event):
-        msg = self.obs_log.GetValue()
-        msg = '['+time.strftime("%b.%d.%Y-%H:%M:%S")+']' + 'Observer Note:\n' + msg
-        self.log.AppendText(msg)
+        msg = 'OBSERVER: ' + self.obs_log.GetValue()
+        logging.info(msg)
         self.obs_log.SetValue('')
 
     def onLogEvent(self, event):
