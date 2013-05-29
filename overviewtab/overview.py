@@ -7,6 +7,7 @@ from guideinfopanel import GuideInfoPanel
 from kmirrorpanel import KmirrorPanel
 #from maskpanel import MaskPanel
 from schematicpanel import SchematicPanel
+from temppanel import TemperaturePanel
 
 class OverviewPanel(wx.ScrolledWindow):
     def __init__(self, parent, *args, **kwargs):
@@ -15,15 +16,16 @@ class OverviewPanel(wx.ScrolledWindow):
         self.SetScrollbars(20,20,55,40)
 
         # Attributes
-        self.Schematic = SchematicPanel(self)
-        self.Mask = WheelPanel(self, 'mask')
-        self.FilterOne = WheelPanel(self, 'filter1')
-        self.FilterTwo = WheelPanel(self, 'filter2')
-        self.Grism = WheelPanel(self, 'grism')
-        self.Kmirror = KmirrorPanel(self)
-        self.GuideInfo = GuideInfoPanel(self)
-        self.FocusREI12 = FocusREIPanel(self, 'Focus REI-1-2', 0)
-        self.FocusREI34 = FocusREIPanel(self, 'Focus REI-3-4', 1)
+        self.Schematic   = SchematicPanel(self)
+        self.Mask        = WheelPanel(self, 'mask')
+        self.FilterOne   = WheelPanel(self, 'filter1')
+        self.FilterTwo   = WheelPanel(self, 'filter2')
+        self.Grism       = WheelPanel(self, 'grism')
+        self.Kmirror     = KmirrorPanel(self)
+        self.GuideInfo   = GuideInfoPanel(self)
+        self.FocusREI12  = FocusREIPanel(self, 'Focus REI-1-2', 0)
+        self.FocusREI34  = FocusREIPanel(self, 'Focus REI-3-4', 1)
+        self.Temperature = TemperaturePanel(self)
         
         self.__DoLayout()
 
@@ -51,7 +53,7 @@ class OverviewPanel(wx.ScrolledWindow):
         sizer.Add(self.FilterOne, pos=(4,2), span=(1,1), flag=wx.LEFT|wx.ALIGN_CENTER_VERTICAL)
         sizer.Add(self.FilterTwo, pos=(5,2), span=(1,1), flag=wx.LEFT|wx.ALIGN_CENTER_VERTICAL)
         sizer.Add(self.Grism, pos=(6,2), span=(1,1), flag=wx.LEFT|wx.ALIGN_CENTER_VERTICAL)
-                
+        sizer.Add(self.Temperature, pos=(0,2), span=(1,2), flag=wx.LEFT|wx.ALIGN_CENTER_VERTICAL)
         
         # Add the grid bag to the static box and make everything fit
         boxSizer.Add(sizer, wx.EXPAND)

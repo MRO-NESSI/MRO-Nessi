@@ -5,11 +5,16 @@ import time
 import sys
 from struct import pack, unpack
 
-DEBUG = True
-
-class tc:
+class LakeshoreController(object):
     """Represents the Lakeshore 336 Temperature Controller."""
     
+    temp_probes = {
+        'a':'Radiation Shield',
+        'b':'Filter Wheels',
+        'c':'Mask Wheel',
+        'd':'FPA',
+        }
+
     def __init__(self):
         """Performs necessary startup procedures."""
         self.__port = '/dev/ttylakeshore'
@@ -34,13 +39,11 @@ class tc:
         """Get the current status of the temperature controller"""
         #send identify request
         self.ser.write('*IDN?\n')
-        if DEBUG: print 'Identify Device:'
         return self.completion()
     
     def kelvin(self,port='a'):
         """Get the current temps in Kelvin."""
         self.ser.write('KRDG?' + port + '\n')
-        if DEBUG: print 'Return Kelvin:'
         return self.completion()
         
         
