@@ -10,6 +10,7 @@ __author__ = 'Luke Schmidt, Matt Napolitano, Tyler Cecil'
 __date__ = '2013'
 
 import logging
+from logging.handlers import TimedRotatingFileHandler
 import sys
 import time
 import wx
@@ -126,8 +127,8 @@ class MainNessiFrame(wx.Frame):
         #Logger
         logging.basicConfig(level=logging.DEBUG)
 
-        logTabFormatter = logging.Formatter('[%(asctime)s] - %(name)s - %(levelname)s - %(message)s')
-        statusbarFormatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+        logTabFormatter = logging.Formatter('[%(asctime)s] %(filename)s:%(funcName)s - %(message)s')
+        statusbarFormatter = logging.Formatter('[%(asctime)s] %(funcName)s - %(message)s')
         #logTabFormatter = logging.Formatter('%(asctime) %(filename):%(funcName) - %(message)s')
         #statusbarFormatter = logging.Formatter('%(asctime) %(message)s')
         
@@ -140,6 +141,11 @@ class MainNessiFrame(wx.Frame):
         statusbarHandler.setFormatter(statusbarFormatter)
         statusbarHandler.setLevel(logging.INFO)
         logging.getLogger('').addHandler(statusbarHandler)
+
+        logfileHandler = logging.handlers.TimedRotatingFileHandler('logfiles/NESSILOG',
+                                                                   when='m')
+        logfileHandler.setLevel(logging.DEBUG)
+        logging.getLogger('').addHandler(logfileHandler)
 
         self.Bind(EVT_WX_LOG_EVENT, self.onLogEvent)
 
