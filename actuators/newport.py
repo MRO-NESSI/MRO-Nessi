@@ -142,26 +142,53 @@ This function returns nothing if succesful and calls XPSErrorHandler otherwise.
     socket:     [int]   Which socket to use to communicate with the XPS controller.
     home_pos:   [int]   Determines whether the thread will find the home position or a different position.
 '''
+    # This function kills any motors that are still active from previous motions.
     GKill = controller.GroupKill(socket, cfg[motor]['group'])   
     if GKill[0] != 0:
         XPSErrorHandler(socket, GKill[0], 'GroupKill')
 
+    # This function initializes the motor so it can be moved.
     GInit = controller.GroupInitialize(socket, cfg[motor]['group'])
     if GInit[0] != 0:
         XPSErrorHandler(socket, GInit[0], 'GroupInitialize')
 
+    # This function homes the motor and then moves the motor to a home position defined by the user.
     GHomeSearch = controller.GroupHomeSearchAndRelativeMove(socket, cfg[motor]['group'],[home_pos])
     if GHomeSearch[0] != 0:
         XPSErrorHandler(socket, GHomeSearch[0], 'GroupHomeSearchAndRelativeMove')
 
 
-def NewportKmirrorMove():
+def NewportKmirrorMove(controller, socket, motor, jog_state, position):
     '''
 This function moves the k-mirror to a choosen position at 10 deg/s.
 
     Inputs: controller, socket, motor, jog_state, position.
-'''
 
+    controller: [xps]   Which instance of the XPS controller to use.
+    socket:     [int]   Which socket to use to communicate with the XPS controller.
+    motor:      [str]   Which motor is being controlled.  This is for config file purposes.
+    jog_state:  [bool]  Whether or not the motor in question is already configured for continuous rotation. 
+    position:   [float] What value to move the k-mirror to.
+'''
+    # This checks to see if the motor is in a continuous rotation state and if it is then the function disables continuous rotation. 
+    if jog_state == True:
+        Gmode = controller.GroupJogModeDisable(socket, cfg[motor]['group'])
+        if Gmode[0] != 0:
+            XPSErrorHandler(controller, socket, Gmode[0], 'GroupJogModeEnable')
+    else:
+        pass
+
+    # This function sets the motion parameters to be used by the motor.
+    # If the parameters are set correctly then an absolute move is made to the position of choice.
+    Gset = controller.GroupJogParametersSet(socket, cfg[motor]['group'], [10], [200])
+    if Gset[0] != 0:
+        XPSErrorHandler(controller, socket, Gset[0], 'GroupJogParametersSet')
+    else:
+        GMove = controller.GroupMoveAbsolute(socket, cfg[motor]['group'], [float(position)])
+        if move[0] != 0:
+            XPSErrorHandler(controller, socket, GMove[0], 'GroupMoveAbsolute')
+        else:
+            pass
 
 def NewportKmirrorRotate(controller, socket, motor, jog_state, speed):
     '''
@@ -175,12 +202,15 @@ This function prepares the motor for continuous rotation if it isn't already pre
     jog_state:  [bool]  Whether or not the motor in question is already configured for continuous rotation. 
     velocity:   [float] What value to set the rotational velocity to in deg/s.
 '''
+    # This checks if the motor is in a continuous rotation state and if it enables that state.
     if jog == False:
         Gmode = controller.GroupJogModeEnable(socket, cfg[motor]['group'])
         if Gmode[0] != 0:
             XPSErrorHandler(controller, socket, Gmode[0], 'GroupJogModeEnable')
     else:
         pass
+    # This sets the rotation rate for the motor. 
+    # The motor will rotate until it is stopped or it hits a limit switch.
     velocity = speed*cfg[motor]['direction']
     GJog = controller.GroupJogParametersSet(socket, cfg[motor]['group'], [velocity],[400])
     if GJog[0] != 0:
