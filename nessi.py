@@ -143,7 +143,7 @@ class MainNessiFrame(wx.Frame):
         logging.getLogger('').addHandler(statusbarHandler)
 
         logfileHandler = logging.handlers.TimedRotatingFileHandler('logfiles/NESSILOG',
-                                                                   when='m')
+                                                                   when='d')
         logfileHandler.setLevel(logging.DEBUG)
         logfileHandler.setFormatter(logTabFormatter)
         logging.getLogger('').addHandler(logfileHandler)
