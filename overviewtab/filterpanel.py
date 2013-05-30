@@ -1,6 +1,6 @@
+import logging
 import wx
 from configobj import ConfigObj
-from wx.lib.pubsub import Publisher as pub
 cfg = ConfigObj('nessisettings.ini')
 
 class WheelPanel(wx.Panel):
@@ -30,7 +30,6 @@ class WheelPanel(wx.Panel):
         self.__DoLayout()
         
         # Event Handlers
-        self.wheel_choice.Bind(wx.EVT_COMBOBOX, self.on_select)
         self.select_button.Bind(wx.EVT_BUTTON, self.move_filter)
         
         ## Layout for this panel:
@@ -56,18 +55,9 @@ class WheelPanel(wx.Panel):
         boxSizer.Add(sizer, flag=wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_CENTER_HORIZONTAL)
         self.SetSizerAndFit(boxSizer)
         
-    def on_select(self, event):
-        try:
-            selected = event.GetSelection()
-            status_update = "Chosen "+self.name+" position is..." + str(self.choices[selected])
-            pub.sendMessage("LOG EVENT", status_update)
-            return selected
-        except ValueError:
-            pass
-
     def move_filter(self, event):
         try:
-            pub.sendMessage("LOG EVENT", "Moving to filter...")
+            logging.info('%s wheel moving to %s...' % (self.name, self.wheel_choice.GetSelection()))
             selected = self.wheel_choice.GetSelection()
             self.curr_wheel.SetLabel(self.choices[selected])
         except ValueError:
