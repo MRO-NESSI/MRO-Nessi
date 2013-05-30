@@ -119,7 +119,7 @@ If the motion succedes the function will log a message. (to be added when workin
                 Publisher().sendMessage((group + '_state'), state)
     else:
         pass
-
+    return position
 
 def NewportInitialize(controller, motor, socket, home_pos):
     '''

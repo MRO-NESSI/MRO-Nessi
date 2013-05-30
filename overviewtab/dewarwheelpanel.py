@@ -17,6 +17,7 @@ class WheelPanel(wx.Panel):
         self.socket = socket
         self.choices = []
         self.slots = {}
+        self.position = 10
         try:
             for i in range(int(cfg[name]['slots'])):
                 self.choices.append(cfg[name]['pos'+str(i)])
@@ -24,6 +25,8 @@ class WheelPanel(wx.Panel):
         except:
             raise
 #        newport.NewportInitialize(self.controller, self.name, self.socket, 0)
+#        newport.NewportWheelThread(self.controller, self.name, self.socket, self.position, 0, True)
+        
         self.curr_wheel_text = wx.StaticText(self, label="Current "+cfg[name]['type']+":")
         self.curr_wheel = wx.StaticText(self, label="Checking...")
         self.select_button = wx.Button(self, 1, label="Select")
@@ -66,10 +69,11 @@ class WheelPanel(wx.Panel):
             logging.info('%s wheel moving to %s...' % (self.name, self.wheel_choice.GetSelection()))
             selected = self.wheel_choice.GetSelection()
             self.curr_wheel.SetLabel(self.choices[selected])
+#           self.position =  newport.NewportWheelThread(self.controller, self.name, self.socket, self.position, self.slots[self.wheel_choice.GetValue()], True)
         except ValueError:
             pass
 
     def home_wheel(self, event):
-#        newport.NewportWheelThread(self.controller, self.name, self.socket, 0, 0, True)
+#        self.position = newport.NewportWheelThread(self.controller, self.name, self.socket, self.position, 0, True)
         pass
         
