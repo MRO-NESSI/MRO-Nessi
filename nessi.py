@@ -25,7 +25,7 @@ from kmirrortab.kmirror import KMirrorPanel
 from guidepaneltab.guiding import GuidingPanel
 from settingstab.settings import SettingsPanel
 from logtab.log import LogPanel, wxLogHandler, EVT_WX_LOG_EVENT
-from emergency import EmergencyPanel
+from emergencytab.emergency import EmergencyPanel
 import actuators.XPS_C8_drivers as xps
 from threadtools import timeout
 
@@ -86,11 +86,6 @@ def fill_socket_list():
             break
         else:
             pass
-try:
-    fill_socket_list()
-except:
-    open_sockets=[0]
-    logging.critical('Connection to the Newport controller failed.')
 
 @timeout(10)
 def close_sockets():
@@ -212,5 +207,23 @@ class MainNessiFrame(wx.Frame):
 
 if __name__ == "__main__":
     app = wx.App()
-    MainNessiFrame().Show()
+    #################MAKE SPALSH################
+    bitmap = wx.Bitmap("media/nessi-logo.png", wx.BITMAP_TYPE_PNG)
+    splash = wx.SplashScreen(bitmap, 
+                             wx.SPLASH_CENTRE_ON_SCREEN|wx.SPLASH_NO_TIMEOUT,
+                             0, None)
+    wx.Yield()
+
+    ################Newport Sockets################
+    try:
+        fill_socket_list()
+    except:
+        open_sockets=[0]
+        logging.critical('Connection to the Newport controller failed.')     
+
+    ################Main Frame################
+    main = MainNessiFrame()
+    splash.Destroy() #Kill splash
+    main.Show()
+    ################RUN################
     app.MainLoop()
