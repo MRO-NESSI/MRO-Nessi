@@ -28,8 +28,7 @@ from settingstab.settings import SettingsPanel
 from logtab.log import LogPanel, wxLogHandler, EVT_WX_LOG_EVENT
 from emergencytab.emergency import EmergencyPanel
 import actuators.XPS_C8_drivers as xps
-from threadtools import timeout
-from threadtools import TimeoutError
+from threadtools import timeout, TimeoutError
 
 
 DEBUG = False
@@ -108,6 +107,7 @@ class MainNessiFrame(wx.Frame):
         try:
             self.fill_socket_list(self.x)
         except TimeoutError:
+            raise
             self.open_sockets=[0,1,2,3,4,5,6,7,8,9,10]
             logging.critical('Connection to the Newport controller failed.')   
 
@@ -241,14 +241,7 @@ if __name__ == "__main__":
 
     splash.Bind(EVT_WX_LOG_EVENT, onLogEvent)
     
-    ################Newport Sockets################
     logging.info('This is a test')
-    try:
-        fill_socket_list()
-    except:
-        open_sockets=[0]
-        logging.critical('Connection to the Newport controller failed.')     
-
     ################Main Frame################
     main = MainNessiFrame()
     logging.getLogger('').removeHandler(splashHandler)
