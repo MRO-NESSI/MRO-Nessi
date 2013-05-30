@@ -108,7 +108,7 @@ class MainNessiFrame(wx.Frame):
         try:
             self.fill_socket_list(self.x)
         except TimeoutError:
-            self.open_sockets=[0]
+            self.open_sockets=[0,1,2,3,4,5,6,7,8,9,10]
             logging.critical('Connection to the Newport controller failed.')   
 
         #Build Frame
@@ -120,7 +120,7 @@ class MainNessiFrame(wx.Frame):
         nb = wx.Notebook(p, style=wx.NB_RIGHT)
 
         #Make tabs
-        page1 = OverviewPanel(nb)
+        page1 = OverviewPanel(nb, self.x, self.open_sockets)
         page2 = KMirrorPanel(nb)
         page3 = GuidingPanel(nb)
         page4 = SettingsPanel(nb)
@@ -199,7 +199,7 @@ class MainNessiFrame(wx.Frame):
 
         wx.AboutBox(info)
 
-    @timeout(5)
+    @timeout(10)
     def fill_socket_list(self, controller):
         for i in range(int(cfg['general']['sockets'])):
             self.open_sockets.append(controller.TCP_ConnectToServer('192.168.0.254',5001,1))
@@ -212,7 +212,7 @@ class MainNessiFrame(wx.Frame):
             else:
                 pass
     
-    @timeout(5)
+    @timeout(10)
     def close_sockets(self, controller):
         for i in range(len(self.open_sockets)):
             controller.TCP_CloseSocket(self.open_sockets[i])
