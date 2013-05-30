@@ -17,6 +17,7 @@ from os.path import isdir
 import sys
 import time
 import wx
+from wx.lib.agw.advancedsplash import AdvancedSplash
 from wx.lib.pubsub import Publisher as pub
 
 
@@ -209,12 +210,26 @@ if __name__ == "__main__":
     app = wx.App()
     #################MAKE SPALSH################
     bitmap = wx.Bitmap("media/nessi-logo.png", wx.BITMAP_TYPE_PNG)
-    splash = wx.SplashScreen(bitmap, 
-                             wx.SPLASH_CENTRE_ON_SCREEN|wx.SPLASH_NO_TIMEOUT,
-                             0, None)
-    wx.Yield()
+    splash = AdvancedSplash(None, bitmap=bitmap)
+    splash.SetText('TEST!')
+    
+    ################START LOGGER################
+    def onLogEvent(self, event):
+        msg = event.message.strip('\r') + '\n'
+        splash.SetText(msg)
+        event.Skip()
 
+    #Logger
+    logging.basicConfig(level=logging.DEBUG)
+
+    splashHandler = wxLogHandler(splash)
+    splashHandler.setLevel(logging.INFO)
+    logging.getLogger('').addHandler(splashHandler)
+
+    splash.Bind(EVT_WX_LOG_EVENT, onLogEvent)
+    
     ################Newport Sockets################
+    logging.info('This is a test')
     try:
         fill_socket_list()
     except:
