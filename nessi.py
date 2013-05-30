@@ -150,7 +150,7 @@ class MainNessiFrame(wx.Frame):
 
         self.Bind(EVT_WX_LOG_EVENT, self.onLogEvent)
 
-        logging.info('This is called from nessi')
+        logging.info('NESSI initialized.')
 
     def onLogEvent(self, event):
         msg = event.message.strip('\r') + '\n'
