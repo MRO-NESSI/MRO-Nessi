@@ -9,13 +9,16 @@
 __author__ = 'Luke Schmidt, Matt Napolitano, Tyler Cecil'
 __date__ = '2013'
 
+from configobj import ConfigObj
 import logging
 from logging.handlers import TimedRotatingFileHandler
+from os import makedirs
+from os.path import isdir
 import sys
 import time
 import wx
 from wx.lib.pubsub import Publisher as pub
-from configobj import ConfigObj
+
 
 from overviewtab.overview import OverviewPanel
 from kmirrortab.kmirror import KMirrorPanel
@@ -123,6 +126,9 @@ class MainNessiFrame(wx.Frame):
 
         #init status
         self.statusbar.SetStatusText("Welcome to NESSI!")
+
+        #Make logfiles dir
+        if not isdir('logfiles'): makedirs('logfiles')
 
         #Logger
         logging.basicConfig(level=logging.DEBUG)
