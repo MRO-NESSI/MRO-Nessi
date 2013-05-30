@@ -193,7 +193,31 @@ class MainNessiFrame(wx.Frame):
 
         wx.AboutBox(info)
 
+class NessiSplash(wx.SplashScreen):
+    def __init__(self, parent=None):
+        bitmap = wx.Image(name = 'media/nessi-logo.png').ConvertToBitmap()
+        splashStyle = wx.SPLASH_CENTER_ON_SCREEN | wx.SPLASH_TIMEOUT
+        duration = 1000
+        wx.SplashScreen.__init__(self, bitmap, splashStyle, duration, parent)
+        self.Bind(wx.EVT_CLOSE, self.OnExit)
+        
+        wx.Yield()
+
+    def OnExit(self, event):
+        self.Hide()
+        nessi = MainNessiFrame()
+        nessi.Show()
+        event.skip()
+        
+
+class NessiApp(wx.App):
+    def OnInit(self):
+        splash = NessiSplash()
+        splash.show()
+
+        return True
+
 if __name__ == "__main__":
-    app = wx.App()
-    MainNessiFrame().Show()
+    app = NessiApp()
+#    MainNessiFrame().Show()
     app.MainLoop()
