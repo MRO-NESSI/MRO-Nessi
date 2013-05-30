@@ -2,6 +2,7 @@
 # Recipe 3: Threading Tools
 #
 import wx
+import signal
 import threading
 from types import FunctionType, MethodType
 

@@ -1,5 +1,3 @@
-import signal
-
 class InvalidPortException(Exception):
     def __init__(self, value = 'Port not valid'):
         self.value = value
