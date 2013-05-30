@@ -85,11 +85,6 @@ def fill_socket_list():
             OnFail()
         else:
             pass
-try:
-    fill_socket_list()
-except:
-    open_sockets=[0]
-
                         
 class MainNessiFrame(wx.Frame):
     """Main Window for Nessi Controll Software."""
@@ -203,31 +198,23 @@ class MainNessiFrame(wx.Frame):
 
         wx.AboutBox(info)
 
-class NessiSplash(wx.SplashScreen):
-    def __init__(self, parent=None):
-        bitmap = wx.Image(name = 'media/nessi-logo.png').ConvertToBitmap()
-        splashStyle = wx.SPLASH_CENTER_ON_SCREEN | wx.SPLASH_TIMEOUT
-        duration = 1000
-        wx.SplashScreen.__init__(self, bitmap, splashStyle, duration, parent)
-        self.Bind(wx.EVT_CLOSE, self.OnExit)
-        
-        wx.Yield()
-
-    def OnExit(self, event):
-        self.Hide()
-        nessi = MainNessiFrame()
-        nessi.Show()
-        event.skip()
-        
-
-class NessiApp(wx.App):
-    def OnInit(self):
-        splash = NessiSplash()
-        splash.show()
-
-        return True
-
 if __name__ == "__main__":
-    app = NessiApp()
-#    MainNessiFrame().Show()
+    app = wx.App()
+    #################MAKE SPALSH################
+    bitmap = wx.Bitmap("media/nessi-logo.png", wx.BITMAP_TYPE_PNG)
+    splash = wx.SplashScreen(bitmap, 
+                             wx.SPLASH_CENTRE_ON_SCREEN|wx.SPLASH_NO_TIMEOUT,
+                             0, None)
+    wx.Yield()
+
+    ################Newport Sockets################
+    try:
+        fill_socket_list()
+    except:
+        open_sockets=[0]
+    ################Main Frame################
+    main = MainNessiFrame()
+    splash.Destroy() #Kill splash
+    main.Show()
+    ################RUN################
     app.MainLoop()
