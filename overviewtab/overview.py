@@ -8,17 +8,18 @@ from schematicpanel import SchematicPanel
 from temppanel import TemperaturePanel
 
 class OverviewPanel(wx.ScrolledWindow):
-    def __init__(self, parent, *args, **kwargs):
+    def __init__(self, parent, controller, sockets, *args, **kwargs):
         super(OverviewPanel, self).__init__(parent)
         
         self.SetScrollbars(20,20,55,40)
-
+        self.controller = controller
+        self.sockets = sockets
         # Attributes
         self.Schematic   = SchematicPanel(self)
-        self.Mask        = WheelPanel(self, 'mask')
-        self.FilterOne   = WheelPanel(self, 'filter1')
-        self.FilterTwo   = WheelPanel(self, 'filter2')
-        self.Grism       = WheelPanel(self, 'grism')
+        self.Mask        = WheelPanel(self, 'mask', self.controller, self. sockets[0])
+        self.FilterOne   = WheelPanel(self, 'filter1', self.controller, self.sockets[1])
+        self.FilterTwo   = WheelPanel(self, 'filter2', self.controller, self.sockets[2])
+        self.Grism       = WheelPanel(self, 'grism', self.controller, self.sockets[3])
         self.Kmirror     = KmirrorPanel(self)
         self.GuideInfo   = GuideInfoPanel(self)
         self.FocusREI12  = FocusREIPanel(self, 'Focus REI-1-2', 0)
