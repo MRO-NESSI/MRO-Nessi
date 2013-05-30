@@ -86,6 +86,22 @@ class MainNessiFrame(wx.Frame):
 
     def __init__(self):
         wx.Frame.__init__(self, None, title="NESSI Controller", size=(850,875))
+
+        #Make logfiles dir
+        if not isdir('logfiles'): makedirs('logfiles')
+
+        #Logger
+        logging.basicConfig(level=logging.DEBUG)
+
+        logTabFormatter = logging.Formatter('[%(asctime)s] %(filename)s:%(funcName)s - %(message)s')
+        statusbarFormatter = logging.Formatter('[%(asctime)s] %(funcName)s - %(message)s')
+        
+        logfileHandler = logging.handlers.TimedRotatingFileHandler('logfiles/NESSILOG',
+                                                                   when='d')
+        logfileHandler.setLevel(logging.DEBUG)
+        logfileHandler.setFormatter(logTabFormatter)
+        logging.getLogger('').addHandler(logfileHandler)
+
         
         #add nessi package to path
         sys.path.append("./")
@@ -130,14 +146,7 @@ class MainNessiFrame(wx.Frame):
         #Make logfiles dir
         if not isdir('logfiles'): makedirs('logfiles')
 
-        #Logger
-        logging.basicConfig(level=logging.DEBUG)
-
-        logTabFormatter = logging.Formatter('[%(asctime)s] %(filename)s:%(funcName)s - %(message)s')
-        statusbarFormatter = logging.Formatter('[%(asctime)s] %(funcName)s - %(message)s')
-        #logTabFormatter = logging.Formatter('%(asctime) %(filename):%(funcName) - %(message)s')
-        #statusbarFormatter = logging.Formatter('%(asctime) %(message)s')
-        
+        #Logger GUI Handlers
         logTabHandler = wxLogHandler(page5)
         logTabHandler.setFormatter(logTabFormatter)
         logTabHandler.setLevel(logging.INFO)
@@ -147,12 +156,6 @@ class MainNessiFrame(wx.Frame):
         statusbarHandler.setFormatter(statusbarFormatter)
         statusbarHandler.setLevel(logging.INFO)
         logging.getLogger('').addHandler(statusbarHandler)
-
-        logfileHandler = logging.handlers.TimedRotatingFileHandler('logfiles/NESSILOG',
-                                                                   when='d')
-        logfileHandler.setLevel(logging.DEBUG)
-        logfileHandler.setFormatter(logTabFormatter)
-        logging.getLogger('').addHandler(logfileHandler)
 
         self.Bind(EVT_WX_LOG_EVENT, self.onLogEvent)
 
