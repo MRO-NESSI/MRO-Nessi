@@ -25,7 +25,7 @@ from kmirrortab.kmirror import KMirrorPanel
 from guidepaneltab.guiding import GuidingPanel
 from settingstab.settings import SettingsPanel
 from logtab.log import LogPanel, wxLogHandler, EVT_WX_LOG_EVENT
-from emergency import EmergencyPanel
+from emergencytab.emergency import EmergencyPanel
 import actuators.XPS_C8_drivers as xps
 
 
