@@ -27,6 +27,7 @@ from settingstab.settings import SettingsPanel
 from logtab.log import LogPanel, wxLogHandler, EVT_WX_LOG_EVENT
 from emergencytab.emergency import EmergencyPanel
 import actuators.XPS_C8_drivers as xps
+from threadtools import timeout
 
 
 DEBUG = False
@@ -72,13 +73,22 @@ keywords = {"OBSERVER"  : "Observer",
 cfg = ConfigObj('nessisettings.ini')
 x=xps.XPS()
 open_sockets=[]
-used_sockets=[]
-for i in range(int(cfg['general']['sockets'])):
-    open_sockets.append(x.TCP_ConnectToServer('192.168.0.254',5001,1))
+
+@timeout(5)
+def fill_socket_list():
+    for i in range(int(cfg['general']['sockets'])):
+        open_sockets.append(x.TCP_ConnectToServer('192.168.0.254',5001,1))
     
-for i in range(int(cfg['general']['sockets'])):
-    if open_sockets[i] == -1:
-        print 'Error, Sockets not opened.'
+    # Checking the status of the connections.
+    for i in range(int(cfg['general']['sockets'])):
+        if open_sockets[i] == -1:
+            OnFail()
+        else:
+            pass
+try:
+    fill_socket_list()
+except:
+    open_sockets=[0]
 
                         
 class MainNessiFrame(wx.Frame):
