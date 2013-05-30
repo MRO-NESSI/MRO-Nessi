@@ -1,11 +1,9 @@
 import wx
 
-from filterpanel import WheelPanel
+from dewarwheelpanel import WheelPanel
 from focusREI import FocusREIPanel
-#from grismpanel import GrismPanel
 from guideinfopanel import GuideInfoPanel
 from kmirrorpanel import KmirrorPanel
-#from maskpanel import MaskPanel
 from schematicpanel import SchematicPanel
 from temppanel import TemperaturePanel
 
