@@ -8,17 +8,8 @@ import threading as thr
 import time
 
 # Shared resources for programs that call these functions.
-x=xps.XPS()
-open_sockets=[]
-used_sockets=[]
-cfg = ConfigObj(infile='/home/mnapolitano/nessi/nessisettings.ini')
-for i in range(int(cfg['general']['sockets'])):
-    open_sockets.append(x.TCP_ConnectToServer('192.168.0.254',5001,1))
-    
-for i in range(int(cfg['general']['sockets'])):
-    if open_sockets[i] == -1:
-        print 'Error, Sockets not opened.'
 
+cfg = ConfigObj(infile='/home/mnapolitano/nessi/nessisettings.ini')
 
 def XPSErrorHandler(controller, socket, code, name):
     '''
@@ -220,6 +211,17 @@ This function prepares the motor for continuous rotation if it isn't already pre
 
 # Test code to be removed later
 if __name__ == '__main__':
+
+    x=xps.XPS()
+    open_sockets=[]
+    used_sockets=[]
+
+    for i in range(int(cfg['general']['sockets'])):
+        open_sockets.append(x.TCP_ConnectToServer('192.168.0.254',5001,1))
+    
+    for i in range(int(cfg['general']['sockets'])):
+        if open_sockets[i] == -1:
+            print 'Error, Sockets not opened.'
     NewportInitialize(x, 'grism', open_sockets[0], 0)
     NewportWheelThread(x, 'grism', open_sockets[0], 1, 4, True)
     
