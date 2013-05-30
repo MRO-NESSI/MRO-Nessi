@@ -74,7 +74,7 @@ cfg = ConfigObj('nessisettings.ini')
 x=xps.XPS()
 open_sockets=[]
 
-@timeout(5)
+@timeout(10)
 def fill_socket_list():
     for i in range(int(cfg['general']['sockets'])):
         open_sockets.append(x.TCP_ConnectToServer('192.168.0.254',5001,1))
@@ -82,14 +82,20 @@ def fill_socket_list():
     # Checking the status of the connections.
     for i in range(int(cfg['general']['sockets'])):
         if open_sockets[i] == -1:
-            OnFail()
+            logging.critical('Newport socket connection not opened at position ' + str(i))
+            break
         else:
             pass
 try:
     fill_socket_list()
 except:
     open_sockets=[0]
+    logging.critical('Connection to the Newport controller failed.')
 
+@timeout(10)
+def close_sockets():
+    for i in range(len(open_sockets)):
+        x.TCP_CloseSocket(open_sockets[i])
                         
 class MainNessiFrame(wx.Frame):
     """Main Window for Nessi Controll Software."""
@@ -192,6 +198,7 @@ class MainNessiFrame(wx.Frame):
         self.SetMenuBar(menuBar)
 
     def OnQuit(self, event=None):
+        close_sockets()
         self.Close()
         
     def OnAbout(self, event=None):
