@@ -28,6 +28,7 @@ from logtab.log import LogPanel, wxLogHandler, EVT_WX_LOG_EVENT
 from emergencytab.emergency import EmergencyPanel
 import actuators.XPS_C8_drivers as xps
 from threadtools import timeout
+from threadtools import TimeoutError
 
 
 DEBUG = False
@@ -71,26 +72,9 @@ keywords = {"OBSERVER"  : "Observer",
 
 # General newport information to be passed to all relevant panels.
 cfg = ConfigObj('nessisettings.ini')
-x=xps.XPS()
-open_sockets=[]
 
-@timeout(10)
-def fill_socket_list():
-    for i in range(int(cfg['general']['sockets'])):
-        open_sockets.append(x.TCP_ConnectToServer('192.168.0.254',5001,1))
-    
-    # Checking the status of the connections.
-    for i in range(int(cfg['general']['sockets'])):
-        if open_sockets[i] == -1:
-            logging.critical('Newport socket connection not opened at position ' + str(i))
-            break
-        else:
-            pass
 
-@timeout(10)
-def close_sockets():
-    for i in range(len(open_sockets)):
-        x.TCP_CloseSocket(open_sockets[i])
+
                         
 class MainNessiFrame(wx.Frame):
     """Main Window for Nessi Controll Software."""
@@ -117,6 +101,15 @@ class MainNessiFrame(wx.Frame):
         #add nessi package to path
         sys.path.append("./")
 
+        self.x=xps.XPS()
+        self.open_sockets=[]
+
+        try:
+            self.fill_socket_list(self.x)
+        except TimeoutError:
+            self.open_sockets=[0]
+            logging.critical('Connection to the Newport controller failed.')   
+
         #Build Frame
         self.create_menus()
         self.statusbar=self.CreateStatusBar()
@@ -131,7 +124,7 @@ class MainNessiFrame(wx.Frame):
         page3 = GuidingPanel(nb)
         page4 = SettingsPanel(nb)
         page5 = LogPanel(nb)
-        page6 = EmergencyPanel(nb, x, open_sockets[0], page1.FocusREI12.motor, page1.FocusREI34.motor)
+        page6 = EmergencyPanel(nb, self.x, self.open_sockets[0], page1.FocusREI12.motor, page1.FocusREI34.motor)
 
         #Add tabs to notebook
         nb.AddPage(page1, "Overview")
@@ -205,6 +198,24 @@ class MainNessiFrame(wx.Frame):
 
         wx.AboutBox(info)
 
+    @timeout(5)
+    def fill_socket_list(self, controller):
+        for i in range(int(cfg['general']['sockets'])):
+            self.open_sockets.append(controller.TCP_ConnectToServer('192.168.0.254',5001,1))
+        
+        # Checking the status of the connections.
+        for i in range(int(cfg['general']['sockets'])):
+            if self.open_sockets[i] == -1:
+                logging.critical('Newport socket connection not opened at position ' + str(i))
+                break
+            else:
+                pass
+    
+    @timeout(5)
+    def close_sockets(self, controller):
+        for i in range(len(self.open_sockets)):
+            controller.TCP_CloseSocket(self.open_sockets[i])
+
 if __name__ == "__main__":
     app = wx.App()
     #################MAKE SPALSH################
@@ -213,14 +224,7 @@ if __name__ == "__main__":
                              wx.SPLASH_CENTRE_ON_SCREEN|wx.SPLASH_NO_TIMEOUT,
                              0, None)
     wx.Yield()
-
-    ################Newport Sockets################
-    try:
-        fill_socket_list()
-    except:
-        open_sockets=[0]
-        logging.critical('Connection to the Newport controller failed.')     
-
+   
     ################Main Frame################
     main = MainNessiFrame()
     splash.Destroy() #Kill splash
