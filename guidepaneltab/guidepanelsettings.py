@@ -1,3 +1,4 @@
+import FLI
 import ds9
 import threading
 import threadtools
@@ -109,7 +110,7 @@ class GuidePanelSettings(wx.Panel):
                 self.c_power = True
                 cams = FLI.camera.USBCamera.find_devices()
                 self.cam0 = cams[0]
-                self.cam0.set_bit_depth("16bit")
+                self.cam0.set_bitdepth("16bit")
                 temp = self.cam0.get_temperature()
                 self.curr_temp.SetLabel(str(temp) + u'\N{DEGREE SIGN}' + 'C  ')
                 
