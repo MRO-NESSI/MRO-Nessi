@@ -1,7 +1,8 @@
 import logging
 import wx
 
-from actuators.tl import TLabs, run_async
+from actuators.tl import TLabs
+from threadtools import run_async
 
 class FocusREIPanel(wx.Panel):
     """This panel controls the position of REI1-2 """

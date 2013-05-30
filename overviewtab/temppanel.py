@@ -2,7 +2,7 @@ from time import sleep
 import wx
 
 from sensors.lake import LakeshoreController
-from actuators.tl import run_async
+from threadtools import run_async
 
 class TemperaturePanel(wx.Panel):
     
