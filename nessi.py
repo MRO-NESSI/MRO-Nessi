@@ -227,7 +227,9 @@ if __name__ == "__main__":
     ################START LOGGER################
     def onLogEvent(self, event):
         msg = event.message.strip('\r') + '\n'
-        splash.SetText(msg)
+        print 'I WAS CALLED %s' % msg
+        wx.CallAfter(splash.SetText,msg)
+        wx.Yield()
         event.Skip()
 
     #Logger
@@ -249,6 +251,7 @@ if __name__ == "__main__":
 
     ################Main Frame################
     main = MainNessiFrame()
+    logging.getLogger('').removeHandler(splashHandler)
     splash.Destroy() #Kill splash
     main.Show()
     ################RUN################
