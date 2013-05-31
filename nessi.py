@@ -121,7 +121,7 @@ class MainNessiFrame(wx.Frame):
 
         #Make tabs
         page1 = OverviewPanel(nb, self.x, self.open_sockets)
-        page2 = KMirrorPanel(nb)
+#        page2 = KMirrorPanel(nb)
         page3 = GuidingPanel(nb)
         page4 = SettingsPanel(nb)
         page5 = LogPanel(nb)
@@ -129,7 +129,7 @@ class MainNessiFrame(wx.Frame):
 
         #Add tabs to notebook
         nb.AddPage(page1, "Overview")
-        nb.AddPage(page2, "K-Mirror")
+#        nb.AddPage(page2, "K-Mirror")
         nb.AddPage(page3, "Guiding")
         nb.AddPage(page4, "Settings")
         nb.AddPage(page5, "Log")
