@@ -6,6 +6,7 @@ from configobj import ConfigObj
 from wx.lib.pubsub import Publisher
 import threading as thr
 import time
+import logging
 
 # Shared resources for programs that call these functions.
 
@@ -32,16 +33,16 @@ If the error string can not be found it will print the error code for lookup by 
         error = controller.ErrorStringGet(socket, code)
         # If the error string lookup fails, this message will display with the error code.
         if error[0] != 0:
-            choice=wx.MessageBox(name + ' : ERROR '+ str(code), style=wx.CENTER|wx.ICON_EXCLAMATION|wx.OK)
+            logging.warning(name + ' : ERROR '+ str(code))
         # This displays the error string.
         else:
-            print error[1] #choice=wx.MessageBox(name +' : '+ error[1],style=wx.CENTER|wx.ICON_EXCLAMATION|wx.OK)
+            logging.warning(name + ' : ' + error[1])
     # This code handles the case where the connection to the controller fails after initial contact.
     else:
         if code == -2:
-            choice=wx.MessageBox(name + ' : TCP timeout', style=wx.CENTER|wx.ICON_EXCLAMATION|wx.OK)
+            logging.warning(name + ' : TCP timeout')
         elif code == -108:
-            choice=wx.MessageBox(name + ' : The TCP/IP connection was closed by an administrator', style=wx.CENTER|wx.ICON_EXCLAMATION|wx.OK)
+            logging.warning(name + ' : The TCP/IP connection was closed by an administrator')
         
 
 #@threaded
@@ -74,7 +75,7 @@ If the motion succedes the function will log a message. (to be added when workin
         # self.diff is how many positions away from current the target position is.
         diff = (int(cfg[wheel]['slots']) - current + position) % int(cfg[wheel]['slots'])
 
-    if current != position:
+    if current != position or home == True:
         # Starting motion.
         Gset = controller.GroupSpinParametersSet(socket, cfg[wheel]['group'], 100, 200)
         # Checking if the motion command was sent correctly.
@@ -136,17 +137,17 @@ This function returns nothing if succesful and calls XPSErrorHandler otherwise.
     # This function kills any motors that are still active from previous motions.
     GKill = controller.GroupKill(socket, cfg[motor]['group'])   
     if GKill[0] != 0:
-        XPSErrorHandler(socket, GKill[0], 'GroupKill')
+        XPSErrorHandler(controller, socket, GKill[0], 'GroupKill')
 
     # This function initializes the motor so it can be moved.
     GInit = controller.GroupInitialize(socket, cfg[motor]['group'])
     if GInit[0] != 0:
-        XPSErrorHandler(socket, GInit[0], 'GroupInitialize')
+        XPSErrorHandler(controller, socket, GInit[0], 'GroupInitialize')
 
     # This function homes the motor and then moves the motor to a home position defined by the user.
     GHomeSearch = controller.GroupHomeSearchAndRelativeMove(socket, cfg[motor]['group'],[home_pos])
     if GHomeSearch[0] != 0:
-        XPSErrorHandler(socket, GHomeSearch[0], 'GroupHomeSearchAndRelativeMove')
+        XPSErrorHandler(controller, socket, GHomeSearch[0], 'GroupHomeSearchAndRelativeMove')
 
 
 def NewportKmirrorMove(controller, socket, motor, jog_state, position):
@@ -171,12 +172,13 @@ This function moves the k-mirror to a choosen position at 10 deg/s.
 
     # This function sets the motion parameters to be used by the motor.
     # If the parameters are set correctly then an absolute move is made to the position of choice.
-    Gset = controller.GroupJogParametersSet(socket, cfg[motor]['group'], [10], [200])
+    Gset = controller.PositionerSGammaParametersSet(socket,cfg[motor]['positioner'], 15 , 200, .005, .05)
+    print cfg[motor]['group'], socket, Gset
     if Gset[0] != 0:
-        XPSErrorHandler(controller, socket, Gset[0], 'GroupJogParametersSet')
+        XPSErrorHandler(controller, socket, Gset[0], 'PositionerSGammaParametersSet')
     else:
         GMove = controller.GroupMoveAbsolute(socket, cfg[motor]['group'], [float(position)])
-        if move[0] != 0:
+        if GMove[0] != 0:
             XPSErrorHandler(controller, socket, GMove[0], 'GroupMoveAbsolute')
         else:
             pass
@@ -224,4 +226,5 @@ if __name__ == '__main__':
             print 'Error, Sockets not opened.'
     NewportInitialize(x, 'grism', open_sockets[0], 0)
     NewportWheelThread(x, 'grism', open_sockets[0], 1, 4, True)
+#   NewportWheelThread(x, 'grism', open_sockets[0],0,1,False)
     
