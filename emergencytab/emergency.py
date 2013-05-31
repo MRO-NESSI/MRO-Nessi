@@ -1,14 +1,15 @@
 import wx
-from actuators.newport import XPSErrorHandler
+from actuators.newport import XPSErrorHandler, NewportInitialize
 
 class EmergencyPanel(wx.Panel):
-    def __init__(self, parent, controller, socket, thorlabs1, thorlabs2, *args, **kwargs):
+    def __init__(self, parent, controller, socket, thorlabs1, thorlabs2):
         super(EmergencyPanel, self).__init__(parent)
         
         self.controller = controller
         self.socket = socket
         self.thorlabs1 = thorlabs1
         self.thorlabs2 = thorlabs2
+        self.groups = ['mask','filter1','filter2','grism','kmirror']
         # Attributes
         self.t = wx.StaticText(self, -1, "Emergency", (40,40))
         self.emergency = wx.Button(self, 1, label='KILL ALL', size=(400,200))
@@ -46,5 +47,6 @@ class EmergencyPanel(wx.Panel):
         self.thorlabs2.home()
 
     def OnReset(self, event):
-        
+        for x in self.groups:
+            NewportInitialize(self.controller, x, self.socket, 0)
         pass
