@@ -120,7 +120,7 @@ class MainNessiFrame(wx.Frame):
         nb = wx.Notebook(p, style=wx.NB_RIGHT)
 
         #Make tabs
-        page1 = OverviewPanel(nb, self.x, self.open_sockets)
+        page1 = OverviewPanel(nb, self.x, self.open_sockets[1:])
 #        page2 = KMirrorPanel(nb)
         page3 = GuidingPanel(nb)
         page4 = SettingsPanel(nb)
