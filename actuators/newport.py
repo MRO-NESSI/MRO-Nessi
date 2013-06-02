@@ -173,7 +173,6 @@ This function moves the k-mirror to a choosen position at 10 deg/s.
     # This function sets the motion parameters to be used by the motor.
     # If the parameters are set correctly then an absolute move is made to the position of choice.
     Gset = controller.PositionerSGammaParametersSet(socket,cfg[motor]['positioner'], 15 , 200, .005, .05)
-    print cfg[motor]['group'], socket, Gset
     if Gset[0] != 0:
         XPSErrorHandler(controller, socket, Gset[0], 'PositionerSGammaParametersSet')
     else:
@@ -209,7 +208,21 @@ This function prepares the motor for continuous rotation if it isn't already pre
     if GJog[0] != 0:
         XPSErrorHandler(controller, socket, GJog[0], 'GroupJogParametersSet')
     
-    
+def NewportStatusGet(controller, socket, motor):
+    info = []
+    position = controller.GroupPositionCurrentGet(socket, cfg[motor]['group'], 1)
+    if position[0] != 0:
+        XPSErrorHandler(controller, socket, position[0], 'GroupPositionCurrentGet')
+    else:
+        info.append(position[1])
+    profile = controller.PositionerSGammaParametersGet(socket, cfg[motor]['positioner'])
+    if profile[0] != 0:
+        XPSErrorHandler(socket, profile[0], 'PositionerSGammaParametersGet')
+    else:
+        for i in profile[1:]:
+            info.append(i)
+    return info
+        
 
 # Test code to be removed later
 if __name__ == '__main__':

@@ -18,12 +18,12 @@ class KmirrorPanel(wx.Panel):
         self.controller = controller
         self.socket = socket
         self.motor = motor
-        
+
         #global k = None
         self.k_power = False        
         self.trackstatus = True
         self.jog_state = False
-        new.NewportInitialize(self.controller, self.motor, self.socket, 0)
+        new.NewportInitialize(self.controller, self.motor, self.socket[0], 0)
         
         # Attributes
         self.curr_pa_text = wx.StaticText(self, label="Current PA:")
@@ -54,6 +54,7 @@ class KmirrorPanel(wx.Panel):
         self.Bind(wx.EVT_BUTTON, self.on_track, self.track_button)
         self.Bind(wx.EVT_BUTTON, self.on_set, self.set_button)
         self.Bind(wx.EVT_BUTTON, self.on_stop, self.stop_button)
+        self.Bind(wx.EVT_BUTTON, self.on_home, self.home_button)
     
 #    def OnPower(self):
 #        self.k_power = True
@@ -118,9 +119,9 @@ class KmirrorPanel(wx.Panel):
     def on_set(self, event):
         try:
             pa = float(self.new_pa.GetValue())
-            logging.info('Rotator: Move to %d' % (int(pa)%360) + u'\N{DEGREE SIGN}')
-            new.NewportKmirrorMove(self.controller, self.socket, self.motor, self.jog_state, pa)
-            logging.info('Rotator: Is at %d' % (int(pa)%360) + u'\N{DEGREE SIGN}')
+            logging.info('Rotator: Move to %f' % (float(pa)) + u'\N{DEGREE SIGN}')
+            new.NewportKmirrorMove(self.controller, self.socket[0], self.motor, self.jog_state, pa)
+            logging.info('Rotator: Is at %f' % (float(pa)) + u'\N{DEGREE SIGN}')
             
         except ValueError:
             pass
@@ -166,7 +167,11 @@ class KmirrorPanel(wx.Panel):
 #            pass
 
     def on_timer(self, event):
-        pass
+        try:
+            pa = new.NewportStatusGet(self.controller, self.socket[1], self.motor)[0]
+            self.curr_pa.SetLabel(str(pa) + u'\N{DEGREE SIGN}')
+        except ValueError:
+            pass
 #        try:
 #            if not self.k_power:
 #                pass
@@ -177,8 +182,15 @@ class KmirrorPanel(wx.Panel):
 #            pass
     
     def step_pos(self, event):
-        pass
-#        try:
+        try:
+            step = self.step_size.GetValue()
+            info = new.NewportStatusGet(self.controller, self.socket[0], self.motor)
+            pa = info[0] + step
+            logging.info('Rotator: Move to %f' % (float(pa)) + u'\N{DEGREE SIGN}')
+            new.NewportKmirrorMove(self.controller, self.socket[0], self.motor, self.jog_state, pa)
+            logging.info('Rotator: Is at %f' % (float(pa)) + u'\N{DEGREE SIGN}')
+        except ValueError:
+            pass
 #            if not self.k_power:
 #                wx.Bell()
 #                wx.MessageBox('The rotator does not have power.', style=wx.OK|wx.CENTER)
@@ -192,7 +204,15 @@ class KmirrorPanel(wx.Panel):
 #            pass
 
     def step_neg(self, event):
-        pass
+        try:
+            step = self.step_size.GetValue()
+            info = new.NewportStatusGet(self.controller, self.socket[0], self.motor)
+            pa = info[0] - step
+            logging.info('Rotator: Move to %f' % (float(pa)) + u'\N{DEGREE SIGN}')
+            new.NewportKmirrorMove(self.controller, self.socket[0], self.motor, self.jog_state, pa)
+            logging.info('Rotator: Is at %f' % (float(pa)) + u'\N{DEGREE SIGN}')
+        except ValueError:
+            pass
 #        try:
 #            if not self.k_power:
 #                wx.Bell()
@@ -206,3 +226,9 @@ class KmirrorPanel(wx.Panel):
 #        except ValueError:
 #            pass
 
+    def on_home(self, event):
+        try:
+            new.NewportInitialize(self.controller, self.motor, self.socket[0], 0)
+            logging.info('Rotator: Re-homing rotator')
+        except:
+            raise
