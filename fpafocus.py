@@ -2,11 +2,11 @@
 
 import wx
 import wx.lib.agw.floatspin as FS
-import XPS_C8_drivers as xps
+import actuators.XPS_C8_drivers as xps
 import time
 import math
 import actuators.newport as new
-from overviewtab.fpapanel.py import FPAPanel
+from overviewtab.fpapanel import FPAPanel
 
 x = xps.XPS()
 s0 = x.TCP_ConnectToServer('192.168.0.254',5001,1)
@@ -19,7 +19,7 @@ class FPA(wx.App):
     '''The Fpa focusing app.''' 
 
     def OnInit(self):
-        self.frame=FPA(None, title='FPA Focusing Program')
+        self.frame=FPAFrame(None, title='FPA Focusing Program')
         self.SetTopWindow(self.frame)
         self.frame.Show()
         return True
@@ -27,8 +27,9 @@ class FPA(wx.App):
 class FPAFrame(wx.Frame):
     def __init__(self,*args,**kwargs):
         super(FPAFrame,self).__init__(*args,**kwargs)
-        self.panel0 = FPAPanel(frame, x,[s1,s2,s3,s4],'array')
-        self.panel1 = Emergency()
+        p = wx.Panel(self)
+        self.panel0 = FPAPanel(p,'array', x,[s1,s2,s3,s4])
+        self.panel1 = Emergency(p)
         self.__DoLayout()
         self.SetInitialSize()
         self.Bind(wx.EVT_CLOSE,self.OnClose)
@@ -44,11 +45,11 @@ class FPAFrame(wx.Frame):
     
     # This function is called when the program is closed and first confirms closing then stops all tasks and closes the program.
     def OnClose(self,event):
-        kill=x.KillAll(s2)
+        kill=x.KillAll(s0)
         if kill[0] != 0:
             new.XPSErrorHandler(x,s0, kill[0], 'KillAll')
         else:
-            Close()
+            self.Close()
 
 class Emergency(wx.Panel):
     def __init__(self,*args,**kwargs):
@@ -76,4 +77,7 @@ class Emergency(wx.Panel):
         if kill[0] != 0:
             new.XPSErrorHandler(x, s0, kill[0], 'KillAll')
         else:
-            result=wx.MessageBox('All groups killed.\nMotors must be reinitialized',style=wx.CENTER|wx.ICON_EXCLAMATION|wx.OK)    
+            result=wx.MessageBox('All groups killed.\nMotors must be reinitialized',style=wx.CENTER|wx.ICON_EXCLAMATION|wx.OK)  
+
+app=FPA(False)   
+app.MainLoop()  
