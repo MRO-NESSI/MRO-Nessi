@@ -64,6 +64,7 @@ If the motion succedes the function will log a message. (to be added when workin
     # Initializing variables.
     group = cfg[wheel]['group']
     state = 0
+    speed = int(cfg[wheel]['direction'])*100
     # Different initializations depending on whether it is homing or not.
     if home == True:
         val = int(cfg[wheel]['home']['val'])
@@ -77,7 +78,7 @@ If the motion succedes the function will log a message. (to be added when workin
 
     if current != position or home == True:
         # Starting motion.
-        Gset = controller.GroupSpinParametersSet(socket, cfg[wheel]['group'], 100, 200)
+        Gset = controller.GroupSpinParametersSet(socket, cfg[wheel]['group'], speed, 200)
         # Checking if the motion command was sent correctly.
         # If so then the GPIO checking begins.
         if Gset[0] != 0:
@@ -109,15 +110,15 @@ If the motion succedes the function will log a message. (to be added when workin
                 else:
                     pass
             # Stopping the motor
-            stop=x.GroupSpinModeStop(socket, group, 800)
+            stop=controller.GroupSpinModeStop(socket, cfg[wheel]['group'], 800)
             if stop[0] != 0:
                 XPSErrorHandler(controller, socket, stop[0], 'GroupSpinModeStop')
             # Checking to be sure the motor is in a valid position.
             elif int(format(value[1], "016b")[::-1][bit]) != val:       
-                print 'motion failed, home and then reinitiate move'
+                logging.critical('motion failed, home and then reinitiate move')
             else:
-                print 'motion succeded'
-                Publisher().sendMessage((group + '_state'), state)
+                logging.info('motion succeded')
+             
     else:
         pass
     return position
@@ -172,7 +173,7 @@ This function moves the k-mirror to a choosen position at 10 deg/s.
 
     # This function sets the motion parameters to be used by the motor.
     # If the parameters are set correctly then an absolute move is made to the position of choice.
-    Gset = controller.PositionerSGammaParametersSet(socket,cfg[motor]['positioner'], 15 , 200, .005, .05)
+    Gset = controller.PositionerSGammaParametersSet(socket,cfg[motor]['positioner'], 10 , 200, .005, .05)
     if Gset[0] != 0:
         XPSErrorHandler(controller, socket, Gset[0], 'PositionerSGammaParametersSet')
     else:
@@ -209,6 +210,9 @@ This function prepares the motor for continuous rotation if it isn't already pre
         XPSErrorHandler(controller, socket, GJog[0], 'GroupJogParametersSet')
     
 def NewportStatusGet(controller, socket, motor):
+    '''
+
+'''
     info = []
     position = controller.GroupPositionCurrentGet(socket, cfg[motor]['group'], 1)
     if position[0] != 0:
@@ -222,7 +226,74 @@ def NewportStatusGet(controller, socket, motor):
         for i in profile[1:]:
             info.append(i)
     return info
-        
+
+def NewportStop(controller, socket, motor):
+    '''
+
+'''
+    if motor == 'kmirror':
+        GStop = controller.GroupJogParametersSet(socket, cfg[motor]['group'], [0],[400])
+        if GStop[0] != 0:
+            XPSErrorHandler(controller, socket, GStop[0], 'GroupJogParametersSet')
+        else: 
+            pass    
+    else:
+        GStop = controller.GroupSpinParametersSet(socket, cfg[motor]['group'], 0, 800)
+        if GStop[0] != 0:
+            XPSErrorHandler(controller, socket, GStop[0], 'GroupSpinParametersSet')
+        else:
+            pass
+
+def NewportFocusLimit(controller, socket, motor):
+    '''
+
+'''
+    bitup = cfg[motor]['upper']['bit']
+    bitdown = cfg[motor]['lower']['bit']
+    valup = cfg[motor]['upper']['val']
+    valdown = cfg[motor]['lower']['val']
+    stop = False
+    while stop == False:
+        value = controller.GPIODigitalGet(socket, 'GPIO4.DI')
+        velocity = controller.GroupSpinCurrentGet(socket, cfg[motor]['group'])
+
+        if value[0] != 0 or velocity[0] != 0:
+            if value[0] != 0:
+                XPSErrorHandler(controller, socket, value[0], 'GPIODigitalGet')
+            else:
+                XPSErrorHandler(controller, socket, velocity[0], 'GroupSpinCurrentGet')
+
+        elif int(format(value[1], "016b")[::-1][bitup]) == valup or int(format(value[1], "016b")[::-1][bitdown]) == valdown:
+            stop = True
+
+        elif velocity[1] == 0:
+            stop = True
+
+        else:
+            pass 
+
+    GStop = controller.GroupSpinModeStop(socket, cfg[motor]['group'], 800)
+    if GStop[0] != 0:
+        XPSErrorHandler(controller, socket, GStop[0], 'GroupSpinModeStop')
+    else:
+        pass
+           
+#@run_async
+def NewportFocusMove(controller, sockets, motor, distance, speed):
+    '''
+    Inputs: controller, socket, motor, distance.
+
+    controller: [xps]   Which instance of the XPS controller to use.
+    sockets:    [list]  A list of two sockets to use to communicate with the XPS controller.
+    motor:      [str]   Which motor is being controlled.  This is for config file purposes.
+    distance:   [float] How far to move the array.
+    speed:      [int]   How fast to move the array.
+'''
+    pass
+
+def NewportFocusHome(controller, socket, motor):
+    pass    
+
 
 # Test code to be removed later
 if __name__ == '__main__':
