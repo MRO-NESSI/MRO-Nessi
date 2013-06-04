@@ -10,7 +10,7 @@ import logging
 
 # Shared resources for programs that call these functions.
 
-cfg = ConfigObj(infile='/home/mnapolitano/nessi/nessisettings.ini')
+cfg = ConfigObj(infile='nessisettings.ini')
 
 def XPSErrorHandler(controller, socket, code, name):
     '''

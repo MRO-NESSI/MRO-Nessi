@@ -9,6 +9,9 @@
 __author__ = 'Luke Schmidt, Matt Napolitano, Tyler Cecil'
 __date__ = '2013'
 
+import wxversion
+wxversion.select('2.8')
+
 from configobj import ConfigObj
 import logging
 from logging.handlers import TimedRotatingFileHandler

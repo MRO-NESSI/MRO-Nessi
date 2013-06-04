@@ -1,4 +1,4 @@
-import FLI
+#import FLI
 import ds9
 import threading
 import threadtools
