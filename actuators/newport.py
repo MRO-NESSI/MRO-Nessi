@@ -14,15 +14,19 @@ cfg = ConfigObj(infile='/home/mnapolitano/nessi/nessisettings.ini')
 
 def XPSErrorHandler(controller, socket, code, name):
     '''
-This is a general error handling function for the newport controller functions. 
-First the function checks for errors in communicating with the controller, then it fetches the error string and displays it in a message box.  
-If the error string can not be found it will print the error code for lookup by the user.
+This is a general error handling function for the newport controller 
+functions. First the function checks for errors in communicating with the 
+controller, then it fetches the error string and displays it in a message box.  
+If the error string can not be found it will print the error code for lookup 
+by the user.
 
     Inputs: controller, socket, code, name.
 
     controller: [xps]   Which instance of the XPS controller to use.
-    socket:     [int]   Which socket to use to communicate with the XPS controller.
-    code:       [int]   The error code returned by the function that called this function.
+    socket:     [int]   Which socket to use to communicate with the XPS 
+                        controller.
+    code:       [int]   The error code returned by the function that called 
+                        this function.
     name:       [str]   The name of the function that called this function.
 '''
 
@@ -48,18 +52,23 @@ If the error string can not be found it will print the error code for lookup by 
 #@threaded
 def NewportWheelThread(controller, wheel, socket, current, position, home):
     '''
-A thread that initiates a move in the dewar and then monitors The Newport GPIO for a bit flip that indicates the motor needs to be stopped.
-If the motion fails the function will print a message to the terminal. (to be changed)
-If the motion succedes the function will log a message. (to be added when working logging is added)
+A thread that initiates a move in the dewar and then monitors The Newport GPIO
+for a bit flip that indicates the motor needs to be stopped.  If the motion 
+fails the function will print a message to the terminal. (to be changed) If 
+the motion succedes the function will log a message. (to be added when working 
+logging is added)
 
     Inputs: controller, name, socket, position, home.
 
     controller: [xps]   Which instance of the XPS controller to use.
-    wheel:      [str]   The name of the motor that is being used.  This is for config file purposes.
-    socket:     [int]   Which socket to use to communicate with the XPS controller.
+    wheel:      [str]   The name of the motor that is being used.  This is for
+                        config file purposes.
+    socket:     [int]   Which socket to use to communicate with the XPS 
+                        controller.
     current:    [int]   What position the motor is currently at.
     position:   [int]   What position the motor should move to.
-    home:       [bool]  Determines whether the thread will find the home position or a different position.
+    home:       [bool]  Determines whether the thread will find the home 
+                        position or a different position.
 '''
     # Initializing variables.
     group = cfg[wheel]['group']
@@ -131,9 +140,12 @@ This function returns nothing if succesful and calls XPSErrorHandler otherwise.
     Inputs: controller, motor, socket, home_position.
     
     controller: [xps]   Which instance of the XPS controller to use.
-    motor:      [str]   The name of the motor that is being used.  This is for config file purposes.
-    socket:     [int]   Which socket to use to communicate with the XPS controller.
-    home_pos:   [int]   Determines whether the thread will find the home position or a different position.
+    motor:      [str]   The name of the motor that is being used.  This is for
+                        config file purposes.
+    socket:     [int]   Which socket to use to communicate with the XPS 
+                        controller.
+    home_pos:   [int]   Determines whether the thread will find the home 
+                        position or a different position.
 '''
     # This function kills any motors that are still active from previous motions.
     GKill = controller.GroupKill(socket, cfg[motor]['group'])   
@@ -158,9 +170,12 @@ This function moves the k-mirror to a choosen position at 10 deg/s.
     Inputs: controller, socket, motor, jog_state, position.
 
     controller: [xps]   Which instance of the XPS controller to use.
-    socket:     [int]   Which socket to use to communicate with the XPS controller.
-    motor:      [str]   Which motor is being controlled.  This is for config file purposes.
-    jog_state:  [bool]  Whether or not the motor in question is already configured for continuous rotation. 
+    socket:     [int]   Which socket to use to communicate with the XPS 
+                        controller.
+    motor:      [str]   Which motor is being controlled.  This is for config 
+                        file purposes.
+    jog_state:  [bool]  Whether or not the motor in question is already 
+                        configured for continuous rotation. 
     position:   [float] What value to move the k-mirror to.
 '''
     # This checks to see if the motor is in a continuous rotation state and if it is then the function disables continuous rotation. 
@@ -185,17 +200,21 @@ This function moves the k-mirror to a choosen position at 10 deg/s.
 
 def NewportKmirrorRotate(controller, socket, motor, jog_state, speed):
     '''
-This function prepares the motor for continuous rotation if it isn't already prepared and then sets a choosen velocity.
+This function prepares the motor for continuous rotation if it isn't already 
+prepared and then sets a choosen velocity.
 
     Inputs: controller, socket, motor, jog_state, velocity.
 
     controller: [xps]   Which instance of the XPS controller to use.
-    socket:     [int]   Which socket to use to communicate with the XPS controller.
-    motor:      [str]   Which motor is being controlled.  This is for config file purposes.
-    jog_state:  [bool]  Whether or not the motor in question is already configured for continuous rotation. 
+    socket:     [int]   Which socket to use to communicate with the XPS 
+                        controller.
+    motor:      [str]   Which motor is being controlled.  This is for config 
+                        file purposes.
+    jog_state:  [bool]  Whether or not the motor in question is already 
+                        configured for continuous rotation. 
     velocity:   [float] What value to set the rotational velocity to in deg/s.
 '''
-    # This checks if the motor is in a continuous rotation state and if it enables that state.
+    # This checks if the motor is in a continuous rotation state and if not enables that state.
     if jog == False:
         Gmode = controller.GroupJogModeEnable(socket, cfg[motor]['group'])
         if Gmode[0] != 0:
@@ -284,8 +303,10 @@ def NewportFocusMove(controller, sockets, motor, distance, speed):
     Inputs: controller, socket, motor, distance.
 
     controller: [xps]   Which instance of the XPS controller to use.
-    sockets:    [list]  A list of two sockets to use to communicate with the XPS controller.
-    motor:      [str]   Which motor is being controlled.  This is for config file purposes.
+    sockets:    [list]  A list of two sockets to use to communicate with the 
+                        XPS controller.
+    motor:      [str]   Which motor is being controlled.  This is for config 
+                        file purposes.
     distance:   [float] How far to move the array.
     speed:      [int]   How fast to move the array.
 '''
