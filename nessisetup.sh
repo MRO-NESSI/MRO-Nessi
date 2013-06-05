@@ -86,4 +86,29 @@ apt-get autoclean
 apt-get autoremove
 echo -e "${P} DONE! ${NC}"
 
+echo -e "${P} Making udev rules... ${NC}"
+cat <<EOF > /etc/udev/rules.d/90-thorlabs.rules
+#Thorlabs
+
+#Use udevadm info -a -p `udevadm info -q path -n [devpath]`
+#to find information about a device. I looked for serial
+#numbers. If this device is replaced, find which device
+#it is, find the serial number, and replace.
+
+ATTRS{serial}=="83840902", NAME="ttyREI12", MODE="666"
+ATTRS{serial}=="83841481", NAME="ttyREI34", MODE="666"
+
+EOF
+cat <<EOF > /etc/udev/rules.d/90-lakeshore.rules
+#Lakeshore Rules
+
+#Use udevadm info -a -p `udevadm info -q path -n [devpath]`
+#to find information about a device. I looked for serial
+#numbers. If this device is replaced, find which device
+#it is, find the serial number, and replace.
+
+ATTRS{interface}=="Model 336 Temperature Controller",NAME="ttylakeshore",MODE="666"
+EOF
+echo -e "${P} DONE! ${NC}"
+
 echo -e "\n\n${P}HOPEFULLY YOU ARE GOOD TO GO!${NC}"
