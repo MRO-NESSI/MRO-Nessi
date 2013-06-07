@@ -1,4 +1,6 @@
-from subprocess import check_call, CalledProcessError, Popen, PIPE
+from subprocess import check_call, check_output, CalledProcessError, Popen, PIPE, STDOUT
+from os import chdir
+from os.path import expanduser
 
 #Colors
 colors = {
@@ -9,26 +11,37 @@ colors = {
 }
 
 #Open Yes
-yes = Popen('yes', stdout=PIPE).stdout
-
+yes = Popen('yes', stdout=PIPE)
 
 #Get the character size of the terminal
 def getSize():
-    return Popen('stty size', shell=True, stdout=PIPE).stdout.read().split()
+    return map(int, Popen('stty size', shell=True, stdout=PIPE).stdout.read().split())
 
 def taskBatch(msg, tasks):
     print colors['WARNING'] + '==> ' + colors['ENDC'] + msg
     
+    n = len(tasks)
+    c = 0
+
     for task in tasks:
         task = task.split()
+        print task
+        if task[0] == 'cd':
+            chdir(expanduser(task[1]))
+            c += 1
+            print '%i / %i' % (c, n)
+            continue
         try:
-            check_call(task, stdin=yes)
+            check_output(task, stderr=STDOUT, stdin=yes.stdout)
         except CalledProcessError as e:
             print colors['FAIL']+'\n"'+msg+'" FAILED!'
-            print 'Failed on ' + e.cmd + ' with exit status ' + cmd.returncode
+            print 'Failed on ' + str(e.cmd) + ' with exit status ' + str(e.returncode)
             print e.output
             print colors['ENDC']
+            yes.kill()
             exit(1)
+        c += 1
+        print '%i / %i' % (c, n)
     print colors['OK'] + 'Done!' + colors['ENDC']
 
 def main():
@@ -37,7 +50,7 @@ def main():
 
     batches.append(
         ('Setting up Aptitude...', [
-            'add-apt-repository ppa:olebde/astro-precise',
+            'add-apt-repository ppa:olebole/astro-precise',
             'apt-get update',
             'apt-get autoremove',
             'apt-get autoclean',
@@ -77,12 +90,13 @@ def main():
             'apt-get install libgtk2.0-dev',
         ]))
     batches.append(
-        ('Installing basic utilities...'), [
+        ('Installing basic utilities...', [
             'apt-get install gedit',
             'apt-get install emacs',
             'apt-get install zsh',
             'apt-get install bpython',
             'apt-get install curl',
+            'apt-get install wget',
             'apt-get install git',
             'apt-get install awesome',
         ]))
@@ -93,12 +107,12 @@ def main():
         taskBatch(batch[0], batch[1])
     
     print colors['OK'] + 'Setting up Oh-My-Zsh' + colors['ENDC']
-    subprocess.check_output(
+    print check_output(
         'curl -L https://github.com/robbyrussell/oh-my-zsh/raw/master/tools/install.sh | sh', shell=True) #Maybe should use popen, and pipe...
     
     print colors['OK'] + 'Setting up udev rules...'
     print colors['WARNING'] + '==> ' + colors['ENDC'] + 'Thorlabs...'
-    90-thorlabs = '''
+    thorlabs = '''
 #Thorlabs
 
 #Use udevadm info -a -p `udevadm info -q path -n [devpath]`
@@ -110,13 +124,12 @@ ATTRS{serial}=="83840902", SYMLINK+="ttyREI12", MODE="0666"
 ATTRS{serial}=="83841481", SYMLINK+="ttyREI34", MODE="0666"
 '''
     f = open('/etc/udev/rules.d/90-thorlabs.rules', 'w')
-    f.write(90-thorlabs)
+    f.write(thorlabs)
     f.close()
     print colors['OK'] + 'Done!' + colors['ENDC']
 
     print colors['WARNING'] + '==> ' + colors['ENDC'] + 'Lakeshore...'
-    90-lakeshore = '''
-#Lakeshore Rules
+    lakeshore = """#Lakeshore Rules
 
 #Use udevadm info -a -p `udevadm info -q path -n [devpath]`
 #to find information about a device. I looked for interface
@@ -124,26 +137,56 @@ ATTRS{serial}=="83841481", SYMLINK+="ttyREI34", MODE="0666"
 #the serial number, and replace.
 
 ATTRS{interface}=="Model 336 Temperature Controller",SYMLINK+="ttylakeshore",MODE="0666"
-'''
+"""
     f = open('/etc/udev/rules.d/90-lakeshore.rules', 'w')
-    f.write(90-thorlabs)
+    f.write(lakeshore)
     f.close()
     print colors['OK'] + 'Done!' + colors['ENDC']
 
     print colors['WARNING'] + '==> ' + colors['ENDC'] + 'FLI Camera...'
-    90-lakeshore = '''
-# Finger Lakes Camera
+    flicam = """# Finger Lakes Camera
 
 KERNEL=="fliusb*", MODE="666", GROUP="plugdev"
-'''
+"""
     f = open('/etc/udev/rules.d/90-flicam.rules', 'w')
-    f.write(90-thorlabs)
+    f.write(flicam)
     f.close()
     print colors['OK'] + 'Done!' + colors['ENDC']
 
     taskBatch('Reloading rules...', ['udevadm control --reload-rules'])
 
+    print colors['OK'] + 'Setting up pyfli...'
+    taskBatch('Downloading/Building fliusb-1.3...', [
+            'cd ~/Downloads',
+            'git clone https://github.com/charris/pyfli.git',
+            'cd ~/Downloads/pyfli/fliusb-1.3',
+            'make clean',
+            'make'
+            ])
+    print colors['OK'] + 'Installing fliusb...'
+    uname = check_output(['uname', '-r']).strip()
+    taskBatch('Copying files/depmod...', [
+            'mkdir /lib/modules/%s/misc' % uname,
+            'cp fliusb.ko /lib/modules/%s/misc/' % uname,
+            'depmod'
+            ])
+    taskBatch('Building/Installing pyfli...', [
+            'cd ~/Downloads/pyfli',
+            'python setup.py build',
+            'python setup.py install'
+            ])
+    
+    print colors['OK'] + 'Installing NESSI...'
 
+    taskBatch('Downloading current software...', [
+            'cd ~/Documents',
+            'wget https://bitbucket.org/lschmidt/nessi/get/master.tar.gz',
+            'tar-xvf master.tar.gz'
+            ])
+
+    print colors['OK'] + '<== You done, yo! ==>' + colors['ENDC']
+
+    yes.kill()
     
 if __name__ == '__main__':
     main()
