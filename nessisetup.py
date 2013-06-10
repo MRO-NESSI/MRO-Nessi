@@ -79,6 +79,7 @@ def main():
             'apt-get install python-matplotlib',
             'apt-get install python-serial',
             'apt-get install python-usb',
+            'pip install -U pyusb',
             'apt-get install python-pyds9',
         ]))
     batches.append(
@@ -99,6 +100,7 @@ def main():
             'apt-get install wget',
             'apt-get install git',
             'apt-get install awesome',
+            'apt-get install finger'
         ]))
 
     print colors['OK'] + 'Installing main software...' + colors['ENDC']
@@ -107,9 +109,12 @@ def main():
         taskBatch(batch[0], batch[1])
     
     print colors['OK'] + 'Setting up Oh-My-Zsh' + colors['ENDC']
-    print check_output(
-        'curl -L https://github.com/robbyrussell/oh-my-zsh/raw/master/tools/install.sh | sh', shell=True) #Maybe should use popen, and pipe...
-    
+    try:
+        print check_output(
+            'curl -L https://github.com/robbyrussell/oh-my-zsh/raw/master/tools/install.sh | sh', shell=True) #Maybe should use popen, and pipe...
+    finally:
+        print colors['OK'] + 'Done!' + colors['ENDC']
+
     print colors['OK'] + 'Setting up udev rules...'
     print colors['WARNING'] + '==> ' + colors['ENDC'] + 'Thorlabs...'
     thorlabs = '''
@@ -181,8 +186,20 @@ KERNEL=="fliusb*", MODE="666", GROUP="plugdev"
     taskBatch('Downloading current software...', [
             'cd ~/Documents',
             'wget https://bitbucket.org/lschmidt/nessi/get/master.tar.gz',
-            'tar-xvf master.tar.gz'
+            'tar -xvf master.tar.gz',
             ])
+
+    print colors['OK'] + 'Moving NESSI...'
+
+    try:
+        check_output('mv lschmidt* nessi', shell=True)
+        user = check_output('who').split()[0]
+        check_output('chown %s nessi' % user, shell=True)            
+    except CalledProcessError as e:
+        print e.output
+        yes.kill()
+        exit(1)
+
 
     print colors['OK'] + '<== You done, yo! ==>' + colors['ENDC']
 
