@@ -21,8 +21,9 @@ class KmirrorPanel(wx.Panel):
 
         #global k = None
         self.k_power = False        
-        self.trackstatus = True
+        self.trackstatus = False
         self.jog_state = False
+        self.vel = 0.0
         new.NewportInitialize(self.controller, self.motor, self.socket[0], 0)
         
         # Attributes
