@@ -5,8 +5,8 @@ import time
 import usb.core
 import wx
 
+from keywords import keywords
 from sensors.flicam import FLICam
-
 DEBUG = False
 
 class GuidePanelSettings(wx.Panel):

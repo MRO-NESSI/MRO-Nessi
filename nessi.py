@@ -36,43 +36,6 @@ from threadtools import timeout, TimeoutError
 
 DEBUG = False
 
-################# Master Dictionary for Instrument State #######################
-keywords = {"OBSERVER"  : "Observer",
-            "INST"      : "NESSI",
-            "TELESCOP"  : "MRO 2.4m",
-            "FILENAME"  : "default",
-            "IMGTYPE"   : "imgtyp",
-            "RA"        : "TCS down" ,   
-            "DEC"       : "TCS down",  
-            "AIRMASS"   : "TCS down",       
-            "TELALT"    : "TCS down",
-            "TELAZ"     : "TCS down",
-            "TELFOCUS"  : "TCS down",
-            "PA"        : "TCS down",
-            "JD"        : "TCS down",
-            "GDATE"     : "TCS down",
-            "WINDVEL"   : "No Env data",
-            "WINDGUST"  : "No Env data",
-            "WINDDIR"   : "No Env data",
-            "REI12"     : 0.0, # focus position
-            "REI34"     : 0.0, # focus position
-            "MASK"      : "None",
-            "FILTER1"   : "None",
-            "FILTER2"   : "None",
-            "GRISM"     : "None",
-            "EXP"       : 0.0,
-            "CAMTEMP"   : 0.0,
-            "CTYPE1"    : "RA---TAN",
-            "CTYPE2"    : "DEC--TAN",
-            "CRPIX1"    : 512.0,
-            "CRPIX2"    : 512.0,
-            "CDELT1"    : 0.0, 
-            "CDELT2"    : 0.0,
-            "CRVAL1"    : 0.0, 
-            "CRVAL2"    : 0.0,
-            "CROTA2"    : 0.0
-            }
-
 # General newport information to be passed to all relevant panels.
 cfg = ConfigObj('nessisettings.ini')
 
@@ -110,7 +73,6 @@ class MainNessiFrame(wx.Frame):
         try:
             self.fill_socket_list(self.x)
         except TimeoutError:
-            raise
             self.open_sockets=[0,1,2,3,4,5,6,7,8,9,10]
             logging.critical('Connection to the Newport controller failed.')   
 
