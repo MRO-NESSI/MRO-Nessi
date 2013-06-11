@@ -110,7 +110,6 @@ class MainNessiFrame(wx.Frame):
         try:
             self.fill_socket_list(self.x)
         except TimeoutError:
-            raise
             self.open_sockets=[0,1,2,3,4,5,6,7,8,9,10]
             logging.critical('Connection to the Newport controller failed.')   
 
