@@ -7,8 +7,7 @@ from wx.lib.pubsub import Publisher
 from threadtools import run_async
 import time
 import logging
-
-# Shared resources for programs that call these functions.
+from keywords import keywords
 
 cfg = ConfigObj(infile="nessisettings.ini")
 
@@ -306,7 +305,7 @@ def NewportFocusLimit(controller, socket, motor):
 #@run_async
 def NewportFocusMove(controller, sockets, motor, distance, speed):
     """
-    Inputs: controller, socket, motor, distance.
+    Inputs: controller, socket, motor, distance, speed.
 
     controller: [xps]   Which instance of the XPS controller to use.
     sockets:    [list]  A list of two sockets to use to communicate with the 
@@ -317,6 +316,7 @@ def NewportFocusMove(controller, sockets, motor, distance, speed):
     speed:      [int]   How fast to move the array.
 """
     pass
+    
 
 @run_async
 def NewportFocusHome(controller, socket, motor):
@@ -333,20 +333,22 @@ def NewportKmirrorTracking(parent, controller, socket, motor):
     phi = math.radians(33.984861)
     
     while parent.trackstatus == True:
-################# Fix These ################
-        A = math.radians(1)
-        H = math.radians(1)
-############################################
-        vel = ((-.262)*(.5)*3600*math.pi*math.cos(phi)*math.cos(A))/(math.cos(H)*180)
-        delta = vel - parent.vel
-        parent.vel = parent.vel + delta
-        velocity = parent.vel*cfg[motor]["direction"]
-        GJog = controller.GroupJogParametersSet(socket, cfg[motor]["group"], [velocity],[400])
-        if GJog[0] != 0:
-            XPSErrorHandler(controller, socket, GJog[0], "GroupJogParametersSet")
-        time.sleep(1)
-         
-
+        try:
+            A = math.radians(keywords['TELAZ'])
+            H = math.radians(keywords['TELALT'])
+        except TypeError:
+            parent.trackstatus = False
+            time.sleep(1)
+        else:
+            vel = ((-.262)*(.5)*3600*math.pi*math.cos(phi)*math.cos(A))/(math.cos(H)*180)
+            delta = vel - parent.vel
+            parent.vel = parent.vel + delta
+            velocity = parent.vel*cfg[motor]["direction"]
+            GJog = controller.GroupJogParametersSet(socket, cfg[motor]["group"], [velocity],[400])
+            if GJog[0] != 0:
+                XPSErrorHandler(controller, socket, GJog[0], "GroupJogParametersSet")
+            time.sleep(1)
+        
 
 # Test code to be removed later
 if __name__ == "__main__":
