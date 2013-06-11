@@ -6,6 +6,8 @@ import time
 import usb.core
 import wx
 
+from keywords import keywords
+
 DEBUG = False
 
 class GuidePanelSettings(wx.Panel):
