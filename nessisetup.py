@@ -112,6 +112,8 @@ def main():
     try:
         print check_output(
             'curl -L https://github.com/robbyrussell/oh-my-zsh/raw/master/tools/install.sh | sh', shell=True) #Maybe should use popen, and pipe...
+    except:
+        pass
     finally:
         print colors['OK'] + 'Done!' + colors['ENDC']
 
@@ -141,7 +143,7 @@ ATTRS{serial}=="83841481", SYMLINK+="ttyREI34", MODE="0666"
 #If this device is replaced, find which device it is, find
 #the serial number, and replace.
 
-ATTRS{interface}=="Model 336 Temperature Controller",SYMLINK+="ttylakeshore",MODE="0666"
+ATTRS{idVendor}=="1fb9", ATTRS{idProduct}=="0301",  MODE="0666", GROUP="users", SYMLINK+="ttylakeshore"
 """
     f = open('/etc/udev/rules.d/90-lakeshore.rules', 'w')
     f.write(lakeshore)
@@ -194,12 +196,11 @@ KERNEL=="fliusb*", MODE="666", GROUP="plugdev"
     try:
         check_output('mv lschmidt* nessi', shell=True)
         user = check_output('who').split()[0]
-        check_output('chown %s nessi' % user, shell=True)            
+        check_output('chown %s ./nessi' % user, shell=True)            
     except CalledProcessError as e:
         print e.output
         yes.kill()
         exit(1)
-
 
     print colors['OK'] + '<== You done, yo! ==>' + colors['ENDC']
 
