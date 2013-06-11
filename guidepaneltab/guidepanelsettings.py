@@ -1,10 +1,11 @@
-#import FLI
 import ds9
 import threading
 import threadtools
 import time
 import usb.core
 import wx
+
+from sensors.flicam import FLICam
 
 DEBUG = False
 
@@ -27,7 +28,7 @@ class GuidePanelSettings(wx.Panel):
         #True if waiting for camera to show up on USB bus
         self.looking = True
         #camera instance
-        self.cam0 = None
+        self.cam = None
                 
         #guide
         self.star1 = wx.StaticText(self, label="Star 1: ")
@@ -108,10 +109,8 @@ class GuidePanelSettings(wx.Panel):
             if dev != None:
                 self.looking = False
                 self.c_power = True
-                cams = FLI.camera.USBCamera.find_devices()
-                self.cam0 = cams[0]
-                self.cam0.set_bitdepth("16bit")
-                temp = self.cam0.get_temperature()
+                self.cam = FLICam(cam=0)
+                temp = self.cam.getTemperature()
                 self.curr_temp.SetLabel(str(temp) + u'\N{DEGREE SIGN}' + 'C  ')
                 
     def OffPower(self):
@@ -190,7 +189,7 @@ class GuidePanelSettings(wx.Panel):
                 pass
             else:
                 #get current temp
-                temp = self.cam0.get_temperature()
+                temp = self.cam.getTemperature()
                 self.curr_temp.SetLabel(str(temp) + u'\N{DEGREE SIGN}' + 'C  ')
                             
         except ValueError:
@@ -201,7 +200,8 @@ class GuidePanelSettings(wx.Panel):
         image[:] = np.fliplr(image)[:]
         self.d.set_np2arr(image)
         self.d.set("zoom to fit")
-        
+
+
     def updateKeywords(self):
         """Update the keywords for the FITS file header"""
         global keywords
@@ -239,7 +239,7 @@ class GuidePanelSettings(wx.Panel):
         keywords["FILTER2"]  = 0
         keywords["GRISM"]    = 0
         keywords["EXP"]      = float(self.exposure.GetValue())
-        keywords["CAMTEMP"]  = float(self.cam0.get_temperature())
+        keywords["CAMTEMP"]  = float(self.cam.getTemperature())
         keywords["CRPIX1"]   = 0
         keywords["CRPIX2"]   = 0
         keywords["CDELT1"]   = float(self.parent.parent.GetPage(3).pixelscalexTxt.GetValue())
@@ -248,6 +248,7 @@ class GuidePanelSettings(wx.Panel):
         keywords["CRVAL2"]   = 0
         keywords["CROTA2"]   = 0
 
+
     def updateHeader(self, fitsfile):
         """Update the header of the fits file to be saved"""
         
@@ -255,11 +256,11 @@ class GuidePanelSettings(wx.Panel):
     def Expose(self, event):
         """take an exposure with current settings"""
         # Set exposure time
-        self.cam0.set_exposure(int(1000*float(self.exposure.GetValue())))
+        self.cam.setExposure(int(1000*float(self.exposure.GetValue())))
         # Update header info
         self.updateKeywords()
         # take image
-        self.image = self.cam0.take_photo()
+        self.image = self.cam.takePicture()
         
 #        self.fits = pic.UpdateFitsHeader(self.fits, keywords, name)
         #send image to the display
@@ -299,7 +300,7 @@ class GuidePanelSettings(wx.Panel):
         
     def SetPoint(self, event):
         temp = int(self.curr_setpoint.GetValue())
-        self.cam0.set_temperature(temp)
+        self.cam.setTemperature(temp)
                 
     def ChooseStar1(self, event):
         global s1
