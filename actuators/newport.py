@@ -325,6 +325,19 @@ def NewportFocusHome(controller, socket, motor):
 @run_async
 def NewportKmirrorTracking(parent, controller, socket, motor):
     """
+This function initiates kmirror tracking.  The tracking algorith updates the
+speed of rotation based on feedback from the telescope.  If the telescope is 
+not returning data then the tracking is cancelled.  tracking runs until the 
+user stops it in the NESSI GUI.
+    
+    Inputs: parent, controller, socket, motor.
+    
+    parent:     [???]   The object that called the function.
+    controller: [xps]   Which instance of the XPS controller to use.
+    socket:     [int]   Which socket to be used to communicate with the XPS
+                        controller.
+    motor:      [str]   Which motor is being used.  This is for config file
+                        purposes.
 
 """
     Gmode = controller.GroupJogModeEnable(socket, cfg[motor]["group"])
