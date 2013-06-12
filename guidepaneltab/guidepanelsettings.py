@@ -1,3 +1,4 @@
+import numpy as np
 import ds9
 import threading
 import threadtools
@@ -76,15 +77,12 @@ class GuidePanelSettings(wx.Panel):
         # Layout
         self.__DoLayout()
         
-        # Event Handlers
-        
+        # Event Handlers        
         self.Bind(wx.EVT_TOGGLEBUTTON, self.OnGuide, id=1)
         self.Bind(wx.EVT_BUTTON, self.Expose, self.take)
         self.Bind(wx.EVT_TOGGLEBUTTON, self.ExposeSeries, id=2)
         self.Bind(wx.EVT_BUTTON, self.SetPoint, self.curr_setpoint_button)
-        
         self.Bind(wx.EVT_CHECKBOX, self.GuideLog, self.log_onoff)
-        
         self.Bind(wx.EVT_SPINCTRL, self.Bin, self.bin)
 
         # Start up image display
@@ -258,7 +256,7 @@ class GuidePanelSettings(wx.Panel):
         # Set exposure time
         self.cam.setExposure(int(1000*float(self.exposure.GetValue())))
         # Update header info
-        self.updateKeywords()
+        #self.updateKeywords()
         # take image
         self.image = self.cam.takePicture()
         
