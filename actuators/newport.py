@@ -54,9 +54,9 @@ def NewportWheelThread(controller, wheel, socket, current, position, home):
     """
 A thread that initiates a move in the dewar and then monitors The Newport GPIO
 for a bit flip that indicates the motor needs to be stopped.  If the motion 
-fails the function will print a message to the terminal. (to be changed) If 
-the motion succedes the function will log a message. (to be added when working 
-logging is added)
+fails the function will log an error in the nessi error log. If the motion 
+succedes the function will log a message. The function returns the position 
+of the motor upon success.
 
     Inputs: controller, name, socket, position, home.
 
@@ -364,6 +364,6 @@ if __name__ == "__main__":
         if open_sockets[i] == -1:
             print "Error, Sockets not opened."
     NewportInitialize(x, "grism", open_sockets[0], 0)
-    NewportWheelThread(x, "grism", open_sockets[0], 1, 4, True)
-#   NewportWheelThread(x, "grism", open_sockets[0],0,1,False)
+    pos = NewportWheelThread(x, "grism", open_sockets[0], 1, 4, True)
+#   NewportWheelThread(x, "grism", open_sockets[0],pos,1,False)
     
