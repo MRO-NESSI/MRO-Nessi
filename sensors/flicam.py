@@ -2,7 +2,8 @@ from threading import Lock
 import pyfli as p
 
 class FLICam(object):
-    
+    """Represents an FLI USB Camera."""
+
     def __init__(self, cam=0):
         self._path = p.FLIList('usb', 'camera')[cam][0]
         self._id   = p.FLIOpen(self._path, 'usb', 'camera')
@@ -21,9 +22,9 @@ class FLICam(object):
         with self.lock:
             return p.getTemperature(self._id)
 
-    def setTemperature(self):
+    def setTemperature(self, temp):
         with self.lock:
-            return p.setTemperature(self._id)
+            return p.setTemperature(self._id, temp)
 
     def __del__(self):
         with self.lock:
