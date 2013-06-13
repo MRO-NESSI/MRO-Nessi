@@ -2,7 +2,10 @@ import logging
 import wx
 from configobj import ConfigObj
 cfg = ConfigObj('nessisettings.ini')
+
+
 from actuators import newport
+from threadtools import run_async
 
 class WheelPanel(wx.Panel):
     """This panel controls the FLI filter wheel """
