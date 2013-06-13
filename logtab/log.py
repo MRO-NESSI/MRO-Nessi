@@ -2,6 +2,7 @@ import logging
 import time
 import wx
 import wx.lib.newevent
+from wx.richtext import RichTextCtrl
 
 # create event type
 wxLogEvent, EVT_WX_LOG_EVENT = wx.lib.newevent.NewEvent()
@@ -20,6 +21,7 @@ class wxLogHandler(logging.Handler):
         logging.Handler.__init__(self)
         self.wxDest = wxDest
         self.level = logging.DEBUG
+
 
     def flush(self):
         """
@@ -47,7 +49,7 @@ class LogPanel(wx.Panel):
 
         # Attributes
         self.logTxt = wx.StaticText(self, wx.ID_ANY, "Instrument Log:")
-        self.log = wx.TextCtrl(self, -1, size=(-1,130), style=wx.TE_MULTILINE|wx.TE_READONLY)
+        self.log = RichTextCtrl(self, -1, size=(-1,130), style=wx.TE_MULTILINE|wx.TE_READONLY)
         self.log.SetBackgroundColour('#B0D6B0')
         self.obs_logTxt = wx.StaticText(self, wx.ID_ANY, "Observing Comments:")
         self.obs_log = wx.TextCtrl(self, -1, size=(-1,75), style=wx.TE_MULTILINE)
@@ -60,6 +62,10 @@ class LogPanel(wx.Panel):
 
         # Layout       
         self.__DoLayout()
+
+        #Taken from http://wiki.wxpython.org/StyledTextCtrl%20Log%20Window%20Demo
+        self.log._styles = [None]*32
+        self.log._free = 1
 
         #EVT_WX_LOG_EVENT
         self.Bind(EVT_WX_LOG_EVENT, self.onLogEvent)
@@ -93,7 +99,16 @@ class LogPanel(wx.Panel):
         self.obs_log.SetValue('')
 
     def onLogEvent(self, event):
+        colors = {
+            'DEBUG'  :'black',
+            'INFO'   :'black',
+            'WARNING':'yellow',
+            'ERROR'  :'red',
+            }
         msg = event.message.strip('\r') + '\n'
-        self.log.AppendText(msg)
+        self.log.BeginTextColour(colors[event.levelname])
+        self.log.WriteText(msg)
+        self.EndTextColour()
+#        write(self.log, msg, c=colors[event.levelname])
+#        self.log.AppendText(msg)
         event.Skip()
-        
