@@ -4,14 +4,13 @@ import math
 import XPS_C8_drivers as xps
 from configobj import ConfigObj
 from wx.lib.pubsub import Publisher
-from threadtools import run_async
 import time
 import logging
 from keywords import keywords
 
 cfg = ConfigObj(infile="nessisettings.ini")
 
-@run_async
+
 def XPSErrorHandler(controller, socket, code, name):
     """
 This is a general error handling function for the newport controller 
@@ -49,7 +48,7 @@ by the user.
             logging.warning(name + " : The TCP/IP connection was closed by an administrator")
         
 
-@run_async
+
 def NewportWheelThread(controller, wheel, socket, current, position, home):
     """
 A thread that initiates a move in the dewar and then monitors The Newport GPIO
@@ -119,7 +118,7 @@ of the motor upon success.
                 else:
                     pass
             # Stopping the motor
-            stop=controller.GroupSpinModeStop(socket, cfg[wheel]["group"], 800)
+            stop=controller.GroupSpinModeStop(socket, cfg[wheel]["group"])
             if stop[0] != 0:
                 XPSErrorHandler(controller, socket, stop[0], "GroupSpinModeStop")
             # Checking to be sure the motor is in a valid position.
@@ -130,9 +129,8 @@ of the motor upon success.
              
     else:
         pass
-    return position
 
-@run_async
+
 def NewportInitialize(controller, motor, socket, home_pos):
     """
 An initialization function for any motor controlled by the XPS controller.
@@ -163,7 +161,7 @@ This function returns nothing if succesful and calls XPSErrorHandler otherwise.
     if GHomeSearch[0] != 0:
         XPSErrorHandler(controller, socket, GHomeSearch[0], "GroupHomeSearchAndRelativeMove")
 
-@run_async
+
 def NewportKmirrorMove(controller, socket, motor, jog_state, position):
     """
 This function moves the k-mirror to a choosen position at 10 deg/s.
@@ -199,7 +197,7 @@ This function moves the k-mirror to a choosen position at 10 deg/s.
         else:
             pass
 
-@run_async
+
 def NewportKmirrorRotate(controller, socket, motor, jog_state, speed):
     """
 This function prepares the motor for continuous rotation if it isn"t already 
@@ -230,7 +228,7 @@ prepared and then sets a choosen velocity.
     if GJog[0] != 0:
         XPSErrorHandler(controller, socket, GJog[0], "GroupJogParametersSet")
 
-@run_async    
+   
 def NewportStatusGet(controller, socket, motor):
     """
 
@@ -249,7 +247,7 @@ def NewportStatusGet(controller, socket, motor):
             info.append(i)
     return info
 
-@run_async
+
 def NewportStop(controller, socket, motor):
     """
 
@@ -267,7 +265,7 @@ def NewportStop(controller, socket, motor):
         else:
             pass
 
-@run_async
+
 def NewportFocusLimit(controller, socket, motor):
     """
 
@@ -302,7 +300,7 @@ def NewportFocusLimit(controller, socket, motor):
     else:
         pass
            
-#@run_async
+
 def NewportFocusMove(controller, sockets, motor, distance, speed):
     """
     Inputs: controller, socket, motor, distance, speed.
@@ -318,11 +316,11 @@ def NewportFocusMove(controller, sockets, motor, distance, speed):
     pass
     
 
-@run_async
+
 def NewportFocusHome(controller, socket, motor):
     pass   
 
-@run_async
+
 def NewportKmirrorTracking(parent, controller, socket, motor):
     """
 This function initiates kmirror tracking.  The tracking algorith updates the
@@ -377,8 +375,7 @@ if __name__ == "__main__":
         if open_sockets[i] == -1:
             print "Error, Sockets not opened."
     NewportInitialize(x, "mask", open_sockets[0], 0)
-    pos = NewportWheelThread(x, "mask", open_sockets[0], 1, 4, True)
-    print pos
-#    pos = NewportWheelThread(x, "grism", open_sockets[0],pos,1,False)
-#    print pos
+    NewportWheelThread(x, "mask", open_sockets[0], 1, 4, True)
+#    NewportWheelThread(x, "grism", open_sockets[0],pos,1,False)
+
     

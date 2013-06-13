@@ -1,6 +1,7 @@
 import wx
 import logging
 import actuators.newport as new
+from threadtools import run_async
 
 class KmirrorPanel(wx.Panel):
     """This panel shows information and controls relevant to the Kmirror.
@@ -108,6 +109,7 @@ class KmirrorPanel(wx.Panel):
         self.timer.Start(2000) # poll every 5 seconds
         wx.EVT_TIMER(self, TIMER_ID, self.on_timer)
 
+    @run_async
     def on_set(self, event):
         try:
             pa = float(self.new_pa.GetValue())
@@ -118,7 +120,7 @@ class KmirrorPanel(wx.Panel):
         except ValueError:
             pass
         
-
+    @run_async
     def on_track(self, event):
         try:
             self.trackstatus = True
@@ -127,7 +129,7 @@ class KmirrorPanel(wx.Panel):
         except:
             pass
 
-
+    @run_async
     def on_stop(self, event):
         try:
             self.trackstatus = False
@@ -137,7 +139,7 @@ class KmirrorPanel(wx.Panel):
         except ValueError:
             pass
 
-
+    @run_async
     def on_timer(self, event):
         try:
             pa = new.NewportStatusGet(self.controller, self.socket[1], self.motor)[0]
@@ -145,7 +147,7 @@ class KmirrorPanel(wx.Panel):
         except ValueError:
             pass
 
-
+    @run_async
     def step_pos(self, event):
         try:
             step = self.step_size.GetValue()
@@ -157,7 +159,7 @@ class KmirrorPanel(wx.Panel):
         except ValueError:
             pass
 
-
+    @run_async
     def step_neg(self, event):
         try:
             step = self.step_size.GetValue()
@@ -169,7 +171,7 @@ class KmirrorPanel(wx.Panel):
         except ValueError:
             pass
 
-
+    @run_async
     def on_home(self, event):
         try:
             new.NewportInitialize(self.controller, self.motor, self.socket[0], 0)

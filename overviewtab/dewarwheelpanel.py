@@ -63,7 +63,8 @@ class WheelPanel(wx.Panel):
         sizer.SetMinSize(wx.Size(200, -1))
         boxSizer.Add(sizer, flag=wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_CENTER_HORIZONTAL)
         self.SetSizerAndFit(boxSizer)
-        
+
+    @run_async    
     def move_wheel(self, event):
         try:
             logging.info('%s wheel moving to %s...' % (self.name, self.wheel_choice.GetSelection()))
@@ -73,6 +74,7 @@ class WheelPanel(wx.Panel):
         except ValueError:
             pass
 
+    @run_async
     def home_wheel(self, event):
 #        self.position = newport.NewportWheelThread(self.controller, self.name, self.socket, self.position, 0, True)
         pass
