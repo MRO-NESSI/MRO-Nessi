@@ -108,7 +108,7 @@ class LogPanel(wx.Panel):
         msg = event.message.strip('\r') + '\n'
         self.log.BeginTextColour(colors[event.levelname])
         self.log.WriteText(msg)
-        self.EndTextColour()
+        self.log.EndTextColour()
 #        write(self.log, msg, c=colors[event.levelname])
 #        self.log.AppendText(msg)
         event.Skip()
