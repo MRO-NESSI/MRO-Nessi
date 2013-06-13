@@ -7,8 +7,7 @@ from wx.lib.pubsub import Publisher
 from threadtools import run_async
 import time
 import logging
-
-# Shared resources for programs that call these functions.
+from keywords import keywords
 
 cfg = ConfigObj(infile="nessisettings.ini")
 
@@ -55,9 +54,9 @@ def NewportWheelThread(controller, wheel, socket, current, position, home):
     """
 A thread that initiates a move in the dewar and then monitors The Newport GPIO
 for a bit flip that indicates the motor needs to be stopped.  If the motion 
-fails the function will print a message to the terminal. (to be changed) If 
-the motion succedes the function will log a message. (to be added when working 
-logging is added)
+fails the function will log an error in the nessi error log. If the motion 
+succedes the function will log a message. The function returns the position 
+of the motor upon success.
 
     Inputs: controller, name, socket, position, home.
 
@@ -74,7 +73,7 @@ logging is added)
     # Initializing variables.
     group = cfg[wheel]["group"]
     state = 0
-    speed = int(cfg[wheel]["direction"])*100
+    speed = int(cfg[wheel]["direction"])*300
     # Different initializations depending on whether it is homing or not.
     if home == True:
         val = int(cfg[wheel]["home"]["val"])
@@ -306,7 +305,7 @@ def NewportFocusLimit(controller, socket, motor):
 #@run_async
 def NewportFocusMove(controller, sockets, motor, distance, speed):
     """
-    Inputs: controller, socket, motor, distance.
+    Inputs: controller, socket, motor, distance, speed.
 
     controller: [xps]   Which instance of the XPS controller to use.
     sockets:    [list]  A list of two sockets to use to communicate with the 
@@ -317,6 +316,7 @@ def NewportFocusMove(controller, sockets, motor, distance, speed):
     speed:      [int]   How fast to move the array.
 """
     pass
+    
 
 @run_async
 def NewportFocusHome(controller, socket, motor):
@@ -325,6 +325,19 @@ def NewportFocusHome(controller, socket, motor):
 @run_async
 def NewportKmirrorTracking(parent, controller, socket, motor):
     """
+This function initiates kmirror tracking.  The tracking algorith updates the
+speed of rotation based on feedback from the telescope.  If the telescope is 
+not returning data then the tracking is cancelled.  tracking runs until the 
+user stops it in the NESSI GUI.
+    
+    Inputs: parent, controller, socket, motor.
+    
+    parent:     [???]   The object that called the function.
+    controller: [xps]   Which instance of the XPS controller to use.
+    socket:     [int]   Which socket to be used to communicate with the XPS
+                        controller.
+    motor:      [str]   Which motor is being used.  This is for config file
+                        purposes.
 
 """
     Gmode = controller.GroupJogModeEnable(socket, cfg[motor]["group"])
@@ -333,20 +346,22 @@ def NewportKmirrorTracking(parent, controller, socket, motor):
     phi = math.radians(33.984861)
     
     while parent.trackstatus == True:
-################# Fix These ################
-        A = math.radians(1)
-        H = math.radians(1)
-############################################
-        vel = ((-.262)*(.5)*3600*math.pi*math.cos(phi)*math.cos(A))/(math.cos(H)*180)
-        delta = vel - parent.vel
-        parent.vel = parent.vel + delta
-        velocity = parent.vel*cfg[motor]["direction"]
-        GJog = controller.GroupJogParametersSet(socket, cfg[motor]["group"], [velocity],[400])
-        if GJog[0] != 0:
-            XPSErrorHandler(controller, socket, GJog[0], "GroupJogParametersSet")
-        time.sleep(1)
-         
-
+        try:
+            A = math.radians(keywords['TELAZ'])
+            H = math.radians(keywords['TELALT'])
+        except TypeError:
+            parent.trackstatus = False
+            time.sleep(1)
+        else:
+            vel = ((-.262)*(.5)*3600*math.pi*math.cos(phi)*math.cos(A))/(math.cos(H)*180)
+            delta = vel - parent.vel
+            parent.vel = parent.vel + delta
+            velocity = parent.vel*cfg[motor]["direction"]
+            GJog = controller.GroupJogParametersSet(socket, cfg[motor]["group"], [velocity],[400])
+            if GJog[0] != 0:
+                XPSErrorHandler(controller, socket, GJog[0], "GroupJogParametersSet")
+            time.sleep(1)
+        
 
 # Test code to be removed later
 if __name__ == "__main__":
@@ -361,7 +376,9 @@ if __name__ == "__main__":
     for i in range(int(cfg["general"]["sockets"])):
         if open_sockets[i] == -1:
             print "Error, Sockets not opened."
-    NewportInitialize(x, "grism", open_sockets[0], 0)
-    NewportWheelThread(x, "grism", open_sockets[0], 1, 4, True)
-#   NewportWheelThread(x, "grism", open_sockets[0],0,1,False)
+    NewportInitialize(x, "mask", open_sockets[0], 0)
+    pos = NewportWheelThread(x, "mask", open_sockets[0], 1, 4, True)
+    print pos
+#    pos = NewportWheelThread(x, "grism", open_sockets[0],pos,1,False)
+#    print pos
     

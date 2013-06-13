@@ -56,16 +56,7 @@ class KmirrorPanel(wx.Panel):
         self.Bind(wx.EVT_BUTTON, self.on_set, self.set_button)
         self.Bind(wx.EVT_BUTTON, self.on_stop, self.stop_button)
         self.Bind(wx.EVT_BUTTON, self.on_home, self.home_button)
-    
-#    def OnPower(self):
-#        self.k_power = True
-#        global k 
-#        k = Kmirror()
-#    
-#    def OffPower(self):
-#        self.k_power = False
-#        self.curr_pa.SetLabel('...')
-#        k.__del__()
+
         
     def __DoLayout(self):
         ## Layout for this panel:
@@ -127,45 +118,25 @@ class KmirrorPanel(wx.Panel):
         except ValueError:
             pass
         
-#       try:
-#            if not self.k_power:
-#                wx.Bell()
-#                wx.MessageBox('The rotator does not have power.', style=wx.OK|wx.CENTER)
-#            else:
-#                pa = float(self.new_pa.GetValue())
-#                pub.sendMessage("LOG EVENT", "Rotator: Move to %d" % (int(pa)%360) + u'\N{DEGREE SIGN}')
-#                k.set_pa(pa)
-#                pub.sendMessage("LOG EVENT", "Rotator: Is at %d" % (int(pa)%360) + u'\N{DEGREE SIGN}')
-#        except ValueError:
-#            pass # TODO: Error Message
 
     def on_track(self, event):
-        pass
-#        try:
-#            if not self.k_power:
-#                wx.Bell()
-#                wx.MessageBox('The rotator does not have power.', style=wx.OK|wx.CENTER)
-#            else:
-#                pub.sendMessage("LOG EVENT", "K-Mirror is Tracking...")
-#                self.trackstatus = True
-#                self.track_thread = TrackThread(self)
-#                self.track_thread.daemon=True
-#                self.track_thread.start()
-#            
-#        except ValueError:
-#            pass
+        try:
+            self.trackstatus = True
+            new.NewportKmirrorTracking(self, self.controller, self.socket[3], self.motor)
+            logging.info('Rotator: Tracking started.')
+        except:
+            pass
+
 
     def on_stop(self, event):
-        pass
-#        try:
-#            if not self.k_power:
-#                wx.Bell()
-#                wx.MessageBox('The rotator does not have power.', style=wx.OK|wx.CENTER)
-#            else:
-#                pub.sendMessage("LOG EVENT", "K-Mirror Stopped...")
-#                self.trackstatus = False
-#        except ValueError:
-#            pass
+        try:
+            self.trackstatus = False
+            time.sleep(1)
+            new.NewportStop(self.controller, self.socket[2], self.motor)
+            logging.info('Rotator: Motion stopped.')
+        except ValueError:
+            pass
+
 
     def on_timer(self, event):
         try:
@@ -173,15 +144,8 @@ class KmirrorPanel(wx.Panel):
             self.curr_pa.SetLabel(str(pa) + u'\N{DEGREE SIGN}')
         except ValueError:
             pass
-#        try:
-#            if not self.k_power:
-#                pass
-#            else:
-#                pa = k.get_pa()
-#                self.curr_pa.SetLabel(str(pa) + u'\N{DEGREE SIGN}')
-#        except ValueError:
-#            pass
-    
+
+
     def step_pos(self, event):
         try:
             step = self.step_size.GetValue()
@@ -192,17 +156,7 @@ class KmirrorPanel(wx.Panel):
             logging.info('Rotator: Is at %f' % (float(pa)) + u'\N{DEGREE SIGN}')
         except ValueError:
             pass
-#            if not self.k_power:
-#                wx.Bell()
-#                wx.MessageBox('The rotator does not have power.', style=wx.OK|wx.CENTER)
-#            else:
-#                step = self.step_size.GetValue()
-#                pa = k.get_pa() + step
-#                pub.sendMessage("LOG EVENT", "Stepping rotator +")
-#                k.set_pa(pa)
-#                pub.sendMessage("LOG EVENT", "Rotator moved +" + str(step))
-#        except ValueError:
-#            pass
+
 
     def step_neg(self, event):
         try:
@@ -214,18 +168,7 @@ class KmirrorPanel(wx.Panel):
             logging.info('Rotator: Is at %f' % (float(pa)) + u'\N{DEGREE SIGN}')
         except ValueError:
             pass
-#        try:
-#            if not self.k_power:
-#                wx.Bell()
-#                wx.MessageBox('The rotator does not have power.', style=wx.OK|wx.CENTER)
-#            else:
-#                step = self.step_size.GetValue()
-#                pa = k.get_pa() - step
-#                pub.sendMessage("LOG EVENT", "Stepping rotator -")
-#                k.set_pa(pa)
-#                pub.sendMessage("LOG EVENT", "Rotator moved -" + str(step))
-#        except ValueError:
-#            pass
+
 
     def on_home(self, event):
         try:
