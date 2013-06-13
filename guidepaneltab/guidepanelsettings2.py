@@ -1,3 +1,4 @@
+import numpy as np
 import logging
 import ds9
 import wx
@@ -22,14 +23,6 @@ class GuidePanelSettings(wx.Panel):
         
         self.__DoLayout()
 
-        # Event Handlers        
-#        self.Bind(wx.EVT_TOGGLEBUTTON, self.OnGuide, id=1)
-#        self.Bind(wx.EVT_BUTTON, self.Expose, self.take)
-#        self.Bind(wx.EVT_TOGGLEBUTTON, self.ExposeSeries, id=2)
-#        self.Bind(wx.EVT_BUTTON, self.SetPoint, self.curr_setpoint_button)
-#        self.Bind(wx.EVT_CHECKBOX, self.GuideLog, self.log_onoff)
-#        self.Bind(wx.EVT_SPINCTRL, self.Bin, self.bin)
-
         # Start up image display
         self.d = ds9.ds9()
         self.d.set("width 538")
@@ -51,3 +44,8 @@ class GuidePanelSettings(wx.Panel):
         boxSizer.Add(sizer, flag=wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_CENTER_HORIZONTAL)
 
         self.SetSizerAndFit(boxSizer)
+
+    def DisplayImage(self, image):
+        image[:] = np.fliplr(image)[:]
+        self.d.set_np2arr(image)
+        self.d.set("zoom to fit")
