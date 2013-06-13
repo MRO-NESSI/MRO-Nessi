@@ -73,7 +73,7 @@ of the motor upon success.
     # Initializing variables.
     group = cfg[wheel]["group"]
     state = 0
-    speed = int(cfg[wheel]["direction"])*100
+    speed = int(cfg[wheel]["direction"])*300
     # Different initializations depending on whether it is homing or not.
     if home == True:
         val = int(cfg[wheel]["home"]["val"])
@@ -376,7 +376,9 @@ if __name__ == "__main__":
     for i in range(int(cfg["general"]["sockets"])):
         if open_sockets[i] == -1:
             print "Error, Sockets not opened."
-    NewportInitialize(x, "grism", open_sockets[0], 0)
-    pos = NewportWheelThread(x, "grism", open_sockets[0], 1, 4, True)
-#   NewportWheelThread(x, "grism", open_sockets[0],pos,1,False)
+    NewportInitialize(x, "mask", open_sockets[0], 0)
+    pos = NewportWheelThread(x, "mask", open_sockets[0], 1, 4, True)
+    print pos
+#    pos = NewportWheelThread(x, "grism", open_sockets[0],pos,1,False)
+#    print pos
     
