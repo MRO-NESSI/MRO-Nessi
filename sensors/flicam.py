@@ -1,3 +1,4 @@
+from time import sleep
 from threading import Lock
 import pyfli as p
 
@@ -16,6 +17,10 @@ class FLICam(object):
     def takePicture(self):
         with self.lock:
             p.exposeFrame(self._id)
+            wait = 100
+            while wait != 0:
+                wait = p.getExposureStatus(self._id)
+                sleep(wait/1000)
             return p.grabFrame(self._id)
 
     def getTemperature(self):
@@ -26,6 +31,11 @@ class FLICam(object):
         with self.lock:
             return p.setTemperature(self._id, temp)
 
+    def setBinning(self, hBin, vBin):
+        with self.lock:
+            p.setHBin(self._id, hBin)
+            p.setVBin(self._id, vBin)
+        
     def __del__(self):
         with self.lock:
             p.FLIClose(sef._id)
