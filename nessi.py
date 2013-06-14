@@ -185,7 +185,7 @@ class MainNessiFrame(wx.Frame):
 if __name__ == "__main__":
     app = wx.App()
     #################MAKE SPALSH################
-    bitmap = wx.Bitmap("media/nessi-logo.png", wx.BITMAP_TYPE_PNG)
+    bitmap = wx.Bitmap("media/badass.png", wx.BITMAP_TYPE_PNG)
     splash = AdvancedSplash(None, bitmap=bitmap)
     splash.SetText('TEST!')
     
