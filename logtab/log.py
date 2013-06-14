@@ -100,15 +100,15 @@ class LogPanel(wx.Panel):
 
     def onLogEvent(self, event):
         colors = {
-            'DEBUG'  :'black',
-            'INFO'   :'black',
-            'WARNING':'yellow',
-            'ERROR'  :'red',
+            'DEBUG'    :'black',
+            'INFO'     :'black',
+            'WARNING'  :'yellow',
+            'ERROR'    :'red',
+            'CRITICAL' : 'red'
             }
         msg = event.message.strip('\r') + '\n'
+        self.log.SetInsertionPointEnd()
         self.log.BeginTextColour(colors[event.levelname])
         self.log.WriteText(msg)
         self.log.EndTextColour()
-#        write(self.log, msg, c=colors[event.levelname])
-#        self.log.AppendText(msg)
         event.Skip()
