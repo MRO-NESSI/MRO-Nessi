@@ -36,16 +36,16 @@ by the user.
         error = controller.ErrorStringGet(socket, code)
         # If the error string lookup fails, this message will display with the error code.
         if error[0] != 0:
-            logging.warning(name + " : ERROR "+ str(code))
+            logging.error(name + " : ERROR "+ str(code))
         # This displays the error string.
         else:
-            logging.warning(name + " : " + error[1])
+            logging.error(name + " : " + error[1])
     # This code handles the case where the connection to the controller fails after initial contact.
     else:
         if code == -2:
-            logging.warning(name + " : TCP timeout")
+            logging.critical(name + " : TCP timeout")
         elif code == -108:
-            logging.warning(name + " : The TCP/IP connection was closed by an administrator")
+            logging.critical(name + " : The TCP/IP connection was closed by an administrator")
         
 
 
