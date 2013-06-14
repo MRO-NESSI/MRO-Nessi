@@ -1,5 +1,7 @@
-import wx
 import logging
+from time import sleep
+import wx
+
 import actuators.newport as new
 from threadtools import run_async
 
@@ -133,7 +135,7 @@ class KmirrorPanel(wx.Panel):
     def on_stop(self, event):
         try:
             self.trackstatus = False
-            time.sleep(1)
+            sleep(1)
             new.NewportStop(self.controller, self.socket[2], self.motor)
             logging.info('Rotator: Motion stopped.')
         except ValueError:
@@ -143,7 +145,7 @@ class KmirrorPanel(wx.Panel):
     def on_timer(self, event):
         try:
             pa = new.NewportStatusGet(self.controller, self.socket[1], self.motor)[0]
-            self.curr_pa.SetLabel(str(pa) + u'\N{DEGREE SIGN}')
+            wx.CallAfter(self.curr_pa.SetLabel, u'%.3f \N{DEGREE SIGN}' % pa)
         except ValueError:
             pass
 
