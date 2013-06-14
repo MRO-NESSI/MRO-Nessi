@@ -22,7 +22,7 @@ class OverviewPanel(wx.ScrolledWindow):
         self.Grism       = WheelPanel(self, 'grism', self.controller, self.sockets[3])
         self.Kmirror     = KmirrorPanel(self, 'kmirror', self.controller, self.sockets[4:8])
         self.GuideInfo   = GuideInfoPanel(self)
-        self.FocusREI12  = FocusREIPanel(self, 'Focus REI-1-2', 0)
+        self.FocusREI12  = FocusREIPanel(self, 'Focus Guide Cam', 0)
         self.FocusREI34  = FocusREIPanel(self, 'Focus REI-3-4', 1)
         self.Temperature = TemperaturePanel(self)
         

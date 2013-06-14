@@ -68,26 +68,27 @@ class FocusREIPanel(wx.Panel):
     @run_async
     def onOut(self, event):
         wx.CallAfter(self.curr_pos.SetLabel, '...')
+        wx.CallAfter(self.Enable, False)
         step = self.step_size.GetValue() 
         logging.info('%s moving out %s um.' % (self.name, step))
         self.motor.move_relative(step)
-        position = self.motor.status()['Position']
-        logging.info('%s arrived to %f um.' % (self.name, position))
-        wx.CallAfter(self.curr_pos.SetLabel,str(position))
+        self.updateCurrPos()
+        wx.CallAfter(self.Enable, True)
 
     @run_async
     def onIn(self, event):
         wx.CallAfter(self.curr_pos.SetLabel, '...')
+        wx.CallAfter(self.Enable, False)
         step = self.step_size.GetValue() 
         logging.info('%s moving in %s um.' % (self.name, step))
         self.motor.move_relative(-1*step)
-        position = self.motor.status()['Position']
-        logging.info('%s arrived to %f um.' % (self.name, position))
-        wx.CallAfter(self.curr_pos.SetLabel, str(position))
+        self.updateCurrPos()
+        wx.CallAfter(self.Enable, True)
     
     @run_async
     def onGoto(self, event):
         wx.CallAfter(self.curr_pos.SetLabel, '...')
+        wx.CallAfter(self.Enable, False)
         loc = self.goto_value.GetValue()
         logging.info('%s focusing to %s um.' % (self.name, loc))
         try:
@@ -97,14 +98,19 @@ class FocusREIPanel(wx.Panel):
             wx.CallAfter(wx.MessageBox,'Please select a valid number!', 
                           'INVALID FOCUS POSITION!', wx.OK | wx.ICON_ERROR)
             logging.warning('Focus-To ERROR: INVALID DESTINATION!')
-
-        position = self.motor.status()['Position']
-        logging.info('%s arrived to %f um.' % (self.name, loc))
-        wx.CallAfter(self.curr_pos.SetLabel, str(position))
+        self.updateCurrPos()
+        wx.CallAfter(self.Enable, True)
 
     @run_async
     def initMotor(self, port):
+        wx.CallAfter(self.Enable, False)
         self.motor = TLabs(port)
         self.motor.home()
+        self.updateCurrPos()
+        wx.CallAfter(self.Enable, True)
+
+    def updateCurrPos(self):
         position = self.motor.status()['Position']
-        wx.CallAfter(self.curr_pos.SetLabel, str(position))
+        logging.info('%s arrived to %f um.' % (self.name, position))
+        wx.CallAfter(self.curr_pos.SetLabel, '%.3f' % position)
+        
