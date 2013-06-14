@@ -1,6 +1,6 @@
 import wx
 
-from guidepanelsettings import GuidePanelSettings
+from guidepanelsettings2 import GuidePanelSettings
 
 class GuidingPanel(wx.Panel):
     def __init__(self, parent, *args, **kwargs):
