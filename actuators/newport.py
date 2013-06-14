@@ -203,7 +203,7 @@ This function moves the k-mirror to a choosen position at 10 deg/s.
             pass
 
 
-def NewportKmirrorRotate(controller, socket, motor, jog_state, speed):
+def NewportKmirrorRotate(controller, socket, motor, speed):
     """
 This function prepares the motor for continuous rotation if it isn"t already 
 prepared and then sets a choosen velocity.
@@ -220,10 +220,9 @@ prepared and then sets a choosen velocity.
     velocity:   [float] What value to set the rotational velocity to in deg/s.
 """
     # This checks if the motor is in a continuous rotation state and if not enables that state.
-    if jog == False:
-        Gmode = controller.GroupJogModeEnable(socket, cfg[motor]["group"])
-        if Gmode[0] != 0:
-            XPSErrorHandler(controller, socket, Gmode[0], "GroupJogModeEnable")
+    Gmode = controller.GroupJogModeEnable(socket, cfg[motor]["group"])
+    if Gmode[0] != 0:
+        XPSErrorHandler(controller, socket, Gmode[0], "GroupJogModeEnable")
     else:
         pass
     # This sets the rotation rate for the motor. 
@@ -258,11 +257,16 @@ def NewportStop(controller, socket, motor):
 
 """
     if motor == "kmirror":
-        GStop = controller.GroupJogParametersSet(socket, cfg[motor]["group"], [0],[400])
+        GStop = controller.GroupJogParametersSet(socket, cfg[motor]["group"], [0],[200])
         if GStop[0] != 0:
             XPSErrorHandler(controller, socket, GStop[0], "GroupJogParametersSet")
         else: 
-            pass    
+            pass 
+        JDisable = controller.GroupJogModeDisableA(socket, cfg[motor]["group"])
+        if JDisable[0] != 0:
+            XPSErrorHandler(controller, socket, JDisable[0], "GroupJogModeDisable")
+        else: 
+            pass        
     else:
         GStop = controller.GroupSpinParametersSet(socket, cfg[motor]["group"], 0, 800)
         if GStop[0] != 0:
@@ -306,18 +310,36 @@ def NewportFocusLimit(controller, socket, motor):
         pass
            
 
-def NewportFocusMove(controller, sockets, motor, distance, speed):
+def NewportFocusMove(controller, socket, motor, distance, speed, direction):
     """
-    Inputs: controller, socket, motor, distance, speed.
+    Inputs: controller, socket, motor, distance, speed, direction.
 
     controller: [xps]   Which instance of the XPS controller to use.
-    sockets:    [list]  A list of two sockets to use to communicate with the 
+    socket:    [list]  A list of two sockets to use to communicate with the 
                         XPS controller.
     motor:      [str]   Which motor is being controlled.  This is for config 
                         file purposes.
     distance:   [float] How far to move the array.
     speed:      [int]   How fast to move the array.
+    direction:  [+-1]   which direction to move.
 """
+    delay = speed/(distance*.576)
+    velocity = speed * direction * cfg[wheel]['direction']
+    Gset = controller.GroupSpinParametersSet(socket, cfg[wheel]["group"], velocity, 600)
+    if Gset[0] != 0:
+        XPSErrorHandler(controller, socket, Gset[0], "GroupSpinParametersSet")
+    else:
+        pass 
+    time.sleep(delay)
+    GStop = controller.GroupSpinModeStop(socket, cfg[motor]["group"])
+    if GStop[0] != 0:
+        Kill = controller.KillAll(socket)
+        if Kill[0] != 0:
+            
+        XPSErrorHandler(controller, socket, GStop[0], "GroupSpinModeStop")
+        
+    else:
+        pass 
     pass
     
 
