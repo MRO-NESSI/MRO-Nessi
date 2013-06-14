@@ -242,7 +242,7 @@ def NewportStatusGet(controller, socket, motor):
         info.append(position[1])
     profile = controller.PositionerSGammaParametersGet(socket, cfg[motor]["positioner"])
     if profile[0] != 0:
-        XPSErrorHandler(socket, profile[0], "PositionerSGammaParametersGet")
+        XPSErrorHandler(controller, socket, profile[0], "PositionerSGammaParametersGet")
     else:
         for i in profile[1:]:
             info.append(i)
