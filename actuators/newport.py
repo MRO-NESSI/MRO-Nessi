@@ -302,18 +302,36 @@ def NewportFocusLimit(controller, socket, motor):
         pass
            
 
-def NewportFocusMove(controller, sockets, motor, distance, speed):
+def NewportFocusMove(controller, socket, motor, distance, speed, direction):
     """
-    Inputs: controller, socket, motor, distance, speed.
+    Inputs: controller, socket, motor, distance, speed, direction.
 
     controller: [xps]   Which instance of the XPS controller to use.
-    sockets:    [list]  A list of two sockets to use to communicate with the 
+    socket:    [list]  A list of two sockets to use to communicate with the 
                         XPS controller.
     motor:      [str]   Which motor is being controlled.  This is for config 
                         file purposes.
     distance:   [float] How far to move the array.
     speed:      [int]   How fast to move the array.
+    direction:  [+-1]   which direction to move.
 """
+    delay = speed/(distance*.576)
+    velocity = speed * direction * cfg[wheel]['direction']
+    Gset = controller.GroupSpinParametersSet(socket, cfg[wheel]["group"], velocity, 600)
+    if Gset[0] != 0:
+        XPSErrorHandler(controller, socket, Gset[0], "GroupSpinParametersSet")
+    else:
+        pass 
+    time.sleep(delay)
+    GStop = controller.GroupSpinModeStop(socket, cfg[motor]["group"])
+    if GStop[0] != 0:
+        Kill = controller.KillAll(socket)
+        if Kill[0] != 0:
+            
+        XPSErrorHandler(controller, socket, GStop[0], "GroupSpinModeStop")
+        
+    else:
+        pass 
     pass
     
 
