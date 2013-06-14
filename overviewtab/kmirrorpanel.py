@@ -116,7 +116,7 @@ class KmirrorPanel(wx.Panel):
         try:
             pa = float(self.new_pa.GetValue())
             logging.info('Rotator: Move to %f' % (float(pa)) + u'\N{DEGREE SIGN}')
-            new.NewportKmirrorMove(self.controller, self.socket[0], self.motor, self.jog_state, pa)
+            new.NewportKmirrorMove(self.controller, self.socket[0], self.motor, self.trackstatus, pa)
             logging.info('Rotator: Is at %f' % (float(pa)) + u'\N{DEGREE SIGN}')
             
         except ValueError:

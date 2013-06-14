@@ -203,7 +203,7 @@ This function moves the k-mirror to a choosen position at 10 deg/s.
             pass
 
 
-def NewportKmirrorRotate(controller, socket, motor, jog_state, speed):
+def NewportKmirrorRotate(controller, socket, motor, speed):
     """
 This function prepares the motor for continuous rotation if it isn"t already 
 prepared and then sets a choosen velocity.
@@ -220,10 +220,9 @@ prepared and then sets a choosen velocity.
     velocity:   [float] What value to set the rotational velocity to in deg/s.
 """
     # This checks if the motor is in a continuous rotation state and if not enables that state.
-    if jog == False:
-        Gmode = controller.GroupJogModeEnable(socket, cfg[motor]["group"])
-        if Gmode[0] != 0:
-            XPSErrorHandler(controller, socket, Gmode[0], "GroupJogModeEnable")
+    Gmode = controller.GroupJogModeEnable(socket, cfg[motor]["group"])
+    if Gmode[0] != 0:
+        XPSErrorHandler(controller, socket, Gmode[0], "GroupJogModeEnable")
     else:
         pass
     # This sets the rotation rate for the motor. 
@@ -258,11 +257,16 @@ def NewportStop(controller, socket, motor):
 
 """
     if motor == "kmirror":
-        GStop = controller.GroupJogParametersSet(socket, cfg[motor]["group"], [0],[400])
+        GStop = controller.GroupJogParametersSet(socket, cfg[motor]["group"], [0],[200])
         if GStop[0] != 0:
             XPSErrorHandler(controller, socket, GStop[0], "GroupJogParametersSet")
         else: 
-            pass    
+            pass 
+        JDisable = controller.GroupJogModeDisableA(socket, cfg[motor]["group"])
+        if JDisable[0] != 0:
+            XPSErrorHandler(controller, socket, JDisable[0], "GroupJogModeDisable")
+        else: 
+            pass        
     else:
         GStop = controller.GroupSpinParametersSet(socket, cfg[motor]["group"], 0, 800)
         if GStop[0] != 0:
