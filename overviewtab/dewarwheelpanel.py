@@ -73,12 +73,12 @@ class WheelPanel(wx.Panel):
             logging.info('%s wheel moving to %s...' % (self.name, self.wheel_choice.GetSelection()))
             selected = self.wheel_choice.GetSelection()
             self.curr_wheel.SetLabel(self.choices[selected])
-#           self.position =  newport.NewportWheelThread(self.controller, self.name, self.socket, self.position, self.slots[self.wheel_choice.GetValue()], True)
+            self.position =  newport.NewportWheelThread(self.controller, self.name, self.socket, self.position, self.slots[self.wheel_choice.GetValue()], False)
         except ValueError:
             pass
 
     @run_async
     def home_wheel(self, event):
-#        self.position = newport.NewportWheelThread(self.controller, self.name, self.socket, self.position, 0, True)
+        self.position = newport.NewportWheelThread(self.controller, self.name, self.socket, self.position, 0, True)
         pass
         

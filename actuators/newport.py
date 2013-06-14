@@ -129,6 +129,7 @@ of the motor upon success.
              
     else:
         pass
+    return position
 
 
 def NewportInitialize(controller, motor, socket, home_pos):
@@ -294,7 +295,7 @@ def NewportFocusLimit(controller, socket, motor):
         else:
             pass 
 
-    GStop = controller.GroupSpinModeStop(socket, cfg[motor]["group"], 800)
+    GStop = controller.GroupSpinModeStop(socket, cfg[motor]["group"])
     if GStop[0] != 0:
         XPSErrorHandler(controller, socket, GStop[0], "GroupSpinModeStop")
     else:
@@ -375,7 +376,7 @@ if __name__ == "__main__":
         if open_sockets[i] == -1:
             print "Error, Sockets not opened."
     NewportInitialize(x, "mask", open_sockets[0], 0)
-    NewportWheelThread(x, "mask", open_sockets[0], 1, 4, True)
-#    NewportWheelThread(x, "grism", open_sockets[0],pos,1,False)
+    pos = NewportWheelThread(x, "mask", open_sockets[0], 1, 4, True)
+    pos = NewportWheelThread(x, "mask", open_sockets[0], pos, 1, False)
 
     
