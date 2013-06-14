@@ -32,13 +32,14 @@ def timeout(seconds_before_timeout):
     return decorate
 
 
-def run_async(func):
+def run_async(func, daemon=False):
     from threading import Thread
     from functools import wraps
 
     @wraps(func)
     def async_func(*args, **kwargs):
-        func_hl = Thread(target = func, args = args, kwargs = kwargs)
+        func_hl = Thread(name=func.__name__, target = func, args = args, kwargs = kwargs)
+        func_hl.daemon = daemon
         func_hl.start()
         return func_hl
 
