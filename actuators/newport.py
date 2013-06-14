@@ -1,11 +1,13 @@
 #!/usr/bin/env python
 
-import math
-import XPS_C8_drivers as xps
 from configobj import ConfigObj
-from wx.lib.pubsub import Publisher
-import time
 import logging
+import math
+import time
+import traceback
+from wx.lib.pubsub import Publisher
+
+import XPS_C8_drivers as xps
 from keywords import keywords
 
 cfg = ConfigObj(infile="nessisettings.ini")
@@ -29,6 +31,8 @@ by the user.
     name:       [str]   The name of the function that called this function.
 """
 
+    tb = traceback.format_stack()
+    
     # This checks to see if the error is in communication with the controller.
     if code != -2 and code != -108:
 
@@ -36,16 +40,16 @@ by the user.
         error = controller.ErrorStringGet(socket, code)
         # If the error string lookup fails, this message will display with the error code.
         if error[0] != 0:
-            logging.error(name + " : ERROR "+ str(code))
+            logging.error(name + " : ERROR "+ str(code) + '\n' + str(tb))
         # This displays the error string.
         else:
-            logging.error(name + " : " + error[1])
+            logging.error(name + " : " + error[1] + '\n' + str(tb))
     # This code handles the case where the connection to the controller fails after initial contact.
     else:
         if code == -2:
-            logging.critical(name + " : TCP timeout")
+            logging.critical(name + " : TCP timeout" + '\n' + str(tb))
         elif code == -108:
-            logging.critical(name + " : The TCP/IP connection was closed by an administrator")
+            logging.critical(name + " : The TCP/IP connection was closed by an administrator" + '\n' + str(tb))
         
 
 
