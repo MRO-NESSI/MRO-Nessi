@@ -1,3 +1,4 @@
+
 import logging
 from time import sleep
 import wx
@@ -37,9 +38,9 @@ class KmirrorPanel(wx.Panel):
 
         self.step_p = wx.Button(self, size=(30,-1), label="+")
         self.step_m = wx.Button(self, size=(30,-1), label="-")
-        self.track_button = wx.Button(self,  size=(62,-1), label="Track")
+        self.track_button = wx.ToggleButton(self,  size=(62,-1), label="Start Tracking")
         self.set_button = wx.Button(self,  size=(62,-1), label="Set")
-        self.stop_button = wx.Button(self,  size=(62,-1), label="Stop")
+#        self.stop_button = wx.Button(self,  size=(62,-1), label="Stop")
         self.home_button = wx.Button(self, size=(62,-1), label="Home")
         self.mode_txt = wx.StaticText(self, label="Mode:")
         self.mode = wx.ComboBox(self, -1, size=(126,-1), choices=("Position Angle", "Vertical Angle", "Stationary"), style=wx.CB_READONLY)
@@ -55,9 +56,9 @@ class KmirrorPanel(wx.Panel):
         # Event handlers
         self.Bind(wx.EVT_BUTTON, self.step_pos, self.step_p)
         self.Bind(wx.EVT_BUTTON, self.step_neg, self.step_m)
-        self.Bind(wx.EVT_BUTTON, self.on_track, self.track_button)
+        self.Bind(wx.EVT_TOGGLEBUTTON, self.on_track, self.track_button)
         self.Bind(wx.EVT_BUTTON, self.on_set, self.set_button)
-        self.Bind(wx.EVT_BUTTON, self.on_stop, self.stop_button)
+#        self.Bind(wx.EVT_BUTTON, self.on_stop, self.stop_button)
         self.Bind(wx.EVT_BUTTON, self.on_home, self.home_button)
 
         
@@ -93,8 +94,8 @@ class KmirrorPanel(wx.Panel):
         sizer.Add(self.step_txt, pos=(2,0), flag=wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL)
         sizer.Add(self.step_size, pos=(2,1), flag=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
 
-        sizer.Add(self.track_button,  pos=(3,0), flag=wx.ALIGN_RIGHT)
-        sizer.Add(self.stop_button,  pos=(3,1), flag=wx.ALIGN_LEFT)
+        sizer.Add(self.track_button,  pos=(3,0), span=(1,2), flag=wx.EXPAND)
+#        sizer.Add(self.stop_button,  pos=(3,1), flag=wx.ALIGN_LEFT)
         sizer.Add(self.home_button,  pos=(3,2), span=(1,2), flag=wx.ALIGN_LEFT)
         
         sizer.Add(self.mode_txt,  pos=(4,0), flag=wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL)
@@ -113,6 +114,7 @@ class KmirrorPanel(wx.Panel):
 
     @run_async
     def on_set(self, event):
+        wx.CallAfter(self.Enable, False)
         try:
             pa = float(self.new_pa.GetValue())
             logging.info('Rotator: Move to %f' % (float(pa)) + u'\N{DEGREE SIGN}')
@@ -121,25 +123,35 @@ class KmirrorPanel(wx.Panel):
             
         except ValueError:
             pass
+        wx.CallAfter(self.Enable, True)
         
     @run_async
     def on_track(self, event):
-        try:
-            self.trackstatus = True
-            new.NewportKmirrorTracking(self, self.controller, self.socket[3], self.motor)
-            logging.info('Rotator: Tracking started.')
-        except:
-            pass
-
-    @run_async
-    def on_stop(self, event):
-        try:
-            self.trackstatus = False
-            sleep(1)
-            new.NewportStop(self.controller, self.socket[2], self.motor)
-            logging.info('Rotator: Motion stopped.')
-        except ValueError:
-            pass
+        children = self.GetChildren()
+        if self.track_button.GetValue():
+            wx.CallAfter(self.track_button.SetLabel, "Stop Tracking")
+            wx.CallAfter(self.track_button.SetForegroundColour, (34,139,34))
+            for child in children:
+                if child != self.track_button: wx.CallAfter(child.Enable, False)
+            try:
+                self.trackstatus = True
+                new.NewportKmirrorTracking(self, self.controller, self.socket[3], self.motor)
+                logging.info('Rotator: Tracking started.')
+            except:
+                pass
+        else:
+            wx.CallAfter(self.track_button.SetLabel, "Start Tracking")
+            wx.CallAfter(self.track_button.SetForegroundColour,(0,0,0))
+            wx.CallAfter(self.Enable, True)
+            for child in children:
+                if child != self.track_button: wx.CallAfter(child.Enable, True)
+            try:
+                self.trackstatus = False
+                sleep(1)
+                new.NewportStop(self.controller, self.socket[2], self.motor)
+                logging.info('Rotator: Motion stopped.')
+            except ValueError:
+                pass
 
     @run_async
     def on_timer(self, event):
@@ -148,9 +160,11 @@ class KmirrorPanel(wx.Panel):
             wx.CallAfter(self.curr_pa.SetLabel, u'%.3f \N{DEGREE SIGN}' % pa)
         except ValueError:
             pass
+        
 
     @run_async
     def step_pos(self, event):
+        wx.CallAfter(self.Enable, False)
         try:
             step = self.step_size.GetValue()
             info = new.NewportStatusGet(self.controller, self.socket[0], self.motor)
@@ -160,9 +174,11 @@ class KmirrorPanel(wx.Panel):
             logging.info('Rotator: Is at %f' % (float(pa)) + u'\N{DEGREE SIGN}')
         except ValueError:
             pass
+        wx.CallAfter(self.Enable, True)
 
     @run_async
     def step_neg(self, event):
+        wx.CallAfter(self.Enable, False)
         try:
             step = self.step_size.GetValue()
             info = new.NewportStatusGet(self.controller, self.socket[0], self.motor)
@@ -172,11 +188,14 @@ class KmirrorPanel(wx.Panel):
             logging.info('Rotator: Is at %f' % (float(pa)) + u'\N{DEGREE SIGN}')
         except ValueError:
             pass
+        wx.CallAfter(self.Enable, True)
 
     @run_async
     def on_home(self, event):
+        wx.CallAfter(self.Enable, False)
         try:
             new.NewportInitialize(self.controller, self.motor, self.socket[0], 0)
             logging.info('Rotator: Re-homing rotator')
         except:
             raise
+        wx.CallAfter(self.Enable, True)
