@@ -47,22 +47,6 @@ class MainNessiFrame(wx.Frame):
 
     def __init__(self):
         wx.Frame.__init__(self, None, title="NESSI Controller", size=(850,875))
-
-        #Make logfiles dir
-        if not isdir('logfiles'): makedirs('logfiles')
-
-        #Logger
-        logging.basicConfig(level=logging.DEBUG)
-
-        logTabFormatter = logging.Formatter('[%(asctime)s] %(filename)s:%(funcName)s - %(message)s')
-        statusbarFormatter = logging.Formatter('[%(asctime)s] %(funcName)s - %(message)s')
-        
-        logfileHandler = logging.handlers.TimedRotatingFileHandler('logfiles/NESSILOG',
-                                                                   when='d')
-        logfileHandler.setLevel(logging.DEBUG)
-        logfileHandler.setFormatter(logTabFormatter)
-        logging.getLogger('').addHandler(logfileHandler)
-
         
         #add nessi package to path
         sys.path.append("./")
@@ -117,6 +101,10 @@ class MainNessiFrame(wx.Frame):
         if not isdir('logfiles'): makedirs('logfiles')
 
         #Logger GUI Handlers
+        logTabFormatter = logging.Formatter(
+            '[%(asctime)s] %(filename)s:%(funcName)s - %(message)s')
+        statusbarFormatter = logging.Formatter(
+            '[%(asctime)s] %(funcName)s - %(message)s')
         logTabHandler = wxLogHandler(page5)
         logTabHandler.setFormatter(logTabFormatter)
         logTabHandler.setLevel(logging.INFO)
@@ -197,8 +185,20 @@ if __name__ == "__main__":
         wx.Yield()
         event.Skip()
 
+    #Make logfiles dir
+    if not isdir('logfiles'): makedirs('logfiles')
+
     #Logger
     logging.basicConfig(level=logging.DEBUG)
+    logfileHandler = logging.handlers.TimedRotatingFileHandler('logfiles/NESSILOG',
+                                                               when='d')
+    logfileFormatter = logging.Formatter(
+        '[%(asctime)s] %(filename)s:%(funcName)s - %(message)s')
+
+    logfileHandler.setLevel(logging.DEBUG)    
+    logfileHandler.setFormatter(logfileFormatter)
+    logging.getLogger('').addHandler(logfileHandler)
+
 
     splashHandler = wxLogHandler(splash)
     splashHandler.setLevel(logging.INFO)
