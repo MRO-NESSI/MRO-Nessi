@@ -335,17 +335,43 @@ def NewportFocusMove(controller, socket, motor, distance, speed, direction):
     if GStop[0] != 0:
         Kill = controller.KillAll(socket)
         if Kill[0] != 0:
-            
+            XPSErrorHandler(controller, socket, Kill[0], "KillAll")        
         XPSErrorHandler(controller, socket, GStop[0], "GroupSpinModeStop")
         
     else:
         pass 
-    pass
+    
     
 
 
 def NewportFocusHome(controller, socket, motor):
-    pass   
+    """
+
+"""
+    bitdown = cfg[motor]["lower"]["bit"]
+    valdown = cfg[motor]["lower"]["val"]
+    home = True
+    vel = 200*cfg[wheel]['direction']
+    Gset = controller.GroupSpinParametersSet(socket, cfg[wheel]["group"], speed, 200)
+        # Checking if the motion command was sent correctly.
+        # If so then the GPIO checking begins.
+    if Gset[0] != 0:
+        XPSErrorHandler(controller ,socket, Gset[0], "GroupSpinParametersSet")
+    else:
+        while home == True
+            value = controller.GPIODigitalGet(socket, "GPIO4.DI")
+            if int(format(value[1], "016b")[::-1][bitdown]) == valdown:
+                home = False
+            else:
+                time.sleep(.15)
+    stop = controller.GroupSpinModeStop(socket, cfg[wheel]["group"])
+    if stop[0] != 0:
+        Kill = controller.KillAll(socket)
+        if Kill[0] != 0:
+            XPSErrorHandler(controller, socket, Kill[0], "KillAll")        
+        XPSErrorHandler(controller, socket, stop[0], "GroupSpinModeStop")    
+    else:
+        pass
 
 
 def NewportKmirrorTracking(parent, controller, socket, motor):
