@@ -5,6 +5,8 @@ class GuidingPanel(wx.Panel):
     def __init__(self, parent):
         super(GuidingPanel, self).__init__(parent)
 
+        self.parent = parent
+
         self.star1 = wx.StaticText(self, label="Star 1: ")
         self.star2 = wx.StaticText(self, label="Star 2: ")
         self.star1_xy = wx.StaticText(self, label="(x.000,y.000)")
@@ -35,9 +37,11 @@ class GuidingPanel(wx.Panel):
 
     def OnGuide(self, event):
         if self.guide.GetValue():
+            self.parent.guideCamPanel.Enable(False)
             self.guide.SetLabel("Stop Guiding")
             self.guide.SetForegroundColour((34,139,34))
         else:
+            self.parent.guideCamPanel.Enable(True)
             self.guide.SetLabel("StartGuiding")
             self.guide.SetForegroundColour((0,0,0))
 
