@@ -358,7 +358,7 @@ def NewportFocusHome(controller, socket, motor):
     if Gset[0] != 0:
         XPSErrorHandler(controller ,socket, Gset[0], "GroupSpinParametersSet")
     else:
-        while home == True
+        while home == True:
             value = controller.GPIODigitalGet(socket, "GPIO4.DI")
             if int(format(value[1], "016b")[::-1][bitdown]) == valdown:
                 home = False
