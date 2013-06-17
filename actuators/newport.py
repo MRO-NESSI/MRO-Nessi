@@ -262,7 +262,7 @@ def NewportStop(controller, socket, motor):
             XPSErrorHandler(controller, socket, GStop[0], "GroupJogParametersSet")
         else: 
             pass 
-        JDisable = controller.GroupJogModeDisableA(socket, cfg[motor]["group"])
+        JDisable = controller.GroupJogModeDisable(socket, cfg[motor]["group"])
         if JDisable[0] != 0:
             XPSErrorHandler(controller, socket, JDisable[0], "GroupJogModeDisable")
         else: 
