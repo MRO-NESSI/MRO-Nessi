@@ -73,16 +73,42 @@ class WheelPanel(wx.Panel):
 
     @run_async    
     def move_wheel(self, event):
+        #TODO: If an error occurs, what will the selected panel say
+        # and what will the value of self.position be?
+        # Make the label set to the actual position, not just the selected
+        wx.CallAfter(self.Enable, False)
         try:
-            logging.info('%s wheel moving to %s...' % (self.name, self.wheel_choice.GetSelection()))
             selected = self.wheel_choice.GetSelection()
-            self.curr_wheel.SetLabel(self.choices[selected])
-            self.position =  newport.NewportWheelThread(self.controller, self.name, self.socket, self.position, self.slots[self.wheel_choice.GetValue()], False)
-        except ValueError:
-            pass
+
+            if selected is -1:
+                wx.CallAfter(wx.MessageBox,'Please select a position!', 
+                          'NO POSITION SELECTED!', wx.OK | wx.ICON_ERROR)
+                raise Exception()
+
+            logging.info('%s wheel moving to %s...' % (self.name, self.wheel_choice.GetSelection()))
+            self.position = newport.NewportWheelThread(self.controller, 
+                                                       self.name, self.socket, 
+                                                       self.position, 
+                                                       self.slots[self.wheel_choice.GetValue()], False)
+            logging.info('%s wheel arrived at %s!' % (self.name, wheel_choice.GetSelection()))
+            wx.CallAfter(self.curr_wheel.SetLabel, self.choices[selected])
+        except:
+            logging.warning('%s wheel failed!' % self.name)
+            wx.CallAfter(self.curr_wheel.SetLabel, 'ERROR')
+        finally:
+            wx.CallAfter(self.Enable, True)
+
 
     @run_async
     def home_wheel(self, event):
-        self.position = newport.NewportWheelThread(self.controller, self.name, self.socket, self.position, 0, True)
-        pass
-        
+        wx.CallAfter(self.Enable, False)
+        try:
+            logging.info('%s is homing...' % self.name)
+            self.position = newport.NewportWheelThread(self.controller, self.name, self.socket, self.position, 0, True)
+            wx.CallAfter(self.curr_wheel.SetLabel, self.choices[selected])
+        except:
+            #TODO: Make this home
+            logging.warning('%s wheel failed!' % self.name)
+            wx.CallAfter(self.curr_wheel.SetLabel, 'ERROR')
+        finally:
+            wx.CallAfter(self.Enable, True)
