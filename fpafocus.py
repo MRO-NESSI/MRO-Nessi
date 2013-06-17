@@ -7,13 +7,26 @@ import time
 import math
 import actuators.newport as new
 from overviewtab.fpapanel import FPAPanel
+from threadtools import timeout, TimeoutError
 
 x = xps.XPS()
-s0 = x.TCP_ConnectToServer('192.168.0.254',5001,1)
-s1 = x.TCP_ConnectToServer('192.168.0.254',5001,1)
-s2 = x.TCP_ConnectToServer('192.168.0.254',5001,1)
-s3 = x.TCP_ConnectToServer('192.168.0.254',5001,1)
-s4 = x.TCP_ConnectToServer('192.168.0.254',5001,1)
+
+@timeout(10)
+def socket_list():
+    s = []
+    for i in range(5):
+        s.append(x.TCP_ConnectToServer('192.168.0.254',5001,1))
+   
+    for i in range(5):
+        if self.open_sockets[i] == -1:
+            s=[0,1,2,3,4]
+            break
+
+try:
+    socket_list()
+except TimeoutError:
+    s=[0,1,2,3,4]
+    
 
 class FPA(wx.App):
     '''The Fpa focusing app.''' 
@@ -28,26 +41,25 @@ class FPAFrame(wx.Frame):
     def __init__(self,*args,**kwargs):
         super(FPAFrame,self).__init__(*args,**kwargs)
         p = wx.Panel(self)
-        self.panel0 = FPAPanel(p,'array', x,[s1,s2,s3,s4])
-        self.panel1 = Emergency(p)
+        self.panel0 = FPAPanel(self,'array', x,s[1:])
+        self.panel1 = Emergency(self)
         self.__DoLayout()
-        self.SetInitialSize()
+        
         self.Bind(wx.EVT_CLOSE,self.OnClose)
-    
+        self.SetInitialSize()
     # This function will handle the layout of the different elements of the program.
     def __DoLayout(self):
         '''A basic layout handler for the frame.  Layout information is available in KMIRRORREADME.'''
         # This establishes which layout manager we are using.
         sizer=wx.GridBagSizer()
-        sizer.Add(self.panel0,(0,0))
-        sizer.Add(self.panel1,(1,0))
+        sizer.Add(self.panel0,(0,0),(1,1))
+        sizer.Add(self.panel1,(1,0),(1,1))
         self.SetSizer(sizer)
     
-    # This function is called when the program is closed and first confirms closing then stops all tasks and closes the program.
     def OnClose(self,event):
-        kill=x.KillAll(s0)
+        kill=x.KillAll(s[0])
         if kill[0] != 0:
-            new.XPSErrorHandler(x,s0, kill[0], 'KillAll')
+            new.XPSErrorHandler(x,s[0], kill[0], 'KillAll')
         else:
             self.Close()
 
@@ -69,7 +81,7 @@ class Emergency(wx.Panel):
         sizer=wx.GridBagSizer()
         sizer.Add(self.title,(0,0),(1,1),wx.ALIGN_CENTER_HORIZONTAL)
         sizer.Add(self.line,(1,0),(1,1),wx.EXPAND)
-        sizer.Add(self.kill_group,(2,0))
+        sizer.Add(self.kill_group,(2,0),(1,1))
         self.SetSizer(sizer)
     
     def OnButton(self,event):
@@ -77,7 +89,8 @@ class Emergency(wx.Panel):
         if kill[0] != 0:
             new.XPSErrorHandler(x, s0, kill[0], 'KillAll')
         else:
-            result=wx.MessageBox('All groups killed.\nMotors must be reinitialized',style=wx.CENTER|wx.ICON_EXCLAMATION|wx.OK)  
-
-app=FPA(False)   
-app.MainLoop()  
+            result=wx.MessageBox('All groups killed.\nMotors must be reinitialized',style=wx.CENTER|wx.ICON_EXCLAMATION|wx.OK) 
+ 
+if __name__ == '__main__':
+    app=FPA(False)   
+    app.MainLoop()  

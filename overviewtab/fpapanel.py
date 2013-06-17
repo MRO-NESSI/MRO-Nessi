@@ -4,30 +4,35 @@ import actuators.newport as new
 import wx.lib.agw.floatspin as FS
 
 class FPAPanel(wx.Panel):
-    def __init__(self, parent, motor, controller, socket, *args, **kwargs):
+    def __init__(self, parent, motor, controller, socket):
         #wx.Panel.__init__(self, parent, *args, **kwargs)
         super(FPAPanel, self).__init__(parent)
 
-        self.parent = parent
         self.controller = controller
         self.socket = socket
         self.motor = motor
-        new.NewportInitialize(self.controller, self.motor, self.socket[0], 0)
-        
+        try:
+            new.NewportInitialize(self.controller, self.motor, self.socket[0], 0)
+        except TypeError:
+            pass
+        else:
+            self.pa = 0
         # Attributes
 #        self.curr_pa_text = wx.StaticText(self, label="Current :")
 #        self.curr_pa = wx.StaticText(self, label="...")
-#        self.new_pa_text = wx.StaticText(self, label="New Pos:")
-#        self.position=FS.FloatSpin(self,digits=6)
+        self.new_pa_text = wx.StaticText(self, label="New Pos "+u"\u00B5"+"m:")
+
 
         self.step_p = wx.Button(self, size=(30,-1), label="+")
         self.step_m = wx.Button(self, size=(30,-1), label="-")
         self.set_button = wx.Button(self,  size=(62,-1), label="Set")
         self.stop_button = wx.Button(self,  size=(62,-1), label="Stop")
         self.home_button = wx.Button(self, size=(62,-1), label="Home")      
-        self.step_txt = wx.StaticText(self, label="Step Size:")
-        self.step_size = self.position=FS.FloatSpin(self,digits=6)
-        self.step_size.SetRange(1, 5)
+        self.step_txt = wx.StaticText(self, label="Step Size "+u"\u00B5"+"m:")
+        self.step_size = FS.FloatSpin(self,digits=6)
+        self.position=FS.FloatSpin(self,digits=6)
+        self.position.SetRange(0,15000)
+        self.step_size.SetRange(0, 500)
         self.step_size.SetValue(1)
                 
         # Layout
@@ -39,21 +44,13 @@ class FPAPanel(wx.Panel):
         self.Bind(wx.EVT_BUTTON, self.on_set, self.set_button)
         self.Bind(wx.EVT_BUTTON, self.on_stop, self.stop_button)
         self.Bind(wx.EVT_BUTTON, self.on_home, self.home_button)
+        self.SetInitialSize()
 
     def __DoLayout(self):
-        sbox = wx.StaticBox(self, label="FPA")
-        boxSizer = wx.StaticBoxSizer(sbox, wx.HORIZONTAL)
-        sizer = wx.GridBagSizer(vgap=2, hgap=2)
-
-        # Add controls to gridbag
-#        sizer.Add(self.curr_pa_text, pos=(0,0), flag=wx.ALIGN_RIGHT)
-#        sizer.Add(self.curr_pa, pos=(0,1), flag=wx.ALIGN_LEFT)
-
-#        sizer.Add(self.new_pa_text,  pos=(1,0), flag=wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL)
-#        sizer.Add(self.new_pa,  pos=(1,1), flag=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
-
+        sizer = wx.GridBagSizer()
+        sizer.Add(self.position, (1,1), (1,1))
         sizer.Add(self.set_button,  pos=(1,2), span=(1,2), flag=wx.ALIGN_LEFT)
-        
+        sizer.Add(self.new_pa_text, (1,0))
         sizer.Add(self.step_m, pos=(2,2), flag=wx.ALIGN_RIGHT)
         sizer.Add(self.step_p, pos=(2,3), flag=wx.ALIGN_LEFT)
         
@@ -64,15 +61,20 @@ class FPAPanel(wx.Panel):
         sizer.Add(self.home_button,  pos=(3,2), span=(1,2), flag=wx.ALIGN_LEFT)
 
         # Add the grid bag to the static box and make everything fit
-        sizer.SetMinSize(wx.Size(200, -1))
-        boxSizer.Add(sizer, flag=wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_CENTER_HORIZONTAL)
-        self.SetSizerAndFit(boxSizer)
+        self.SetSizer(sizer)
         
 
     def on_set(self, event):
         try:
-            pa = self.new_pa.GetValue()
-            logging.info('')
+            
+            move = self.pa-self.position.GetValue()
+            if move == 0:
+                pass
+            else:
+                speed = 10**math.floor(math.log10(math.fabs(move))) 
+                direction = math.copysign(1,move)           
+                NewportFocusMove(self.controller, self.socket[0], self.motor, move, speed, 1)
+#            logging.info('')
 #            new.NewportKmirrorMove(self.controller, self.socket[0], self.motor, self.jog_state, pa)
             logging.info('')
             
@@ -86,6 +88,8 @@ class FPAPanel(wx.Panel):
     def step_pos(self, event):
         try:
             step = self.step_size.GetValue()
+            speed = 10**math.floor(math.log10(math.fabs(step))) 
+            direction = math.copysign(1,step)   
 #            info = new.NewportStatusGet(self.controller, self.socket[0], self.motor)
 #            pa = info[0] + step
             logging.info('')
@@ -97,6 +101,8 @@ class FPAPanel(wx.Panel):
     def step_neg(self, event):
         try:
             step = self.step_size.GetValue()
+            speed = 10**math.floor(math.log10(math.fabs(step))) 
+            direction = math.copysign(1,step)   
 #            info = new.NewportStatusGet(self.controller, self.socket[0], self.motor)
 #            pa = info[0] - step
             logging.info('')
