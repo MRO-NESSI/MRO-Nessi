@@ -124,34 +124,42 @@ class KmirrorPanel(wx.Panel):
         except ValueError:
             pass
         wx.CallAfter(self.Enable, True)
-        
+
     @run_async
     def on_track(self, event):
+        wx.CallAfter(self.Enable, False)
         children = self.GetChildren()
         if self.track_button.GetValue():
             wx.CallAfter(self.track_button.SetLabel, "Stop Tracking")
             wx.CallAfter(self.track_button.SetForegroundColour, (34,139,34))
             for child in children:
                 if child != self.track_button: wx.CallAfter(child.Enable, False)
-            try:
-                self.trackstatus = True
-                new.NewportKmirrorTracking(self, self.controller, self.socket[3], self.motor)
-                logging.info('Rotator: Tracking started.')
-            except:
-                pass
+            self.start_tracking()
         else:
             wx.CallAfter(self.track_button.SetLabel, "Start Tracking")
             wx.CallAfter(self.track_button.SetForegroundColour,(0,0,0))
             wx.CallAfter(self.Enable, True)
             for child in children:
                 if child != self.track_button: wx.CallAfter(child.Enable, True)
-            try:
-                self.trackstatus = False
-                sleep(1)
-                new.NewportStop(self.controller, self.socket[2], self.motor)
-                logging.info('Rotator: Motion stopped.')
-            except ValueError:
-                pass
+            self.stop_tracking()
+        wx.CallAfter(self.Enable, True)
+
+    def start_tracking(self):
+        try:
+            self.trackstatus = True
+            new.NewportKmirrorTracking(self, self.controller, self.socket[3], self.motor)
+            logging.info('Rotator: Tracking started.')
+        except:
+            logging.warning('Rotator: Tracking failed!')
+
+    def stop_tracking(self):
+        try:
+            self.trackstatus = False
+            new.NewportStop(self.controller, self.socket[2], self.motor)
+            logging.info('Rotator: Motion stopped.')
+        except:
+            logging.warning('Rotator: Stop tracking failed!')
+
 
     @run_async
     def on_timer(self, event):
