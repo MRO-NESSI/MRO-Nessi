@@ -1,3 +1,7 @@
+#TODO: This needs to be finished. Why do we start a newport thread? Why not make
+#it a procedural action? That way we can disable the control until the action is
+#done. Also, we need to do that thing I just said. 
+
 import logging
 import wx
 from configobj import ConfigObj
