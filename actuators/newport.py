@@ -53,7 +53,7 @@ by the user.
         
 
 
-def NewportWheelThread(controller, wheel, socket, current, position, home):
+def NewportWheel(controller, wheel, socket, current, position, home):
     """
 A thread that initiates a move in the dewar and then monitors The Newport GPIO
 for a bit flip that indicates the motor needs to be stopped.  If the motion 
@@ -126,7 +126,8 @@ of the motor upon success.
             if stop[0] != 0:
                 XPSErrorHandler(controller, socket, stop[0], "GroupSpinModeStop")
             # Checking to be sure the motor is in a valid position.
-            elif int(format(value[1], "016b")[::-1][bit]) != val:       
+            elif int(format(value[1], "016b")[::-1][bit]) != val: 
+                position = -1      
                 logging.critical("motion failed, home and then reinitiate move")
             else:
                 logging.info("motion succeded")

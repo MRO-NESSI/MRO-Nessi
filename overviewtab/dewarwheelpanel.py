@@ -1,6 +1,3 @@
-#TODO: This needs to be finished. Why do we start a newport thread? Why not make
-#it a procedural action? That way we can disable the control until the action is
-#done. Also, we need to do that thing I just said. 
 
 import logging
 import wx
@@ -86,12 +83,12 @@ class WheelPanel(wx.Panel):
                 raise Exception()
 
             logging.info('%s wheel moving to %s...' % (self.name, self.wheel_choice.GetSelection()))
-            self.position = newport.NewportWheelThread(self.controller, 
+            self.position = newport.NewportWheel(self.controller, 
                                                        self.name, self.socket, 
                                                        self.position, 
                                                        self.slots[self.wheel_choice.GetValue()], False)
             logging.info('%s wheel arrived at %s!' % (self.name, wheel_choice.GetSelection()))
-            wx.CallAfter(self.curr_wheel.SetLabel, self.choices[selected])
+            wx.CallAfter(self.curr_wheel.SetLabel, self.choices[position])
         except:
             logging.warning('%s wheel failed!' % self.name)
             wx.CallAfter(self.curr_wheel.SetLabel, 'ERROR')
@@ -104,10 +101,10 @@ class WheelPanel(wx.Panel):
         wx.CallAfter(self.Enable, False)
         try:
             logging.info('%s is homing...' % self.name)
-            self.position = newport.NewportWheelThread(self.controller, self.name, self.socket, self.position, 0, True)
+            self.position = newport.NewportWheel(self.controller, self.name, self.socket, self.position, 0, True)
             wx.CallAfter(self.curr_wheel.SetLabel, self.choices[selected])
         except:
-            #TODO: Make this home
+            #TODO: Make this home.  Tyler, What The FFFfff?
             logging.warning('%s wheel failed!' % self.name)
             wx.CallAfter(self.curr_wheel.SetLabel, 'ERROR')
         finally:
