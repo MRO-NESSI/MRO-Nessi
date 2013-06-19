@@ -85,9 +85,9 @@ class Emergency(wx.Panel):
         self.SetSizer(sizer)
     
     def OnButton(self,event):
-        kill=x.KillAll(s2)
+        kill=x.KillAll(s[2])
         if kill[0] != 0:
-            new.XPSErrorHandler(x, s0, kill[0], 'KillAll')
+            new.XPSErrorHandler(x, s[0], kill[0], 'KillAll')
         else:
             result=wx.MessageBox('All groups killed.\nMotors must be reinitialized',style=wx.CENTER|wx.ICON_EXCLAMATION|wx.OK) 
  
