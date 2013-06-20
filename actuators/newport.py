@@ -292,8 +292,10 @@ def NewportFocusLimit(controller, socket, motor):
 
         if value[0] != 0 or velocity[0] != 0:
             if value[0] != 0:
+                stop = True
                 XPSErrorHandler(controller, socket, value[0], "GPIODigitalGet")
             else:
+                stop = True
                 XPSErrorHandler(controller, socket, velocity[0], "GroupSpinCurrentGet")
 
         elif int(format(value[1], "016b")[::-1][bitup]) == valup or int(format(value[1], "016b")[::-1][bitdown]) == valdown:
@@ -327,21 +329,23 @@ def NewportFocusMove(controller, socket, motor, distance, speed, direction):
 """
     delay = speed/(distance*.576)
     velocity = speed * direction * cfg[wheel]['direction']
-    Gset = controller.GroupSpinParametersSet(socket, cfg[wheel]["group"], velocity, 600)
+    NewportFocusLimit(controller, socket[0], motor)
+    Gset = controller.GroupSpinParametersSet(socket[1], cfg[wheel]["group"], velocity, 600)
     if Gset[0] != 0:
-        XPSErrorHandler(controller, socket, Gset[0], "GroupSpinParametersSet")
+        XPSErrorHandler(controller, socket[1], Gset[0], "GroupSpinParametersSet")
     else:
         pass 
     time.sleep(delay)
-    GStop = controller.GroupSpinModeStop(socket, cfg[motor]["group"])
+    GStop = controller.GroupSpinModeStop(socket[1], cfg[motor]["group"])
     if GStop[0] != 0:
-        Kill = controller.KillAll(socket)
+        Kill = controller.KillAll(socket[1])
         if Kill[0] != 0:
-            XPSErrorHandler(controller, socket, Kill[0], "KillAll")        
-        XPSErrorHandler(controller, socket, GStop[0], "GroupSpinModeStop")
-        
+            XPSErrorHandler(controller, socket[1], Kill[0], "KillAll")        
+        XPSErrorHandler(controller, socket[1], GStop[0], "GroupSpinModeStop")
+        travel = 'ERROR'
     else:
-        pass 
+        travel = distance
+    return travel 
     
 
 def NewportFocusHome(controller, socket, motor):
@@ -374,7 +378,7 @@ def NewportFocusHome(controller, socket, motor):
         pass
 
 
-def NewportKmirrorTracking(parent, controller, socket, motor):
+def NewportKmirrorTracking(parent, controller, socket, motor, t_angle):
     """
 This function initiates kmirror tracking.  The tracking algorith updates the
 speed of rotation based on feedback from the telescope.  If the telescope is 
@@ -389,6 +393,7 @@ user stops it in the NESSI GUI.
                         controller.
     motor:      [str]   Which motor is being used.  This is for config file
                         purposes.
+    t_angle:    [float] User defined angle specific to the target.
 
 """
     Gmode = controller.GroupJogModeEnable(socket, cfg[motor]["group"])
@@ -398,8 +403,10 @@ user stops it in the NESSI GUI.
     
     while parent.trackstatus == True:
         try:
+            # Getting keywords that are updated by the telescope.
             A = math.radians(keywords['TELAZ'])
             H = math.radians(keywords['TELALT'])
+            PA = float(keywords['PA'])
         except TypeError:
             parent.trackstatus = False
             time.sleep(1)
