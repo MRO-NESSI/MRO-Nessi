@@ -2,6 +2,8 @@ import wx
 import logging
 import actuators.newport as new
 import wx.lib.agw.floatspin as FS
+import math
+from threadtools import run_async
 
 class FPAPanel(wx.Panel):
     def __init__(self, parent, motor, controller, socket):
@@ -11,20 +13,20 @@ class FPAPanel(wx.Panel):
         self.controller = controller
         self.socket = socket
         self.motor = motor
+
         try:
             new.NewportInitialize(self.controller, self.motor, self.socket[0], 0)
+            new.NewportFocusHome(self.controller, self.socket[0], self.motor)
         except TypeError:
             pass
         else:
             self.pa = 0
-        # Attributes
-#        self.curr_pa_text = wx.StaticText(self, label="Current :")
-#        self.curr_pa = wx.StaticText(self, label="...")
+
         self.new_pa_text = wx.StaticText(self, label="New Pos "+u"\u00B5"+"m:")
 
 
-        self.step_p = wx.Button(self, size=(30,-1), label="+")
-        self.step_m = wx.Button(self, size=(30,-1), label="-")
+        self.step_p = wx.Button(self, id=1, size=(30,-1), label="+")
+        self.step_m = wx.Button(self, id=2, size=(30,-1), label="-")
         self.set_button = wx.Button(self,  size=(62,-1), label="Set")
         self.stop_button = wx.Button(self,  size=(62,-1), label="Stop")
         self.home_button = wx.Button(self, size=(62,-1), label="Home")      
@@ -39,12 +41,13 @@ class FPAPanel(wx.Panel):
         self.__DoLayout()
         
         # Event handlers
-        self.Bind(wx.EVT_BUTTON, self.step_pos, self.step_p)
-        self.Bind(wx.EVT_BUTTON, self.step_neg, self.step_m)
+        self.Bind(wx.EVT_BUTTON, self.on_step, self.step_p)
+        self.Bind(wx.EVT_BUTTON, self.on_step, self.step_m)
         self.Bind(wx.EVT_BUTTON, self.on_set, self.set_button)
         self.Bind(wx.EVT_BUTTON, self.on_stop, self.stop_button)
         self.Bind(wx.EVT_BUTTON, self.on_home, self.home_button)
         self.SetInitialSize()
+
 
     def __DoLayout(self):
         sizer = wx.GridBagSizer()
@@ -63,57 +66,59 @@ class FPAPanel(wx.Panel):
         # Add the grid bag to the static box and make everything fit
         self.SetSizer(sizer)
         
-
+    @run_async
     def on_set(self, event):
-        try:
-            
+        try: 
             move = self.pa-self.position.GetValue()
             if move == 0:
                 pass
             else:
                 speed = 10**math.floor(math.log10(math.fabs(move))) 
                 direction = math.copysign(1,move)           
-                NewportFocusMove(self.controller, self.socket[0], self.motor, move, speed, 1)
-#            logging.info('')
-#            new.NewportKmirrorMove(self.controller, self.socket[0], self.motor, self.jog_state, pa)
-            logging.info('')
-            
+                new.NewportFocusMove(self.controller, self.socket[0], self.motor, move, speed, direction)
+
         except ValueError:
             pass
-        
+
+    @run_async     
     def on_stop(self, event):
-#        new.NewportFocusStop(self.controller, self.socket[1:], self.motor)
-        pass
+        try:
+            new.NewportStop(self.controller, self.socket[1:], self.motor) 
+        except:
+            pass        
+        children = self.GetChildren()
+        for child in children:
+            wx.CallAfter(child.Enable, True)
     
-    def step_pos(self, event):
+    @run_async
+    def on_step(self, event):
+        """
+"""
+        children = self.GetChildren()
+        for child in children:
+            if child != self.stop_button: wx.CallAfter(child.Enable, False)
+        #wx.CallAfter(self.Enable, False)
+        move = self.step_size.GetValue()
+
+        if event.GetId() == 1:
+            dierection = 1
+        elif event.GetId() == 2:
+            direction = -1
+        else:
+            return
+
         try:
             step = self.step_size.GetValue()
-            speed = 10**math.floor(math.log10(math.fabs(step))) 
-            direction = math.copysign(1,step)   
-#            info = new.NewportStatusGet(self.controller, self.socket[0], self.motor)
-#            pa = info[0] + step
-            logging.info('')
-#            new.NewportKmirrorMove(self.controller, self.socket[0], self.motor, self.jog_state, pa)
-            logging.info('')
+            speed = 10**math.floor(math.log10(math.fabs(step)))   
+            new.NewportFocusMove(self.controller, self.socket[0], self.motor, move, speed, direction)
         except ValueError:
             pass
+        for child in children:
+            wx.CallAfter(child.Enable, True)
 
-    def step_neg(self, event):
-        try:
-            step = self.step_size.GetValue()
-            speed = 10**math.floor(math.log10(math.fabs(step))) 
-            direction = math.copysign(1,step)   
-#            info = new.NewportStatusGet(self.controller, self.socket[0], self.motor)
-#            pa = info[0] - step
-            logging.info('')
-#            new.NewportKmirrorMove(self.controller, self.socket[0], self.motor, self.jog_state, pa)
-            logging.info('')
-        except ValueError:
-            pass
-
+    @run_async
     def on_home(self, event):
         try:
-#            new.NewportInitialize(self.controller, self.motor, self.socket[0], 0)
-            logging.info('')
+            new.NewportFocusHome(self.controller, self.socket[0], self.motor)
         except:
             raise

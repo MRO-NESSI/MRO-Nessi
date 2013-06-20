@@ -9,6 +9,7 @@ from wx.lib.pubsub import Publisher
 
 import XPS_C8_drivers as xps
 from keywords import keywords
+from threadtools import run_async
 
 cfg = ConfigObj(infile="nessisettings.ini")
 
@@ -275,7 +276,7 @@ def NewportStop(controller, socket, motor):
         else:
             pass
 
-
+@run_async
 def NewportFocusLimit(controller, socket, motor):
     """
 
@@ -342,8 +343,6 @@ def NewportFocusMove(controller, socket, motor, distance, speed, direction):
     else:
         pass 
     
-    
-
 
 def NewportFocusHome(controller, socket, motor):
     """
