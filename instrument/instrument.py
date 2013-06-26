@@ -124,9 +124,9 @@ class Instrument(object):
         can be caught upstream if the program wishes to reinitialize the
         instrument.
 
-        arguments:
-        msg -- Message that will be tied to the KillAllException,
-               explaining why the kill was called.
+        Arguments:
+            msg -- Message that will be tied to the KillAllException,
+                   explaining why the kill was called.
 
         returns None
         """
@@ -136,13 +136,26 @@ class Instrument(object):
     def move_telescope(self, ra, dec):
         """Will move the telescope to a new RA and DEC.
 
-        arguments:
-        ra  -- New right ascension
-        dec -- New declination
+        Arguments:
+            ra  -- New right ascension
+            dec -- New declination
 
         returns None
         """
         #TODO: Implement!
         pass
 
+class InstrumentError(Exception):
+    """Base class for all exception that occur in the instrument."""
+    pass
 
+class KillAllError(InstrumentError):
+    """Error raised when kill all is called. Raised so that the
+    program can decide whether to abort or reinitialize.
+
+    Attributes:
+        msg -- explanation of why kill occurred
+    """
+
+    def __init__(self, msg):
+        self.msg = msg
