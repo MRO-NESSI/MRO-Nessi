@@ -249,6 +249,13 @@ prepared and then sets a choosen velocity.
 def NewportStatusGet(controller, socket, motor):
     """
 
+    Inputs: controller, socket, motor.
+    
+    controller: [xps]   Which instance of the XPS controller to use.
+    socket:     [int]   Which socket to use to communicate with the XPS
+                        controller.
+    motor:      [str]   Which Motor is being controlled.  This is for config
+                        file purposes.
 """
     info = []
     position = controller.GroupPositionCurrentGet(socket, cfg[motor]["group"], 1)
@@ -330,7 +337,7 @@ def NewportFocusMove(controller, socket, motor, distance, speed, direction):
     Inputs: controller, socket, motor, distance, speed, direction.
 
     controller: [xps]   Which instance of the XPS controller to use.
-    socket:    [list]  A list of two sockets to use to communicate with the 
+    socket:     [list]  A list of two sockets to use to communicate with the 
                         XPS controller.
     motor:      [str]   Which motor is being controlled.  This is for config 
                         file purposes.
@@ -347,7 +354,7 @@ def NewportFocusMove(controller, socket, motor, distance, speed, direction):
     else:
         pass 
     time.sleep(delay)
-    GStop = controller.GroupSpinModeStop(socket[1], cfg[motor]["group"], 400)
+    GStop = controller.GroupSpinParametersSet(socket[1], cfg[motor]["group"], 0, 600)
     if GStop[0] != 0:
         Kill = controller.KillAll(socket[1])
         if Kill[0] != 0:
@@ -378,7 +385,7 @@ def NewportFocusHome(controller, socket, motor):
             if int(format(value[1], "016b")[::-1][bitdown]) == valdown:
                 home = False
             else:
-                time.sleep(.15)
+                time.sleep(.1)
     stop = controller.GroupSpinModeStop(socket, cfg[wheel]["group"], 400)
     if stop[0] != 0:
         Kill = controller.KillAll(socket)
