@@ -1,3 +1,5 @@
+from threading import Lock
+
 class Instrument(object):
     """Class to represent the NESSI instrument.
        
@@ -143,6 +145,31 @@ class Instrument(object):
         returns None
         """
         #TODO: Implement!
+        pass
+
+class InstrumentComponent(object):
+    """Abstract component to the NESSI instrument.
+
+    Attributes:
+        lock       -- Thread lock for the object. Most components 
+                      interface with some form of hardware, so 
+                      synchronization becomes important.
+        instrument -- Copy of the instrument.
+        
+    """
+    
+    def __init__(self, instrument):
+        """Build new InstrumentComponent, and build a lock for the
+        component.
+        
+        Arguments:
+           instrument -- copy of the NESSI instrument.
+        """
+        self.lock       = Lock()
+        self.instrument = instrument
+        
+    def kill(self):
+        """Called by a kill_all."""
         pass
 
 class InstrumentError(Exception):
