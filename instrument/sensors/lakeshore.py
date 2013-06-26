@@ -55,8 +55,9 @@ class LakeshoreController(InstrumentComponent):
             msg += repr(e)
             raise InstrumentError(msg)
             
-        except:
-            raise InstrumentError('An unknown error occurred!')
+        except Exception as e:
+            raise InstrumentError('An unknown error occurred!\n %s' 
+                                  % repr(e))
 
 
     def __del__(self):
