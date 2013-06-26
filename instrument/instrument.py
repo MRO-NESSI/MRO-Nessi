@@ -173,8 +173,15 @@ class InstrumentComponent(object):
         pass
 
 class InstrumentError(Exception):
-    """Base class for all exception that occur in the instrument."""
-    pass
+    """Base class for all exception that occur in the instrument.
+    
+    Attributes:
+        msg -- High level explanation of the error. Should help
+               a non-programmer fix the problem.
+    """
+    
+    def __init__(self, msg):
+        self.msg = msg
 
 class KillAllError(InstrumentError):
     """Error raised when kill all is called. Raised so that the
