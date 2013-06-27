@@ -10,6 +10,7 @@ from wx.lib.pubsub import Publisher
 import XPS_C8_drivers as xps
 from keywords import keywords
 from threadtools import run_async
+from instrument import InstrumentComponent, InstrumentError
 
 cfg = ConfigObj(infile="nessisettings.ini")
 
@@ -31,27 +32,31 @@ by the user.
                         this function.
     name:       [str]   The name of the function that called this function.
 """
-
-    tb = traceback.format_stack()
+    errstr = ''
+    fatality = None
     
     # This checks to see if the error is in communication with the controller.
     if code != -2 and code != -108:
 
+        fatality = False
         # Getting the error string.
         error = controller.ErrorStringGet(socket, code)
         # If the error string lookup fails, this message will display with the error code.
         if error[0] != 0:
-            logging.error(name + " : ERROR "+ str(code) + '\n' + str(tb))
+            errstr = name + " : ERROR "+ str(code)
         # This displays the error string.
         else:
-            logging.error(name + " : " + error[1] + '\n' + str(tb))
+            errstr = name + " : " + error[1]
     # This code handles the case where the connection to the controller fails after initial contact.
     else:
+    
+        fatality = True
         if code == -2:
-            logging.critical(name + " : TCP timeout" + '\n' + str(tb))
+            errstr = name + " : TCP timeout"
         elif code == -108:
-            logging.critical(name + " : The TCP/IP connection was closed by an administrator" + '\n' + str(tb))
+            errstr = name + " : The TCP/IP connection was closed by an administrator"
         
+    raise InstrumentError(errstr)
 
 
 def NewportWheel(controller, wheel, socket, current, position, home):
