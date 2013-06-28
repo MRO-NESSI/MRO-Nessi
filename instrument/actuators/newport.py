@@ -132,9 +132,8 @@ of the motor upon success.
                         XPSErrorHandler(controller, socket, stop[0], "GroupSpinModeStop")
                     elif int(format(value[1], "016b")[::-1][bit]) != val: 
                         position = -1      
-                        logging.critical("motion failed, home and then reinitiate move")
+                        raise InstrumentError("Motion Failed. Home and reinitiate move.")
                     else:
-                        logging.info("motion succeded")
                         state = state + 1
                 else:
                     pass
