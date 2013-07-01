@@ -181,7 +181,7 @@ This function returns nothing if succesful and calls XPSErrorHandler otherwise.
         XPSErrorHandler(controller, socket, GHomeSearch[0], "GroupHomeSearchAndRelativeMove")
 
 
-def NewportKmirrorMove(controller, socket, motor, jog_state, position):
+def NewportKmirrorMove(controller, socket, motor, position):
     """
 This function moves the k-mirror to a choosen position at 10 deg/s.
 
@@ -192,8 +192,6 @@ This function moves the k-mirror to a choosen position at 10 deg/s.
                         controller.
     motor:      [str]   Which motor is being controlled.  This is for config 
                         file purposes.
-    jog_state:  [bool]  Whether or not the motor in question is already 
-                        configured for continuous rotation. 
     position:   [float] What value to move the k-mirror to.
 """
     # This checks to see if the motor is in a continuous rotation state and if it is then the function disables continuous rotation. 
@@ -232,7 +230,7 @@ prepared and then sets a choosen velocity.
 """
     # This checks if the motor is in a continuous rotation state and if not enables that state.
     Gmode = controller.GroupJogModeEnable(socket, cfg[motor]["group"])
-    if Gmode[0] != 0:
+    if Gmode[0] != 0 and Gmode[0] != -22:
         XPSErrorHandler(controller, socket, Gmode[0], "GroupJogModeEnable")
     else:
         pass
