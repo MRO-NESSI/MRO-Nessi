@@ -100,7 +100,7 @@ class DewarWheel(InstrumentComponent):
             None
         """
         try:
-            np.Kill(self.controller, self.name, self.sockets[1])
+            np.NewportKill(self.controller, self.name, self.sockets[1])
 
         except Exception as e:
             raise InstrumentError('An error occured during a kill sequence of'
