@@ -11,12 +11,13 @@ class DewarWheel(InstrumentComponent):
         move
     """
 
-    def __init__(self, instrument, wheel, controller, sockets):
-        """Connects to, initializes, and homes a specified wheel in the dewar. 
+    def __init__(self, instrument, name, controller, sockets):
+        """Connects to, initializes, and homes a specified wheel in 
+        the dewar. 
 
         Arguments:
             instrument -- Copy of the NESSI instrument
-            wheel      -- Name of the wheel to control [str] 
+            name       -- Name of the wheel to control [str] 
             controller -- XPS instance to use for control 
             sockets    -- List of integers representing TCP sockets
 
@@ -29,7 +30,7 @@ class DewarWheel(InstrumentComponent):
 
         super(DewarWheel, self).__init__(instrument)
         
-        self.motor = wheel
+        self.name = name
         self.controller = controller
         self.sockets = sockets
         self.home_pos = 0
@@ -42,7 +43,7 @@ class DewarWheel(InstrumentComponent):
         """Moves the wheel to a selected position.
             
         Arguments:
-            self.selected_pos -- Which position [int] to move to.
+            selected_pos -- Which position [int] to move to.
 
         Raises:
             InstrumentError
@@ -53,14 +54,14 @@ class DewarWheel(InstrumentComponent):
         try:
             with self.lock:
                 self.current_pos = np.NewportWheel(self.controller, 
-                                                   self.motor, self.sockets[0],
+                                                   self.name, self.sockets[0],
                                                    self.current_pos, 
                                                    selected_pos, False)
                 return self.current_pos
 
         except Exception as e:
             raise InstrumentError('An error occured during a movement of'
-                                  ' the' + self.motor + '\n The following '
+                                  ' the' + self.name + '\n The following '
                                   ' error was raised...\n %s' % repr(e))  
 
     def home(self):
@@ -78,12 +79,12 @@ class DewarWheel(InstrumentComponent):
         try:
             with self.lock:
                 self.current_pos = np.NewportWheel(self.controller, 
-                                                   self.motor, self.sockets[0],
+                                                   self.name, self.sockets[0],
                                                    0, 0, True)
 
         except Exception as e:
             raise InstrumentError('An error occured during a homing of'
-                                  ' the' + self.motor + '\n The following '
+                                  ' the' + self.name + '\n The following '
                                   ' error was raised...\n %s' % repr(e))       
     
     def kill(self):
@@ -99,11 +100,11 @@ class DewarWheel(InstrumentComponent):
             None
         """
         try:
-            np.Kill(self.controller, self.motor, self.sockets[1])
+            np.Kill(self.controller, self.name, self.sockets[1])
 
         except Exception as e:
             raise InstrumentError('An error occured during a kill sequence of'
-                                  ' the' + self.motor + '\n The following '
+                                  ' the' + self.name + '\n The following '
                                   ' error was raised...\n %s' % repr(e))
 
     def initialize(self):
@@ -120,10 +121,10 @@ class DewarWheel(InstrumentComponent):
         """
         try:
             with self.lock:
-                np.NewportInitialize(self.controller, self.motor,
+                np.NewportInitialize(self.controller, self.name,
                                      self.sockets[0], self.home_pos)
 
         except Exception as e:
             raise InstrumentError('An error occured during initialization of'
-                                  ' the' + self.motor + '\n The following '
+                                  ' the' + self.name + '\n The following '
                                   ' error was raised...\n %s' % repr(e))
