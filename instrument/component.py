@@ -48,3 +48,4 @@ class KillAllError(InstrumentError):
 
     def __init__(self, msg):
         self.msg = msg
+        logging.critical(msg)

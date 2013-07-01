@@ -8,9 +8,6 @@ from sensors.lakeshore import LakeshoreController
 from sensors.flicam import FLICam
 from threadtools import timeout, TimeoutError
 
-
-
-
 sockets = 40
 
 class Instrument(object):
@@ -47,26 +44,10 @@ class Instrument(object):
         self.guide_focus   = None
         self.REI34_focus   = None
 
-        self.actuators = [
-            self.newport      ,
-            self.kmiror       ,
-            self.mask_wheel   ,
-            self.filter1_wheel,
-            self.filter2_wheel,
-            self.grism_wheel  ,
-            self.guide_focus  ,
-            self.REI34_focus  ,
-            ]
-
         #Define list of sensors
         ################################################################
         self.temperature = None
         self.guide_cam   = None
-
-        self.sensors = [
-            self.temperature ,
-            self.guide_cam   ,
-            ]
 
         #Define keywords
         ################################################################
@@ -107,10 +88,6 @@ class Instrument(object):
             "CROTA2"    : 0.0
             }
 
-        #Build component list
-        ################################################################
-        self.components = self.actuators + self.sensors
-
         #Init components
         ################################################################
         self._init_components()
@@ -119,6 +96,85 @@ class Instrument(object):
         ################################################################
         self.update_telescope_data()
 
+    def _init_components(self):
+        """Initialize the instrument components and connections. Logs
+        errors as they occur, but will never halt or abort the program.
+        """
+        #TODO: Finish Implement!
+
+        #Initialize newport components.
+        ################################################################
+        #This is the only init step that may cause an
+        #InstrumentInitializationError.
+        self.newport = xps.XPS()
+        self.open_sockets=[]
+
+        try:
+            self._fill_socket_list()
+            self.mask_wheel = DewarWheel(self, 'mask', self.newport,
+                                         self.open_sockets)
+            self.filter1_wheel = DewarWheel(self, 'filter1', self.newport, 
+                                         self.open_sockets)
+            self.filter2_wheel = DewarWheel(self, 'filter2', self.newport, 
+                                         self.open_sockets)
+            self.grism_wheel = DewarWheel(self, 'grism', self.newport, 
+                                         self.open_sockets)
+        except TimeoutError:
+            raise InstrumentInitializationError
+        except InstrumentError:
+            raise InstrumentInitializationError
+
+        #Thorlabs components
+        ################################################################
+        try:
+            self.REI34_focus = ThorlabsController(self, 0)
+        except InstrumentError:
+            sys.exc_clear()
+
+        try:
+            self.guide_focus = ThorlabsController(self, 1)
+        except InstrumentError:
+            sys.exc_clear()
+
+
+        #Sensors
+        ################################################################
+        try:
+            self.temperature = LakeshoreController(self)
+        except InstrumentError:
+            sys.exc_clear()
+
+        try:
+            self.guide_cam = FLICam(self)
+        except InstrumentError:
+            sys.exc_clear()
+        
+    @property
+    def actuators(self):
+        actuators = [
+            self.newport      ,
+            self.kmiror       ,
+            self.mask_wheel   ,
+            self.filter1_wheel,
+            self.filter2_wheel,
+            self.grism_wheel  ,
+            self.guide_focus  ,
+            self.REI34_focus  ,
+            ]
+        return actuators
+
+    @property
+    def sensors(self):
+        sensors = [
+            self.temperature ,
+            self.guide_cam   ,
+            ]
+        return sensors
+
+    @property
+    def components(self):
+        return self.actuators + self.sensors
+        
     @timeout(10)
     def _fill_socket_list(self):
         for i in range(40):
@@ -134,70 +190,7 @@ class Instrument(object):
     @timeout(10)
     def _close_sockets(self):
         for i in range(len(self.open_sockets)):
-            self.newport.TCP_CloseSocket(self.open_sockets[i])
-
-
-    def _init_components(self):
-        """Initialize the instrument components and connections. Logs
-        errors as they occur, but will never halt or abort the program.
-        """
-        #TODO: Implement!
-
-        try:
-            self.temperature = LakeshoreController(self)
-        except InstrumentError:
-            sys.exc_clear()
-
-        try:
-            self.guide_cam = FLICam(self)
-        except InstrumentError:
-            sys.exc_clear()
-        
-        try:
-            self.REI34_focus = ThorlabsController(self, 0)
-        except InstrumentError:
-            sys.exc_clear()
-
-        try:
-            self.guide_focus = ThorlabsController(self, 1)
-        except InstrumentError:
-            sys.exc_clear()
-
-        self.newport = xps.XPS()
-        self.open_sockets=[]
-
-        try:
-            self._fill_socket_list()
-        except TimeoutError:
-            sys.exc_clear()
-        except InstrumentError:
-            sys.exc_clear()
-            
-        try:
-            self.mask_wheel = DewarWheel(self, 'mask', self.newport,
-                                         self.open_sockets)
-        except InstrumentError:
-            sys.exc_clear()
-
-        try:
-            self.filter1_wheel = DewarWheel(self, 'filter1', self.newport, 
-                                         self.open_sockets)
-        except InstrumentError:
-            sys.exc_clear()
-
-        try:
-            self.filter2_wheel = DewarWheel(self, 'filter2', self.newport, 
-                                         self.open_sockets)
-        except InstrumentError:
-            sys.exc_clear()
-        
-        try:
-            self.grism_wheel = DewarWheel(self, 'grism', self.newport, 
-                                         self.open_sockets)
-        except InstrumentError:
-            sys.exc_clear()
-
-
+            self.newport.TCP_CloseSocket(self.open_sockets[i])            
         
     def update_telescope_data(self):
         """Will communicate with the telescope via indiclient
@@ -217,13 +210,14 @@ class Instrument(object):
         instrument.
 
         Arguments:
-            msg -- Message that will be tied to the KillAllException,
+            msg -- Message that will be tied to the KillAllError,
                    explaining why the kill was called.
 
         returns None
         """
         #TODO: Implement!
-        pass
+
+        raise KillAllError(msg)
 
     def move_telescope(self, ra, dec):
         """Will move the telescope to a new RA and DEC.
@@ -238,5 +232,8 @@ class Instrument(object):
         pass
 
     def __del__(self):
-        #TODO: Implement
-        pass
+        self.kill_all('deleting')
+
+
+class InstrumentInitializationError(InstrumentError):
+    pass
