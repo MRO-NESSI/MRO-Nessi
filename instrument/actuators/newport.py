@@ -197,12 +197,10 @@ This function moves the k-mirror to a choosen position at 10 deg/s.
     position:   [float] What value to move the k-mirror to.
 """
     # This checks to see if the motor is in a continuous rotation state and if it is then the function disables continuous rotation. 
-    if jog_state == True:
-        Gmode = controller.GroupJogModeDisable(socket, cfg[motor]["group"])
-        if Gmode[0] != 0:
-            XPSErrorHandler(controller, socket, Gmode[0], "GroupJogModeEnable")
-    else:
-        pass
+
+    Gmode = controller.GroupJogModeDisable(socket, cfg[motor]["group"])
+    if Gmode[0] != 0 and Gmode[0] != -22:
+        XPSErrorHandler(controller, socket, Gmode[0], "GroupJogModeEnable")
 
     # This function sets the motion parameters to be used by the motor.
     # If the parameters are set correctly then an absolute move is made to the position of choice.
@@ -213,9 +211,8 @@ This function moves the k-mirror to a choosen position at 10 deg/s.
         GMove = controller.GroupMoveAbsolute(socket, cfg[motor]["group"], [float(position)])
         if GMove[0] != 0:
             XPSErrorHandler(controller, socket, GMove[0], "GroupMoveAbsolute")
-        else:
-            pass
-
+       
+   
 
 def NewportKmirrorRotate(controller, socket, motor, speed):
     """
@@ -441,6 +438,17 @@ user stops it in the NESSI GUI.
                 XPSErrorHandler(controller, socket, GJog[0], "GroupJogParametersSet")
             time.sleep(1)
         
+
+def NewportKill(controller, motor, socket):
+    try:
+        kill = controller.GroupKill(socket, cfg[motor]['group']
+        if kill[0] != 0:
+            XPSErrorHandler(controller, socket, kill[0], "GroupKill")
+    
+    except:
+        killall = controller.KillAll(socket)
+        if killall[0] != 0:
+            XPSErrorHandler(controller, socket, killall[0], "KillAll")
 
 # Test code to be removed later
 if __name__ == "__main__":
