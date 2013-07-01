@@ -18,10 +18,8 @@ from logging.handlers import TimedRotatingFileHandler
 from os import makedirs
 from os.path import isdir
 import sys
-import time
 import wx
 from wx.lib.agw.advancedsplash import AdvancedSplash
-from wx.lib.pubsub import Publisher as pub
 
 
 from overviewtab.overview import OverviewPanel
@@ -30,17 +28,13 @@ from guidepaneltab.guiding import GuidingPanel
 from settingstab.settings import SettingsPanel
 from logtab.log import LogPanel, wxLogHandler, EVT_WX_LOG_EVENT
 from emergencytab.emergency import EmergencyPanel
-import actuators.XPS_C8_drivers as xps
-from threadtools import timeout, TimeoutError
+
 
 
 DEBUG = False
 
 # General newport information to be passed to all relevant panels.
 cfg = ConfigObj('nessisettings.ini')
-
-
-
                         
 class MainNessiFrame(wx.Frame):
     """Main Window for Nessi Controll Software."""
@@ -51,14 +45,6 @@ class MainNessiFrame(wx.Frame):
         #add nessi package to path
         sys.path.append("./")
 
-        self.x=xps.XPS()
-        self.open_sockets=[]
-
-        try:
-            self.fill_socket_list(self.x)
-        except TimeoutError:
-            self.open_sockets=[0,1,2,3,4,5,6,7,8,9,10]
-            logging.critical('Connection to the Newport controller failed.')   
 
         #Build Frame
         self.create_menus()
@@ -151,24 +137,6 @@ class MainNessiFrame(wx.Frame):
         info.SetCopyright('(C) 2013 Luke Schmidt, Matt Napolitano, Tyler Cecil, NMT/MRO')
 
         wx.AboutBox(info)
-
-    @timeout(10)
-    def fill_socket_list(self, controller):
-        for i in range(int(cfg['general']['sockets'])):
-            self.open_sockets.append(controller.TCP_ConnectToServer('192.168.0.254',5001,1))
-        
-        # Checking the status of the connections.
-        for i in range(int(cfg['general']['sockets'])):
-            if self.open_sockets[i] == -1:
-                logging.critical('Newport socket connection not opened at position ' + str(i))
-                break
-            else:
-                pass
-    
-    @timeout(10)
-    def close_sockets(self, controller):
-        for i in range(len(self.open_sockets)):
-            controller.TCP_CloseSocket(self.open_sockets[i])
 
 if __name__ == "__main__":
     app = wx.App()
