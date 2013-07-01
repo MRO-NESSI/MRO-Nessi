@@ -1,4 +1,9 @@
-from threading import Lock
+import sys
+
+from component import InstrumentError, KillAllError
+from sensors.lakeshore import LakeshoreController
+from sensors.flicam import FLICam
+from actuators.thorlabs import ThorlabsController
 
 class Instrument(object):
     """Class to represent the NESSI instrument.
@@ -107,7 +112,29 @@ class Instrument(object):
         errors as they occur, but will never halt or abort the program.
         """
         #TODO: Implement!
-        pass
+
+        try:
+            self.temperature = LakeshoreController(self)
+        except InstrumentError:
+            sys.exc_clear()
+
+        try:
+            self.guide_cam = FLICam(self)
+        except InstrumentError:
+            sys.exc_clear()
+        
+        try:
+            self.REI34_focus = ThorlabsController(self, 0)
+        except InstrumentError:
+            sys.exc_clear()
+
+        try:
+            self.guide_focus = ThorlabsController(self, 1)
+        except InstrumentError:
+            sys.exc_clear()
+
+        
+
         
     def update_telescope_data(self):
         """Will communicate with the telescope via indiclient
@@ -146,50 +173,3 @@ class Instrument(object):
         """
         #TODO: Implement!
         pass
-
-class InstrumentComponent(object):
-    """Abstract component to the NESSI instrument.
-
-    Attributes:
-        lock       -- Thread lock for the object. Most components 
-                      interface with some form of hardware, so 
-                      synchronization becomes important.
-        instrument -- Copy of the instrument.
-        
-    """
-    
-    def __init__(self, instrument):
-        """Build new InstrumentComponent, and build a lock for the
-        component.
-        
-        Arguments:
-           instrument -- copy of the NESSI instrument.
-        """
-        self.lock       = Lock()
-        self.instrument = instrument
-        
-    def kill(self):
-        """Called by a kill_all."""
-        pass
-
-class InstrumentError(Exception):
-    """Base class for all exception that occur in the instrument.
-    
-    Attributes:
-        msg -- High level explanation of the error. Should help
-               a non-programmer fix the problem.
-    """
-    
-    def __init__(self, msg):
-        self.msg = msg
-
-class KillAllError(InstrumentError):
-    """Error raised when kill all is called. Raised so that the
-    program can decide whether to abort or reinitialize.
-
-    Attributes:
-        msg -- explanation of why kill occurred
-    """
-
-    def __init__(self, msg):
-        self.msg = msg

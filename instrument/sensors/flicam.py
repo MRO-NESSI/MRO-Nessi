@@ -2,7 +2,7 @@ from time import sleep
 
 import pyfli as p
 
-from instrument import InstrumentComponent, InstrumentError
+from instrument.component import InstrumentComponent, InstrumentError
 
 class FLICam(InstrumentComponent):
     """Represents an FLI USB Camera."""
@@ -126,7 +126,7 @@ class FLICam(InstrumentComponent):
             with self.lock:
                 p.setHBin(self._id, hBin)
                 p.setVBin(self._id, vBin)
-        except Exception e:
+        except Exception as e:
             raise InstrumentError('An error occured communicating with the'
                                   ' guide cam!\n The following error was'
                                   ' raised...\n %s' % repr(e))           

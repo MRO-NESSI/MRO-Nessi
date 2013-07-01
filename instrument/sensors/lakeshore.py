@@ -1,7 +1,7 @@
 import serial
 from serial import SerialException, SerialTimeoutException
 
-from instrument import InstrumentComponent, InstrumentError
+from instrument.component import InstrumentComponent, InstrumentError
 
 class LakeshoreController(InstrumentComponent):
     """Represents the Lakeshore 336 Temperature Controller."""
@@ -75,16 +75,15 @@ class LakeshoreController(InstrumentComponent):
 
     def _identify(self):
         """Get the current status of the temperature controller"""
-        try:
-            with self.lock:
+        with self.lock:
+            try:
                 self.ser.write('*IDN?\n')
-        except SerialTimeoutException:
-            self.ser.close()
-            raise InstrumentError('Writing to Lakeshore controller timed'
-                                  ' out. Has it been powered off or '
-                                  'disconnected?\n Closed connection to'
-                                  ' Lakeshore controller...')
-
+            except SerialTimeoutException:
+                self.ser.close()
+                raise InstrumentError('Writing to Lakeshore controller timed'
+                                      ' out. Has it been powered off or '
+                                      'disconnected?\n Closed connection to'
+                                      ' Lakeshore controller...')
         return self._completion()
     
     def get_temp(self, port):
@@ -104,16 +103,15 @@ class LakeshoreController(InstrumentComponent):
             raise InstrumentError('A programming error attempted to read'
                                   'a non-existent port on the Lakeshore'
                                   'temperature controller!')
-        try:
-            with self.lock:
+        with self.lock:
+            try:
                 self.ser.write('KRDG?' + port + '\n')
-        except SerialTimeoutException:
-            self.ser.close()
-            raise InstrumentError('Writing to Lakeshore controller timed'
-                                  ' out. Has it been powered off or '
-                                  'disconnected?\n Closed connection to'
-                                  ' Lakeshore controller...')
-
+            except SerialTimeoutException:
+                self.ser.close()
+                raise InstrumentError('Writing to Lakeshore controller timed'
+                                      ' out. Has it been powered off or '
+                                      'disconnected?\n Closed connection to'
+                                      ' Lakeshore controller...')
         return self._completion()
 
     def kill(self):
