@@ -1,9 +1,17 @@
 import sys
 
+from actuators.dewarwheel import DewarWheel
+from actuators.thorlabs import ThorlabsController
+import actuators.XPS_C8_drivers as xps
 from component import InstrumentError, KillAllError
 from sensors.lakeshore import LakeshoreController
 from sensors.flicam import FLICam
-from actuators.thorlabs import ThorlabsController
+from threadtools import timeout, TimeoutError
+
+
+
+
+sockets = 40
 
 class Instrument(object):
     """Class to represent the NESSI instrument.
@@ -27,12 +35,15 @@ class Instrument(object):
         
         #Define list of actuators
         ################################################################
+        #Newport things
         self.newport       = None
-        self.kmiror        = None
+        self.open_sockets  = None
+        self.kmiror        = None        
         self.mask_wheel    = None
         self.filter1_wheel = None
         self.filter2_wheel = None
         self.grism_wheel   = None
+
         self.guide_focus   = None
         self.REI34_focus   = None
 
@@ -59,7 +70,8 @@ class Instrument(object):
 
         #Define keywords
         ################################################################
-        keywords = {"OBSERVER"  : "Observer",
+        keywords = {
+            "OBSERVER"  : "Observer",
             "INST"      : "NESSI",
             "TELESCOP"  : "MRO 2.4m",
             "FILENAME"  : "default",
@@ -107,6 +119,24 @@ class Instrument(object):
         ################################################################
         self.update_telescope_data()
 
+    @timeout(10)
+    def _fill_socket_list(self):
+        for i in range(40):
+            self.open_sockets.append(
+                self.newport.TCP_ConnectToServer('192.168.0.254',5001,1))
+        
+        # Checking the status of the connections.
+        for i in range(40):
+            if self.open_sockets[i] == -1:
+                raise InstrumentError('Newport socket connection not opened'
+                                      ' at position ' + str(i))
+    
+    @timeout(10)
+    def _close_sockets(self):
+        for i in range(len(self.open_sockets)):
+            self.newport.TCP_CloseSocket(self.open_sockets[i])
+
+
     def _init_components(self):
         """Initialize the instrument components and connections. Logs
         errors as they occur, but will never halt or abort the program.
@@ -133,7 +163,40 @@ class Instrument(object):
         except InstrumentError:
             sys.exc_clear()
 
+        self.newport = xps.XPS()
+        self.open_sockets=[]
+
+        try:
+            self._fill_socket_list()
+        except TimeoutError:
+            sys.exc_clear()
+        except InstrumentError:
+            sys.exc_clear()
+            
+        try:
+            self.mask_wheel = DewarWheel(self, 'mask', self.newport,
+                                         self.open_sockets)
+        except InstrumentError:
+            sys.exc_clear()
+
+        try:
+            self.filter1_wheel = DewarWheel(self, 'filter1', self.newport, 
+                                         self.open_sockets)
+        except InstrumentError:
+            sys.exc_clear()
+
+        try:
+            self.filter2_wheel = DewarWheel(self, 'filter2', self.newport, 
+                                         self.open_sockets)
+        except InstrumentError:
+            sys.exc_clear()
         
+        try:
+            self.grism_wheel = DewarWheel(self, 'grism', self.newport, 
+                                         self.open_sockets)
+        except InstrumentError:
+            sys.exc_clear()
+
 
         
     def update_telescope_data(self):
@@ -172,4 +235,8 @@ class Instrument(object):
         returns None
         """
         #TODO: Implement!
+        pass
+
+    def __del__(self):
+        #TODO: Implement
         pass
