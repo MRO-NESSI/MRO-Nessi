@@ -1,16 +1,13 @@
 #!/usr/bin/env python
 
 from configobj import ConfigObj
-import logging
 import math
 import time
-import traceback
 from wx.lib.pubsub import Publisher
 
 import XPS_C8_drivers as xps
-from keywords import keywords
 from threadtools import run_async
-from instrument import InstrumentComponent, InstrumentError
+from instrument.component import InstrumentError
 
 cfg = ConfigObj(infile="nessisettings.ini")
 
@@ -423,9 +420,11 @@ user stops it in the NESSI GUI.
     while parent.trackstatus == True:
         try:
             # Getting keywords that are updated by the telescope.
-            A = math.radians(keywords['TELAZ'])
-            H = math.radians(keywords['TELALT'])
-            PA = float(keywords['PA'])
+            #TODO: Make these arguments
+            pass
+#            A = math.radians(keywords['TELAZ'])
+#            H = math.radians(keywords['TELALT'])
+#            PA = float(keywords['PA'])
         except TypeError:
             parent.trackstatus = False
             time.sleep(1)
