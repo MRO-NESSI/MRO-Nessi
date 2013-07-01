@@ -1,12 +1,13 @@
 import sys
 
-from actuators.dewarwheel import DewarWheel
-from actuators.thorlabs import ThorlabsController
+from   actuators.dewarwheel import DewarWheel
+from   actuators.kmirror    import KMirror
+from   actuators.thorlabs   import ThorlabsController
 import actuators.XPS_C8_drivers as xps
-from component import InstrumentError, KillAllError
-from sensors.lakeshore import LakeshoreController
-from sensors.flicam import FLICam
-from threadtools import timeout, TimeoutError
+from   component            import InstrumentError, KillAllError
+from   sensors.lakeshore    import LakeshoreController
+from   sensors.flicam       import FLICam
+from   threadtools          import timeout, TimeoutError
 
 sockets = 40
 
@@ -111,14 +112,16 @@ class Instrument(object):
 
         try:
             self._fill_socket_list()
-            self.mask_wheel = DewarWheel(self, 'mask', self.newport,
-                                         self.open_sockets)
+            self.mask_wheel    = DewarWheel(self, 'mask', self.newport,
+                                            self.open_sockets[0:4])
             self.filter1_wheel = DewarWheel(self, 'filter1', self.newport, 
-                                         self.open_sockets)
+                                         self.open_sockets[5:9])
             self.filter2_wheel = DewarWheel(self, 'filter2', self.newport, 
-                                         self.open_sockets)
-            self.grism_wheel = DewarWheel(self, 'grism', self.newport, 
-                                         self.open_sockets)
+                                         self.open_sockets[10:14])
+            self.grism_wheel   = DewarWheel(self, 'grism', self.newport, 
+                                            self.open_sockets[15:19])
+            self.kmiror        = KMirror(self, self.newport, 
+                                         self.open_sockets[20:])
         except TimeoutError:
             raise InstrumentInitializationError
         except InstrumentError:

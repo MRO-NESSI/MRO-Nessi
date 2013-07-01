@@ -441,7 +441,7 @@ user stops it in the NESSI GUI.
 
 def NewportKill(controller, motor, socket):
     try:
-        kill = controller.GroupKill(socket, cfg[motor]['group']
+        kill = controller.GroupKill(socket, cfg[motor]['group'])
         if kill[0] != 0:
             XPSErrorHandler(controller, socket, kill[0], "GroupKill")
     

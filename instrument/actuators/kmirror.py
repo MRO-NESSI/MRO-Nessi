@@ -1,4 +1,4 @@
-import newport as np
+import instrument.actuators.newport as np
 from instrument.component import InstrumentComponent, InstrumentError
 
 class KMirror(InstrumentComponent):
@@ -12,12 +12,11 @@ class KMirror(InstrumentComponent):
         track
     """
 
-    def __init__(self, instrument, motor, controller, sockets):
+    def __init__(self, instrument, controller, sockets):
         """Connects to, initializes, and homes a specified wheel in the dewar. 
 
         Arguments:
             instrument -- Copy of the NESSI instrument
-            motor      -- Name of the motor to control [str] 
             controller -- XPS instance to use for control 
             sockets    -- List of integers representing TCP sockets
 
@@ -30,7 +29,7 @@ class KMirror(InstrumentComponent):
 
         super(KMirror, self).__init__(instrument)
         
-        self.motor = motor
+        self.motor = 'kmirror'
         self.controller = controller
         self.sockets = sockets
         self.home_pos = 0
@@ -38,7 +37,6 @@ class KMirror(InstrumentComponent):
         self.track_status = False
 
         self.initialize()
-        self.home()
 
     def initialize(self):
         """Initializes the motor.
@@ -59,7 +57,7 @@ class KMirror(InstrumentComponent):
                                      self.sockets[0], self.home_pos)
                 self.current_pos = 0
 
-        except Exception as e:
+        except InstrumentError as e:
             raise InstrumentError('An error occured during initialization of'
                                   ' the K-Mirror.\n The following '
                                   ' error was raised...\n %s' % repr(e))
@@ -80,7 +78,7 @@ class KMirror(InstrumentComponent):
             self.track_status = False
             np.NewportKill(self.controller, self.motor, self.sockets[1])
 
-        except Exception as e:
+        except InstrumentError as e:
             raise InstrumentError('An error occured during a kill sequence of'
                                   ' the K-Mirror.\n The following '
                                   ' error was raised...\n %s' % repr(e))
@@ -99,12 +97,13 @@ class KMirror(InstrumentComponent):
         """
         try:
             with self.lock:
-                np.NewportKmirrorMove(self.controller, self.socket[0], 
+                np.NewportKmirrorMove(self.controller, self.sockets[0], 
                                    self.motor, position)
-                self.current_pos = NewportStatusGet(self.controller, 
-                                                    self.socket[0], motor)[0]
+                self.current_pos = np.NewportStatusGet(self.controller, 
+                                                       self.sockets[0],
+                                                       self.motor)[0]
 
-        except Exception as e:
+        except InstrumentError as e:
             raise InstrumentError('An error occured during a movement of'
                                   ' the K-Mirror. \n The following '
                                   ' error was raised...\n %s' % repr(e))
@@ -123,9 +122,9 @@ class KMirror(InstrumentComponent):
         """
         try:
             self.track_status = False
-            np.NewportStop(self.controller, self.socket[2], self.motor)
+            np.NewportStop(self.controller, self.sockets[2], self.motor)
         
-        except Exception as e:
+        except InstrumentError as e:
             raise InstrumentError('An error occured during a stop sequence of'
                                   ' the K-Mirror.\n The following '
                                   ' error was raised...\n %s' % repr(e))    
@@ -144,10 +143,9 @@ class KMirror(InstrumentComponent):
         """
         try:
             self.track_status = True
-            np.NewportKmirrorTracking(self, self.controller, self.socket[0],
-                                      self.motor, t_angle)
-        
-        except Exception as e:
+            np.NewportKmirrorTracking(self, self.controller, self.sockets[0],
+                                      self.motor, t_angle)        
+        except InstrumentError as e:
             raise InstrumentError('An error occured during a stop sequence of'
                                   ' the K-Mirror.\n The following '
                                   ' error was raised...\n %s' % repr(e))
