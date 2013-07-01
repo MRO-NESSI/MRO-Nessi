@@ -1,9 +1,10 @@
 #!/usr/bin/env python
+import logging
 import serial
 from serial import SerialException, SerialTimeoutException
 from struct import pack, unpack
 
-from instrument import InstrumentComponent, InstrumentError
+from instrument.component import InstrumentComponent, InstrumentError
 
 class ThorlabsController(InstrumentComponent):
     """Represents a Thorlabs TDC001 controller."""
@@ -36,6 +37,7 @@ class ThorlabsController(InstrumentComponent):
                                   ' access a non-existent Thorlabs '
                                   'controller!')
         self.__port = ThorlabsController._ports[port]
+        self._name  = self.__port[3:].upper()
         
         try:
             self.ser = serial.Serial(port=self.__port, baudrate=115200,
@@ -58,6 +60,8 @@ class ThorlabsController(InstrumentComponent):
         except Exception as e:
             raise InstrumentError('An unknown error occurred!\n %s' 
                                   % repr(e))
+
+        logging.debug('%s initialized!' % self._name)
                 
     def __del__(self):
         """Perform cleanup operations."""
@@ -114,7 +118,9 @@ class ThorlabsController(InstrumentComponent):
         See MGMSG_MOT_MOVE_HOME
         Page 50 - APT_Communications_Protocol_Rev 6
         """
-
+        
+        logging.info('%s began homing...' % self._name)
+        
         tx  = '\x43\x04' + ThorlabsController._channel + '\x00'
         tx += ThorlabsController._dest + ThorlabsController._source
 
@@ -122,12 +128,18 @@ class ThorlabsController(InstrumentComponent):
             try:
                 self.ser.write(tx)
                 return self._read_exit_status()
-            except SerialTimeoutException:
+            except SerialException:
                 self.ser.close()
                 raise InstrumentError('Writing to Thorlab controller timed'
                                       ' out. Has it been powered off or '
                                       'disconnected?\n Closed connection to'
                                       ' Thorlab controller...')
+
+        position = self.position
+        logging.info('%s finished homing. Current position is %i' %
+                     (self._name, position))
+        self.instrument.keywords[self._name] = position
+                     
 
     @property
     def position(self):
@@ -186,6 +198,8 @@ class ThorlabsController(InstrumentComponent):
         Page 51 - APT_Communications_Protocol_Rev 6
         """
 
+        logging.info('%s began moving %i um...' % (self._name, distance))
+
         #convert distance in um to counts, make sure it is an integer.
         intcounts = round(distance / 0.02915111) #um per count
         #convert to hex
@@ -206,6 +220,12 @@ class ThorlabsController(InstrumentComponent):
                                       'disconnected?\n Closed connection to'
                                       ' Thorlab controller...')
 
+        position = self.position
+        logging.info('%s finished moving. Current position is %i' %
+                     (self._name, position))
+        self.instrument.keywords[self._name] = position
+
+
     def move_absolute(self, position):
         """Move the stage an absolute position.
 
@@ -224,6 +244,8 @@ class ThorlabsController(InstrumentComponent):
         See MGMSG_MOT_MOVE_ABSOLUTE
         Page 54 - APT_Communications_Protocol_Rev 6
         """
+
+        logging.info('%s began moving to %i...' % (self._name, position))
 
         #convert distance in um to counts, make sure it is an integer.
         intcounts = round(position / 0.02915111) #um per count
@@ -244,4 +266,7 @@ class ThorlabsController(InstrumentComponent):
                                       ' out. Has it been powered off or '
                                       'disconnected?\n Closed connection to'
                                       ' Thorlab controller...')
-
+        position = self.position
+        logging.info('%s finished moving. Current position is %i' %
+                     (self._name, position))
+        self.instrument.keywords[self._name] = position
