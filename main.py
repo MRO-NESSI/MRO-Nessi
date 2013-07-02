@@ -9,143 +9,51 @@
 __author__ = 'Luke Schmidt, Matt Napolitano, Tyler Cecil'
 __date__ = '2013'
 
-import wxversion
-wxversion.select('2.8')
-
-from configobj import ConfigObj
 import logging
 from logging.handlers import TimedRotatingFileHandler
 from os import makedirs
-from os.path import isdir
+from os.path import isdir, join
 import sys
+
+from configobj import ConfigObj
+import wxversion
+wxversion.select('2.8')
 import wx
 from wx.lib.agw.advancedsplash import AdvancedSplash
 
-
-from overviewtab.overview import OverviewPanel
-from kmirrortab.kmirror import KMirrorPanel
-from guidepaneltab.guiding import GuidingPanel
-from settingstab.settings import SettingsPanel
-from logtab.log import LogPanel, wxLogHandler, EVT_WX_LOG_EVENT
-from emergencytab.emergency import EmergencyPanel
+from gui import MainNessiFrame
+from instrument.instrument import Instrument
+from logtab.log import wxLogHandler, EVT_WX_LOG_EVENT
 
 
+def main(argv=None):
+    """Run the entirety of the nessi software.
 
-DEBUG = False
+    Arguments:
+        argv -- Sys args. Not currently used.
+    Raises:
+        None
+    Returns:
+        None
+    """
 
-# General newport information to be passed to all relevant panels.
-cfg = ConfigObj('nessisettings.ini')
-                        
-class MainNessiFrame(wx.Frame):
-    """Main Window for Nessi Controll Software."""
-
-    def __init__(self):
-        wx.Frame.__init__(self, None, title="NESSI Controller", size=(850,875))
-        
-        #add nessi package to path
-        sys.path.append("./")
-
-
-        #Build Frame
-        self.create_menus()
-        self.statusbar=self.CreateStatusBar()
-        
-        #Init Notebook panel
-        p = wx.Panel(self)
-        nb = wx.Notebook(p, style=wx.NB_RIGHT)
-
-        #Make tabs
-        page1 = OverviewPanel(nb, self.x, self.open_sockets[1:])
-#        page2 = KMirrorPanel(nb)
-        page3 = GuidingPanel(nb)
-        page4 = SettingsPanel(nb)
-        page5 = LogPanel(nb)
-        page6 = EmergencyPanel(nb, self.x, self.open_sockets[0], page1.FocusREI12.motor, page1.FocusREI34.motor)
-
-        #Add tabs to notebook
-        nb.AddPage(page1, "Overview")
-#        nb.AddPage(page2, "K-Mirror")
-        nb.AddPage(page3, "Guiding")
-        nb.AddPage(page4, "Settings")
-        nb.AddPage(page5, "Log")
-        nb.AddPage(page6, "Panic")
-
-        # Add icon
-        path = "media/nessi.png"
-        icon = wx.Icon(path, wx.BITMAP_TYPE_PNG)
-        self.SetIcon(icon)
-        
-        #Place notebook panel into a sizer
-        sizer = wx.BoxSizer()
-        sizer.Add(nb, 1, wx.EXPAND)
-        p.SetSizer(sizer)
-
-        #init status
-        self.statusbar.SetStatusText("Welcome to NESSI!")
-
-        #Make logfiles dir
-        if not isdir('logfiles'): makedirs('logfiles')
-
-        #Logger GUI Handlers
-        logTabFormatter = logging.Formatter(
-            '[%(asctime)s] %(filename)s:%(funcName)s - %(message)s')
-        statusbarFormatter = logging.Formatter(
-            '[%(asctime)s] %(funcName)s - %(message)s')
-        logTabHandler = wxLogHandler(page5)
-        logTabHandler.setFormatter(logTabFormatter)
-        logTabHandler.setLevel(logging.INFO)
-        logging.getLogger('').addHandler(logTabHandler)
-
-        statusbarHandler = wxLogHandler(self)
-        statusbarHandler.setFormatter(statusbarFormatter)
-        statusbarHandler.setLevel(logging.INFO)
-        logging.getLogger('').addHandler(statusbarHandler)
-
-        self.Bind(EVT_WX_LOG_EVENT, self.onLogEvent)
-
-        logging.info('NESSI initialized.')
-
-    def onLogEvent(self, event):
-        msg = event.message.strip('\r') + '\n'
-        self.statusbar.SetStatusText(msg)
-        event.Skip()
-        
-    def create_menus(self):
-        menuBar = wx.MenuBar()
-
-        # Attributes
-        FileMenu = wx.Menu()
-        about_item   = FileMenu.Append(wx.ID_ABOUT, text="&About NESSI Controller")
-        quit_item    = FileMenu.Append(wx.ID_EXIT, text="&Quit")
-        
-        # Event Handlers
-        self.Bind(wx.EVT_MENU, self.OnAbout, about_item)
-        self.Bind(wx.EVT_MENU, self.OnQuit, quit_item)
-        
-        menuBar.Append(FileMenu, "&File")
-        self.SetMenuBar(menuBar)
-
-    def OnQuit(self, event=None):
-        close_sockets()
-        self.Close()
-        
-    def OnAbout(self, event=None):
-        info = wx.AboutDialogInfo()
-        info.SetName('NESSI Controller')
-        info.SetVersion('0.1')
-        info.SetDescription('NESSI Controller is an interface to the New Mexico Tech Extrasolar Spectroscopic Survey Instrument. Email lschmidt@nmt.edu with questions.')
-        info.SetCopyright('(C) 2013 Luke Schmidt, Matt Napolitano, Tyler Cecil, NMT/MRO')
-
-        wx.AboutBox(info)
-
-if __name__ == "__main__":
+    #Init wx App
+    ################################################################
     app = wx.App()
-    #################MAKE SPALSH################
-    bitmap = wx.Bitmap("media/badass.png", wx.BITMAP_TYPE_PNG)
-    splash = AdvancedSplash(None, bitmap=bitmap)
-    splash.SetText('TEST!')
-    
-    ################START LOGGER################
+
+    #Add nessi package to path
+    ################################################################
+    sys.path.append("./")
+
+    #Init Logger
+    ################################################################
+    initLogger()
+
+    #Set up splash page
+    ################################################################
+    splash = buildSplash('media/badass.png')
+
+    #Splash logger
     def onLogEvent(self, event):
         msg = event.message.strip('\r') + '\n'
         print 'I WAS CALLED %s' % msg
@@ -153,32 +61,77 @@ if __name__ == "__main__":
         wx.Yield()
         event.Skip()
 
-    #Make logfiles dir
-    if not isdir('logfiles'): makedirs('logfiles')
-
-    #Logger
-    logging.basicConfig(level=logging.DEBUG)
-    logfileHandler = logging.handlers.TimedRotatingFileHandler('logfiles/NESSILOG',
-                                                               when='d')
-    logfileFormatter = logging.Formatter(
-        '[%(asctime)s] %(filename)s:%(funcName)s - %(message)s')
-
-    logfileHandler.setLevel(logging.DEBUG)    
-    logfileHandler.setFormatter(logfileFormatter)
-    logging.getLogger('').addHandler(logfileHandler)
-
-
     splashHandler = wxLogHandler(splash)
     splashHandler.setLevel(logging.INFO)
     logging.getLogger('').addHandler(splashHandler)
 
     splash.Bind(EVT_WX_LOG_EVENT, onLogEvent)
-    
-    logging.info('This is a test')
-    ################Main Frame################
-    main = MainNessiFrame()
+
+    #Build configure object
+    ################################################################
+    cfg = ConfigObj('nessisettings.ini')
+
+    #Build instrument
+    ################################################################
+    instrument = Instrument()
+
+    #Make main frame
+    ################################################################
+    frame = MainNessiFrame()
+
+    #Kill splash
+    ################################################################
     logging.getLogger('').removeHandler(splashHandler)
-    splash.Destroy() #Kill splash
-    main.Show()
-    ################RUN################
-    app.MainLoop()
+    splash.Destroy()
+
+    #Start App
+    ################################################################
+    frame.Show()
+
+    
+def buildSplash(image_dir):
+    """Make a splash page to display logging info.
+    
+    Arguments:
+        image_dir -- Path to the image of the splash screen.
+    Raises:
+        None
+    Returns
+        A splash screen [AdvancedSplash]
+    """
+
+    bitmap = wx.Bitmap(image_dir, wx.BITMAP_TYPE_PNG)
+    splash = AdvancedSplash(None, bitmap=bitmap)
+    splash.SetText('NESSI initializing...')
+    return splash
+
+
+def initLogger(level=logging.DEBUG, logdir='logfiles'):
+    """Sets the desired settings for the logger
+    
+    Arguments:
+        level  -- Level to set the root logger at. Take
+                  from logging.DEBUG/logging.INFO/ect...
+        logdir -- Directory to put log files.
+    Returns:
+        None
+    """
+
+    #Check if logdir exists. Make if not.
+    ################################################################
+    if not isdir(logdir): makedirs(logdir)
+
+    #Init Logger
+    ################################################################
+    logging.basicConfig(level=level)
+    logfileHandler = TimedRotatingFileHandler(join(logdir, 'NESSILog'),
+                                              when='d')
+    logfileFormatter = logging.Formatter(
+        '[%(asctime)s] %(filename)s:%(funcName)s - %(message)s')
+    logfileHandler.setLevel(level)    
+    logfileHandler.setFormatter(logfileFormatter)
+
+    logging.getLogger('').addHandler(logfileHandler)
+                        
+if __name__ == "__main__":
+    main()
