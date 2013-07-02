@@ -1,116 +1,163 @@
 import logging
+
 import wx
 
-from actuators.tl import TLabs
+from instrument.component import InstrumentError
 from threadtools import run_async
 
 class FocusREIPanel(wx.Panel):
     """This panel controls the position of REI1-2 """
-    def __init__(self, parent, name, port):
+    def __init__(self, parent, name, motor):
         super(FocusREIPanel, self).__init__(parent) 
         
         self.parent = parent
-        self.name = name        
+        self.name   = name
+        self.motor  = motor
 
-        # Attributes    
-        self.curr_pos_label = wx.StaticText(self, label="Position " + u'\u03bc' + "m:")
+        #Current Position
+        ################################################################
+        self.curr_pos_label = wx.StaticText(self, 
+                                            label=u'Position \u03bc m:')
         self.curr_pos = wx.StaticText(self, label="...")
         
+        #Goto Button
+        ################################################################
         self.goto_button = wx.Button(self, label="Set", size=(50,-1))
-        self.goto_value = wx.TextCtrl(self, -1, '', size=(50,-1), style=wx.TE_NO_VSCROLL)
+        self.goto_value  = wx.TextCtrl(self, -1, '', size=(50,-1), 
+                                      style=wx.TE_NO_VSCROLL)
+        #In Button
+        ################################################################
+        self.in_button  = wx.Button(self, label=u'\u21e6 In', size=(50,-1))
+        self.out_button = wx.Button(self, label="Out " + u'\u21e8', 
+                                    size=(50,-1))
         
-        self.in_button = wx.Button(self, label=u'\u21e6' + " In", size=(50,-1))
-        self.out_button = wx.Button(self, label="Out " + u'\u21e8', size=(50,-1))
-        
+        #Step Size
+        ################################################################
         self.step_size = wx.SpinCtrl(self, -1, '', (-1, -1),  (50, -1))
         self.step_size.SetRange(1, 1000)
         self.step_size.SetValue(0)
         
         # Layout
+        ################################################################
         self.__DoLayout()
         
         # Event Handlers
+        ################################################################
         self.out_button.Bind(wx.EVT_BUTTON, self.onOut)
         self.in_button.Bind(wx.EVT_BUTTON, self.onIn)
         self.goto_button.Bind(wx.EVT_BUTTON, self.onGoto)
 
-        #Init Motor
-        self.initMotor(port)
-
-        ## Layout for this panel:
-        ##
-        ##    0                      1
-        ##   +-------------------+---------------------+
-        ## 0 |  curr_pos_label   |   curr_pos          |
-        ##   +-------------------+---------------------+
-        ## 1 |     in_button     |      out_button     |
-        ##   +-------------------+---------------------+
     def __DoLayout(self):
         sbox = wx.StaticBox(self, label=self.name)
         boxSizer = wx.StaticBoxSizer(sbox, wx.HORIZONTAL)
+
         sizer = wx.GridBagSizer(vgap=2, hgap=2)
 
-        sizer.Add(self.curr_pos_label,  pos=(0,0), span=(1,2), flag=wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL, border=5)
-        sizer.Add(self.curr_pos,  pos=(0,2), span=(1,2), flag=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL, border=5)
+        sizer.Add(self.curr_pos_label,  pos=(0,0), span=(1,2), 
+                  flag=wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL, border=5)
+        sizer.Add(self.curr_pos,  pos=(0,2), span=(1,2), 
+                  flag=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL, border=5)
         
-        sizer.Add(self.goto_button, pos=(1,0), span=(1,2), flag=wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL)
-        sizer.Add(self.goto_value, pos=(1,2), span=(1,2), flag=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+        sizer.Add(self.goto_button, pos=(1,0), span=(1,2), 
+                  flag=wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL)
+        sizer.Add(self.goto_value, pos=(1,2), span=(1,2), 
+                  flag=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
     
-        sizer.Add(self.in_button, pos=(2,0), flag=wx.ALIGN_CENTER|wx.ALIGN_CENTER_VERTICAL)
-        sizer.Add(self.step_size, pos=(2,1), span=(1,2), flag=wx.ALIGN_CENTER|wx.ALIGN_CENTER_VERTICAL)
-        sizer.Add(self.out_button, pos=(2,3), flag=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
+        sizer.Add(self.in_button, pos=(2,0), 
+                  flag=wx.ALIGN_CENTER|wx.ALIGN_CENTER_VERTICAL)
+        sizer.Add(self.step_size, pos=(2,1), span=(1,2), 
+                  flag=wx.ALIGN_CENTER|wx.ALIGN_CENTER_VERTICAL)
+        sizer.Add(self.out_button, pos=(2,3), 
+                  flag=wx.ALIGN_LEFT|wx.ALIGN_CENTER_VERTICAL)
         
         # Add the grid bag to the static box and make everything fit
         sizer.SetMinSize(wx.Size(150, -1))
-        boxSizer.Add(sizer, flag=wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_CENTER_HORIZONTAL)
+
+        boxSizer.Add(
+            sizer,flag=wx.ALIGN_CENTER_VERTICAL|wx.ALIGN_CENTER_HORIZONTAL)
+
         self.SetSizerAndFit(boxSizer)
 
-    @run_async
+    @run_async(daemon=True)
     def onOut(self, event):
+        #Disable frame
+        ################################################################
         wx.CallAfter(self.curr_pos.SetLabel, '...')
         wx.CallAfter(self.Enable, False)
+
         step = self.step_size.GetValue() 
-        logging.info('%s moving out %s um.' % (self.name, step))
-        self.motor.move_relative(step)
+
+        #Move motor
+        ################################################################
+        try:
+            self.motor.move_relative(step)
+        except:
+            wx.CallAfter(self.curr_pos.SetLabel,
+                         'ERROR!')
+            return
+            
+        #Enable frame
+        ################################################################
         self.updateCurrPos()
         wx.CallAfter(self.Enable, True)
 
-    @run_async
+    @run_async(daemon=True)
     def onIn(self, event):
+        #Disable frame
+        ################################################################
         wx.CallAfter(self.curr_pos.SetLabel, '...')
         wx.CallAfter(self.Enable, False)
+
         step = self.step_size.GetValue() 
-        logging.info('%s moving in %s um.' % (self.name, step))
-        self.motor.move_relative(-1*step)
+
+        #Move motor
+        ################################################################
+        try:
+            self.motor.move_relative(-1*step)
+        except InstrumentError:
+            wx.CallAfter(self.curr_pos.SetLabel,
+                         'ERROR!')
+            return
+            
+        #Enable frame
+        ################################################################
         self.updateCurrPos()
         wx.CallAfter(self.Enable, True)
     
-    @run_async
+    @run_async(daemon=True)
     def onGoto(self, event):
+        #Disable frame
+        ################################################################
         wx.CallAfter(self.curr_pos.SetLabel, '...')
         wx.CallAfter(self.Enable, False)
-        loc = self.goto_value.GetValue()
-        logging.info('%s focusing to %s um.' % (self.name, loc))
-        try:
-            loc = float(loc)
-            self.motor.move_absolute(loc)        
-        except:
-            wx.CallAfter(wx.MessageBox,'Please select a valid number!', 
-                          'INVALID FOCUS POSITION!', wx.OK | wx.ICON_ERROR)
-            logging.warning('Focus-To ERROR: INVALID DESTINATION!')
-        self.updateCurrPos()
-        wx.CallAfter(self.Enable, True)
 
-    @run_async
-    def initMotor(self, port):
-        wx.CallAfter(self.Enable, False)
-        self.motor = TLabs(port)
-        self.motor.home()
+        #Get desired location
+        ################################################################
+        loc = self.goto_value.GetValue()
+        if not loc.isdigit():
+            wx.CallAfter(wx.MessageBox,'Please select a valid number!', 
+                         'INVALID FOCUS POSITION!', wx.OK | wx.ICON_ERROR)
+            return
+
+        #Move motor
+        ################################################################
+        try:
+            self.motor.move_absolute(loc)        
+        except InstrumentError:
+            wx.CallAfter(self.curr_pos.SetLabel,
+                         'ERROR!')
+            return
+
+        #Enable frame
+        ################################################################
         self.updateCurrPos()
         wx.CallAfter(self.Enable, True)
 
     def updateCurrPos(self):
-        position = self.motor.status()['Position']
-        logging.info('%s arrived to %f um.' % (self.name, position))
-        wx.CallAfter(self.curr_pos.SetLabel, '%.3f' % position)
-        
+        try:
+            wx.CallAfter(self.curr_pos.SetLabel, 
+                         '%.3f' % self.motor.position)
+        except InstrumentError:
+            wx.CallAfter(self.curr_pos.SetLabel,
+                         'ERROR!')
+            return            

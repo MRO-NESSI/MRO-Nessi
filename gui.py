@@ -15,11 +15,13 @@ class MainNessiFrame(wx.Frame):
     def __init__(self, instrument):
         wx.Frame.__init__(self, None, title="NESSI Controller", 
                           size=(850,875))
+        
+        self.instrument = instrument
 
         #Build Frame
         ################################################################
-        p  = wx.Panel(self)
-        nb = wx.Notebook(p, style=wx.NB_RIGHT)
+        self.p  = wx.Panel(self)
+        self.nb = wx.Notebook(p, style=wx.NB_RIGHT)
 
         self.create_menus()
 
@@ -29,8 +31,7 @@ class MainNessiFrame(wx.Frame):
         
         #Make tabs
         ################################################################
-        self.overviewPanel  = OverviewPanel(nb, self.x, 
-                                            self.open_sockets[1:])
+        self.overviewPanel  = OverviewPanel(self.nb, self.instrument)
         self.guidingPanel   = GuidingPanel(nb)
         self.settingsPanel  = SettingsPanel(nb)
         self.logPanel       = LogPanel(nb)
