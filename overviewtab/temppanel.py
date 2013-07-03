@@ -2,12 +2,21 @@ from time import sleep
 
 import wx
 
-from sensors.lake import LakeshoreController
+from instrument.sensors.lakeshore import LakeshoreController
 from threadtools import run_async
 
 class TemperaturePanel(wx.Panel):
-    
+    """Panel to display the readouts of a LakeshoreController."""
+
     def __init__(self, parent, controller):
+        """Initialize a TemperaturePanel.
+
+        Arguments:
+            parent     -- Parent panel.
+            controller -- Temperature controller.
+        Raises:
+            None
+        """
         super(TemperaturePanel, self).__init__(parent)
 
         self.parent     = parent
@@ -69,11 +78,11 @@ class TemperaturePanel(wx.Panel):
     def monitor_loop(self):
         while True:
             wx.CallAfter(self.temp_a.SetLabel, 
-                         self.controller.kelvin('a')[1:-2]+'K')
+                         self.controller.get_temp('a')[1:-2]+'K')
             wx.CallAfter(self.temp_b.SetLabel, 
-                         self.controller.kelvin('b')[1:-2]+'K')
+                         self.controller.get_temp('b')[1:-2]+'K')
             wx.CallAfter(self.temp_c.SetLabel, 
-                         self.controller.kelvin('c')[1:-2]+'K')
+                         self.controller.get_temp('c')[1:-2]+'K')
             wx.CallAfter(self.temp_d.SetLabel, 
-                         self.controller.kelvin('d')[1:-2]+'K')
+                         self.controller.get_temp('d')[1:-2]+'K')
             sleep(5)
