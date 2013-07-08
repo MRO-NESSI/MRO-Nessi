@@ -1,9 +1,9 @@
 import wx
 
-from dewarwheelpanel import WheelPanel
 from focusREI import FocusREIPanel
+from dewarwheelpanel import WheelPanel
 from guideinfopanel import GuideInfoPanel
-from kmirrorpanel import KmirrorPanel
+#from kmirrorpanel import KmirrorPanel
 from schematicpanel import SchematicPanel
 from temppanel import TemperaturePanel
 
@@ -29,8 +29,8 @@ class OverviewPanel(wx.ScrolledWindow):
                                       instrument.filter2_wheel)
         self.Grism       = WheelPanel(self, 'grism', 
                                       instrument.grism_wheel)
-        self.Kmirror     = KmirrorPanel(self, 'kmirror', 
-                                        instrument.kmirror)
+#        self.Kmirror     = KmirrorPanel(self, 'kmirror', 
+#                                        instrument.kmirror)
         self.GuideInfo   = GuideInfoPanel(self)
         self.FocusREI12  = FocusREIPanel(self, 'Focus Guide Cam',
                                          instrument.guide_focus)
@@ -47,8 +47,8 @@ class OverviewPanel(wx.ScrolledWindow):
         sizer = wx.GridBagSizer(vgap=2, hgap=2)
         
         # Add controls to gridbag
-        sizer.Add(self.Kmirror, pos=(0,0), span=(1,1), 
-                  flag=wx.LEFT|wx.ALIGN_CENTER_VERTICAL)
+#        sizer.Add(self.Kmirror, pos=(0,0), span=(1,1), 
+#                  flag=wx.LEFT|wx.ALIGN_CENTER_VERTICAL)
         sizer.Add(self.FocusREI12, pos=(0,1), span=(1,1), 
                   flag=wx.LEFT|wx.ALIGN_BOTTOM)
         sizer.Add(self.GuideInfo, pos=(1,2), span=(1,1), 
@@ -71,3 +71,17 @@ class OverviewPanel(wx.ScrolledWindow):
         # Add the grid bag to the static box and make everything fit
         boxSizer.Add(sizer, wx.EXPAND)
         self.SetSizerAndFit(boxSizer)
+
+
+if __name__=='__main__':
+    from instrument.instrument import Instrument
+    import sys
+    import os
+
+    sys.path.append(os.path.expanduser('~/Documents/nessi/'))
+
+    i = Instrument()
+
+    app = wx.App()
+    frame = OverviewPanel(None, i)
+    frame.show()

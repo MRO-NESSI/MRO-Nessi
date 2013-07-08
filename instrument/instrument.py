@@ -1,4 +1,7 @@
+import logging
 import sys
+
+from configobj import ConfigObj
 
 from   actuators.dewarwheel import DewarWheel
 from   actuators.kmirror    import KMirror
@@ -30,6 +33,10 @@ class Instrument(object):
         program, however. It is the duty of external interfaces to
         check whether or not their respective components are None.
         """
+
+        #Config object
+        ################################################################
+        self.cfg = ConfigObj('nessisettings.ini')
         
         #Define list of actuators
         ################################################################
@@ -52,6 +59,7 @@ class Instrument(object):
 
         #Define keywords
         ################################################################
+        #TODO: Be sure to be getting decimal degrees
         keywords = {
             "OBSERVER"  : "Observer",
             "INST"      : "NESSI",
@@ -107,21 +115,34 @@ class Instrument(object):
         ################################################################
         #This is the only init step that may cause an
         #InstrumentInitializationError.
+        #In the case of test, this error should be caught, and objects
+        #should handle the case when these components are none.
         self.newport = xps.XPS()
         self.open_sockets=[]
+        logging.debug('Newport initialized!')
 
         try:
             self._fill_socket_list()
-            self.mask_wheel    = DewarWheel(self, 'mask', self.newport,
-                                            self.open_sockets[0:4])
-            self.filter1_wheel = DewarWheel(self, 'filter1', self.newport, 
-                                         self.open_sockets[5:9])
-            self.filter2_wheel = DewarWheel(self, 'filter2', self.newport, 
-                                         self.open_sockets[10:14])
-            self.grism_wheel   = DewarWheel(self, 'grism', self.newport, 
-                                            self.open_sockets[15:19])
+            logging.debug('Sockets filled!')
+            self.mask_wheel    = DewarWheel(self, 'mask',
+                                            self.open_sockets[0:4],
+                                            ['0','1','2','3','4','5','6','7'])
+            logging.debug('Mask wheel initialized!')
+            self.filter1_wheel = DewarWheel(self, 'filter1',
+                                            self.open_sockets[5:9],
+                                            ['0','1','2','3','4','5','6','7'])
+            logging.debug('Filter1 wheel initialized!')
+            self.filter2_wheel = DewarWheel(self, 'filter2',
+                                            self.open_sockets[10:14],
+                                            ['0','1','2','3','4','5','6','7'])
+            logging.debug('Filter2 wheel initialized!')
+            self.grism_wheel   = DewarWheel(self, 'grism',
+                                            self.open_sockets[15:19],
+                                            ['0','1','2','3','4'])
+            logging.debug('Grism wheel initialized!')
             self.kmiror        = KMirror(self, self.newport, 
                                          self.open_sockets[20:])
+            logging.debug('K-Mirror initialized!')
         except TimeoutError:
             raise InstrumentInitializationError
         except InstrumentError:

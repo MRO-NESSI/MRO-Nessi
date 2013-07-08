@@ -77,7 +77,7 @@ def main(argv=None):
 
     #Make main frame
     ################################################################
-    frame = MainNessiFrame()
+    frame = MainNessiFrame(instrument)
 
     #Kill splash
     ################################################################
@@ -87,6 +87,7 @@ def main(argv=None):
     #Start App
     ################################################################
     frame.Show()
+    app.MainLoop()
 
     
 def buildSplash(image_dir):
@@ -134,4 +135,5 @@ def initLogger(level=logging.DEBUG, logdir='logfiles'):
     logging.getLogger('').addHandler(logfileHandler)
                         
 if __name__ == "__main__":
-    main()
+    f = main()
+    f.Show()

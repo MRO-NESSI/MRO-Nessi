@@ -7,7 +7,19 @@ from threadtools import run_async
 
 class FocusREIPanel(wx.Panel):
     """This panel controls the position of REI1-2 """
+
     def __init__(self, parent, name, motor):
+        """Builds a FocusREIPanel.
+
+        Arguments:
+            parent -- Parent panel.
+            name   -- Name of the panel
+            motor  -- thorlabs motor object.
+
+        Raises:
+            None
+        """
+
         super(FocusREIPanel, self).__init__(parent) 
         
         self.parent = parent
@@ -135,6 +147,8 @@ class FocusREIPanel(wx.Panel):
         ################################################################
         loc = self.goto_value.GetValue()
         if not loc.isdigit():
+            self.updateCurrPos()
+            wx.CallAfter(self.Enable, True)
             wx.CallAfter(wx.MessageBox,'Please select a valid number!', 
                          'INVALID FOCUS POSITION!', wx.OK | wx.ICON_ERROR)
             return

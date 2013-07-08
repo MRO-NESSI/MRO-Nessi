@@ -11,50 +11,56 @@ class DewarWheel(InstrumentComponent):
         move
     """
 
-    def __init__(self, instrument, name, controller, sockets):
+    def __init__(self, instrument, name, sockets, positions):
         """Connects to, initializes, and homes a specified wheel in 
         the dewar. 
 
         Arguments:
-            instrument -- Copy of the NESSI instrument
-            name       -- Name of the wheel to control [str] 
-            controller -- XPS instance to use for control 
-            sockets    -- List of integers representing TCP sockets
+            instrument -- Copy of the NESSI instrument -> Instrument
+            name       -- Name of the wheel to control -> str 
+            sockets    -- List of integers representing TCP sockets ->[Int]
+            positions  -- Possible positions for the wheel -> [str]
 
         Raises:
              InstrumentError
-        
-        Returns:
-            None
         """
 
         super(DewarWheel, self).__init__(instrument)
         
-        self.name = name
-        self.controller = controller
-        self.sockets = sockets
-        self.home_pos = 0
-        self.current_pos = None
+        self.instrument  = instrument
+        self.name        = name
+        self.controller  = instrument.newport
+        self.sockets     = sockets
+        self.home_pos    = 0
+        self.current_pos = 0
+        self.positions   = positions
 
         self.initialize()
-        self.home()
+#        self.home()
+
+    @property
+    def position(self):
+        """Returns the name of the current position."""
+
+        return self.positions[self.current_pos]
 
     def move(self, selected_pos):
         """Moves the wheel to a selected position.
             
         Arguments:
-            selected_pos -- Which position [int] to move to.
+            selected_pos -- Which position to move to. -> int
 
         Raises:
             InstrumentError
         
         Returns:
-            self.current_pos -- The current [int] position of the wheel. 
+            self.current_pos -- The current position of the wheel. -> int
         """
         try:
             with self.lock:
                 self.current_pos = np.NewportWheel(self.controller, 
-                                                   self.name, self.sockets[0],
+                                                   self.name, 
+                                                   self.sockets[0],
                                                    self.current_pos, 
                                                    selected_pos, False)
                 return self.current_pos
@@ -81,7 +87,6 @@ class DewarWheel(InstrumentComponent):
                 self.current_pos = np.NewportWheel(self.controller, 
                                                    self.name, self.sockets[0],
                                                    0, 0, True)
-
         except Exception as e:
             raise InstrumentError('An error occured during a homing of'
                                   ' the' + self.name + '\n The following '
@@ -123,7 +128,7 @@ class DewarWheel(InstrumentComponent):
             with self.lock:
                 np.NewportInitialize(self.controller, self.name,
                                      self.sockets[0], self.home_pos)
-
+        #TODO: We shouldn't have a catchall here!
         except Exception as e:
             raise InstrumentError('An error occured during initialization of'
                                   ' the' + self.name + '\n The following '
