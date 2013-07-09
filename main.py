@@ -135,5 +135,4 @@ def initLogger(level=logging.DEBUG, logdir='logfiles'):
     logging.getLogger('').addHandler(logfileHandler)
                         
 if __name__ == "__main__":
-    f = main()
-    f.Show()
+    main()
