@@ -60,7 +60,7 @@ class Instrument(object):
         #Define keywords
         ################################################################
         #TODO: Be sure to be getting decimal degrees
-        keywords = {
+        self.keywords = {
             "OBSERVER"  : "Observer",
             "INST"      : "NESSI",
             "TELESCOP"  : "MRO 2.4m",
