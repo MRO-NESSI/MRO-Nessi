@@ -417,16 +417,14 @@ user stops it in the NESSI GUI.
     
     while parent.trackstatus == True:
         try:
-            # Getting keywords that are updated by the telescope.
-            #TODO: Make these arguments
-            pass
-#            A = math.radians(keywords['TELAZ'])
-#            H = math.radians(keywords['TELALT'])
-#            PA = float(keywords['PA'])
+            A = math.radians(parent.keywords['TELAZ'])
+            H = math.radians(parent.keywords['TELALT'])
+            PA = float(parent.keywords['PA'])
         except TypeError:
             parent.trackstatus = False
             time.sleep(1)
         else:
+            angle = .5*(t_angle - PA - cfg['motor']["direction"]*H)
             vel = ((-.262)*(.5)*3600*math.pi*math.cos(phi)*math.cos(A))/(math.cos(H)*180)
             delta = vel - parent.vel
             parent.vel = parent.vel + delta
@@ -434,6 +432,12 @@ user stops it in the NESSI GUI.
             GJog = controller.GroupJogParametersSet(socket, cfg[motor]["group"], [velocity],[400])
             if GJog[0] != 0:
                 XPSErrorHandler(controller, socket, GJog[0], "GroupJogParametersSet")
+            position = controller.GroupPositionCurrentGet(socket, 
+                                                          cfg[motor]["group"], 1)
+            if position[0] != 0:
+                XPSErrorHandler(controller, socket, position[0],
+                                "GroupPositionCurrentGet")
+            diff_angle = position[1] - angle           
             time.sleep(1)
         
 

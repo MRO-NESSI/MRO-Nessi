@@ -25,11 +25,12 @@ def socket_list():
 try:
     socket_list()
 except TimeoutError:
+    print "XPS connection failed."
     s=[0,1,2,3,4]
     
 
 class FPA(wx.App):
-    '''The Fpa focusing app.''' 
+    '''The FPA focusing app.''' 
 
     def OnInit(self):
         self.frame=FPAFrame(None, title='FPA Focusing Program')
@@ -45,7 +46,7 @@ class FPAFrame(wx.Frame):
         self.panel1 = Emergency(self)
         self.__DoLayout()
         
-        self.Bind(wx.EVT_CLOSE,self.OnClose)
+#        self.Bind(wx.EVT_CLOSE,self.OnClose)
         self.SetInitialSize()
     # This function will handle the layout of the different elements of the program.
     def __DoLayout(self):
@@ -56,12 +57,17 @@ class FPAFrame(wx.Frame):
         sizer.Add(self.panel1,(1,0),(1,1))
         self.SetSizer(sizer)
     
-    def OnClose(self,event):
-        kill=x.KillAll(s[0])
-        if kill[0] != 0:
-            new.XPSErrorHandler(x,s[0], kill[0], 'KillAll')
-        else:
-            self.Close()
+#    def OnClose(self,event):
+#        print 'closing'
+#        try:
+#            kill=x.KillAll(s[0])
+#            print kill[0]
+#            if kill[0] != 0:
+#                new.XPSErrorHandler(x,s[0], kill[0], 'KillAll')
+#            event.Skip()
+#           
+#        except:
+#            raise 
 
 class Emergency(wx.Panel):
     def __init__(self,*args,**kwargs):
