@@ -3,11 +3,11 @@ import logging
 import wx
 
 from overviewtab.overview   import OverviewPanel
-from kmirrortab.kmirror     import KMirrorPanel
-from guidepaneltab.guiding  import GuidingPanel
-from settingstab.settings   import SettingsPanel
+#from kmirrortab.kmirror     import KMirrorPanel
+#from guidepaneltab.guiding  import GuidingPanel
+#from settingstab.settings   import SettingsPanel
 from logtab.log             import LogPanel, wxLogHandler, EVT_WX_LOG_EVENT
-from emergencytab.emergency import EmergencyPanel
+#from emergencytab.emergency import EmergencyPanel
 
 class MainNessiFrame(wx.Frame):
     """Main Window for Nessi Control Software."""
@@ -21,7 +21,7 @@ class MainNessiFrame(wx.Frame):
         #Build Frame
         ################################################################
         self.p  = wx.Panel(self)
-        self.nb = wx.Notebook(p, style=wx.NB_RIGHT)
+        self.nb = wx.Notebook(self.p, style=wx.NB_RIGHT)
 
         self.create_menus()
 
@@ -32,27 +32,27 @@ class MainNessiFrame(wx.Frame):
         #Make tabs
         ################################################################
         self.overviewPanel  = OverviewPanel(self.nb, self.instrument)
-        self.guidingPanel   = GuidingPanel(nb)
-        self.settingsPanel  = SettingsPanel(nb)
-        self.logPanel       = LogPanel(nb)
-        self.emergencyPanel = EmergencyPanel(nb, self.x, 
-                                             self.open_sockets[0], 
-                                             page1.FocusREI12.motor, 
-                                             page1.FocusREI34.motor)
+#        self.guidingPanel   = GuidingPanel(nb)
+#        self.settingsPanel  = SettingsPanel(nb)
+#        self.logPanel       = LogPanel(nb)
+#        self.emergencyPanel = EmergencyPanel(nb, self.x, 
+#                                             self.open_sockets[0], 
+#                                             page1.FocusREI12.motor, 
+#                                             page1.FocusREI34.motor)
 
         #Add tabs to notebook
         ################################################################
-        nb.AddPage(self.overviewPanel , "Overview")
-        nb.AddPage(self.guidingPanel  , "Guiding")
-        nb.AddPage(self.settingsPanel , "Settings")
-        nb.AddPage(self.logPanel      , "Log")
-        nb.AddPage(self.emergencyPanel, "Panic")
+        self.nb.AddPage(self.overviewPanel , "Overview")
+ #       nb.AddPage(self.guidingPanel  , "Guiding")
+ #       nb.AddPage(self.settingsPanel , "Settings")
+ #       nb.AddPage(self.logPanel      , "Log")
+ #       nb.AddPage(self.emergencyPanel, "Panic")
 
         #Place notebook panel into a sizer
         ################################################################
         sizer = wx.BoxSizer()
-        sizer.Add(nb, 1, wx.EXPAND)
-        p.SetSizer(sizer)
+        sizer.Add(self.nb, 1, wx.EXPAND)
+        self.p.SetSizer(sizer)
 
         #Add an icon
         ################################################################

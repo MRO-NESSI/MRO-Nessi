@@ -77,7 +77,7 @@ def main(argv=None):
 
     #Make main frame
     ################################################################
-    frame = MainNessiFrame()
+    frame = MainNessiFrame(instrument)
 
     #Kill splash
     ################################################################
@@ -87,6 +87,7 @@ def main(argv=None):
     #Start App
     ################################################################
     frame.Show()
+    app.MainLoop()
 
     
 def buildSplash(image_dir):

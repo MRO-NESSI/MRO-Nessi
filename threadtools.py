@@ -31,19 +31,24 @@ def timeout(seconds_before_timeout):
         return new_f
     return decorate
 
+class run_async(object):
+    
+    def __init__(self, daemon=False):
+        self.daemon = daemon
+        
+    def __call__(self, func):
+        from threading import Thread
+        from functools import wraps
+        
+        def async_func(*args, **kwargs):
+            func_hl = Thread(name=func.__name__, target = func, 
+                             args = args, kwargs = kwargs)
+            func_hl.daemon = self.daemon
+            func_hl.start()
+            return func_hl
 
-def run_async(func, daemon=False):
-    from threading import Thread
-    from functools import wraps
+        return async_func        
 
-    @wraps(func)
-    def async_func(*args, **kwargs):
-        func_hl = Thread(name=func.__name__, target = func, args = args, kwargs = kwargs)
-        func_hl.daemon = daemon
-        func_hl.start()
-        return func_hl
-
-    return async_func
 
 def callafter(funct):
     """Decorator to automatically use CallAfter if

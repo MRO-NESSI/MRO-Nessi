@@ -7,7 +7,19 @@ from threadtools import run_async
 
 class FocusREIPanel(wx.Panel):
     """This panel controls the position of REI1-2 """
+
     def __init__(self, parent, name, motor):
+        """Builds a FocusREIPanel.
+
+        Arguments:
+            parent -- Parent panel.
+            name   -- Name of the panel
+            motor  -- thorlabs motor object.
+
+        Raises:
+            None
+        """
+
         super(FocusREIPanel, self).__init__(parent) 
         
         self.parent = parent
@@ -37,7 +49,7 @@ class FocusREIPanel(wx.Panel):
         self.step_size.SetRange(1, 1000)
         self.step_size.SetValue(0)
         
-        # Layout
+        #Layout
         ################################################################
         self.__DoLayout()
         
@@ -46,6 +58,11 @@ class FocusREIPanel(wx.Panel):
         self.out_button.Bind(wx.EVT_BUTTON, self.onOut)
         self.in_button.Bind(wx.EVT_BUTTON, self.onIn)
         self.goto_button.Bind(wx.EVT_BUTTON, self.onGoto)
+
+        #Decide if the device should be active
+        ################################################################
+        if self.motor is None:
+            self.Enable(False)
 
     def __DoLayout(self):
         sbox = wx.StaticBox(self, label=self.name)
@@ -95,11 +112,13 @@ class FocusREIPanel(wx.Panel):
             wx.CallAfter(self.curr_pos.SetLabel,
                          'ERROR!')
             return
-            
+    
         #Enable frame
         ################################################################
         self.updateCurrPos()
-        wx.CallAfter(self.Enable, True)
+        wx.CallAfter(self.Enable, True)            
+            
+
 
     @run_async(daemon=True)
     def onIn(self, event):
@@ -118,7 +137,7 @@ class FocusREIPanel(wx.Panel):
             wx.CallAfter(self.curr_pos.SetLabel,
                          'ERROR!')
             return
-            
+
         #Enable frame
         ################################################################
         self.updateCurrPos()
@@ -137,6 +156,8 @@ class FocusREIPanel(wx.Panel):
         if not loc.isdigit():
             wx.CallAfter(wx.MessageBox,'Please select a valid number!', 
                          'INVALID FOCUS POSITION!', wx.OK | wx.ICON_ERROR)
+            self.updateCurrPos()
+            wx.CallAfter(self.Enable, True)
             return
 
         #Move motor
