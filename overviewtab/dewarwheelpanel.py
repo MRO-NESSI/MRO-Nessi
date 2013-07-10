@@ -25,14 +25,14 @@ class WheelPanel(wx.Panel):
         ################################################################
         self.name    = name
         self.wheel   = wheel
-        self.choices = wheel.positions
+        self.choices = wheel.positions if wheel is not None else ['None']
         
         #GUI Components
         ################################################################
         self.curr_wheel_text = wx.StaticText(
             self, label="Current Position:")
         self.curr_wheel      = wx.StaticText(
-            self, label=self.wheel.position)
+            self, label=self.wheel.position if wheel is not None else 'None')
         self.select_button   = wx.Button(
             self, 1, label="Select")
         self.wheel_choice    = wx.ComboBox(
@@ -48,6 +48,12 @@ class WheelPanel(wx.Panel):
         ################################################################
         self.select_button.Bind(wx.EVT_BUTTON, self.OnSelect, id=1)
         self.home_button.Bind(wx.EVT_BUTTON, self.OnHome, id=2)
+
+        #Decide if the device should be active
+        ################################################################
+        if self.wheel is None:
+            self.Enable(False)
+
         
 
     def __DoLayout(self):

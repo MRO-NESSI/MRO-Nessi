@@ -49,7 +49,7 @@ class FocusREIPanel(wx.Panel):
         self.step_size.SetRange(1, 1000)
         self.step_size.SetValue(0)
         
-        # Layout
+        #Layout
         ################################################################
         self.__DoLayout()
         
@@ -58,6 +58,11 @@ class FocusREIPanel(wx.Panel):
         self.out_button.Bind(wx.EVT_BUTTON, self.onOut)
         self.in_button.Bind(wx.EVT_BUTTON, self.onIn)
         self.goto_button.Bind(wx.EVT_BUTTON, self.onGoto)
+
+        #Decide if the device should be active
+        ################################################################
+        if self.motor is None:
+            self.Enable(False)
 
     def __DoLayout(self):
         sbox = wx.StaticBox(self, label=self.name)
