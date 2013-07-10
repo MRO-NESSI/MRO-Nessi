@@ -117,36 +117,73 @@ class Instrument(object):
         #InstrumentInitializationError.
         #In the case of test, this error should be caught, and objects
         #should handle the case when these components are none.
+
+        newport_good = False    #Flag for if the newport was initialized
+
         self.newport = xps.XPS()
         self.open_sockets=[]
         logging.debug('Newport initialized!')
 
+        #Fill Sockets
+        ################################################################
         try:
             self._fill_socket_list()
             logging.debug('Sockets filled!')
-            self.mask_wheel    = DewarWheel(self, 'mask',
-                                            self.open_sockets[0:4],
-                                            ['0','1','2','3','4','5','6','7'])
-            logging.debug('Mask wheel initialized!')
-            self.filter1_wheel = DewarWheel(self, 'filter1',
-                                            self.open_sockets[5:9],
-                                            ['0','1','2','3','4','5','6','7'])
-            logging.debug('Filter1 wheel initialized!')
-            self.filter2_wheel = DewarWheel(self, 'filter2',
-                                            self.open_sockets[10:14],
-                                            ['0','1','2','3','4','5','6','7'])
-            logging.debug('Filter2 wheel initialized!')
-            self.grism_wheel   = DewarWheel(self, 'grism',
-                                            self.open_sockets[15:19],
-                                            ['0','1','2','3','4'])
-            logging.debug('Grism wheel initialized!')
-            self.kmiror        = KMirror(self, self.newport, 
-                                         self.open_sockets[20:])
-            logging.debug('K-Mirror initialized!')
+            newport_good = True
         except TimeoutError:
-            raise InstrumentInitializationError
-        except InstrumentError:
-            raise InstrumentInitializationError
+            raise InstrumentInitializationError(
+                'Newport sockets could not be filled!')
+
+        if newport_good:
+            #Kmirror
+            ################
+            try:
+                self.kmiror        = KMirror(self, self.newport, 
+                                             self.open_sockets[20:])
+                logging.debug('K-Mirror initialized!')
+            except InstrumentError:
+                sys.exc_clear()
+
+            #Mask
+            #################
+            try:
+                self.mask_wheel    = DewarWheel(self, 'mask',
+                                                self.open_sockets[0:4],
+                                                self.cfg['mask']['pos'])
+                logging.debug('Mask wheel initialized!')
+            except InstrumentError:
+                sys.exc_clear()
+            
+            #Filter 1
+            ################
+            try:
+                self.filter1_wheel = DewarWheel(self, 'filter1',
+                                                self.open_sockets[5:9],
+                                                self.cfg['filter1']['pos'])
+                logging.debug('Filter1 wheel initialized!')
+            except InstrumentError:
+                sys.exc_clear()
+
+            #Filter 2
+            ################
+            try:
+                self.filter2_wheel = DewarWheel(self, 'filter2',
+                                                self.open_sockets[10:14],
+                                                self.cfg['filter2']['pos'])
+                logging.debug('Filter2 wheel initialized!')
+            except InstrumentError:
+                sys.exc_clear()
+
+            #Grism
+            ################
+            try:
+                self.grism_wheel   = DewarWheel(self, 'grism',
+                                                self.open_sockets[15:19],
+                                                self.cfg['grism']['pos'])
+                logging.debug('Grism wheel initialized!')
+            except InstrumentError:
+                sys.exc_clear()
+
 
         #Thorlabs components
         ################################################################
@@ -199,7 +236,7 @@ class Instrument(object):
     def components(self):
         return self.actuators + self.sensors
         
-    @timeout(10)
+    @timeout(20)
     def _fill_socket_list(self):
         for i in range(40):
             self.open_sockets.append(
@@ -256,7 +293,7 @@ class Instrument(object):
         pass
 
     def __del__(self):
-        self.kill_all('deleting')
+        self.kill_all('Instrument is being deleted.')
 
 
 class InstrumentInitializationError(InstrumentError):
