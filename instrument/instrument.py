@@ -43,7 +43,7 @@ class Instrument(object):
         #Newport things
         self.newport       = None
         self.open_sockets  = None
-        self.kmiror        = None        
+        self.kmirror        = None        
         self.mask_wheel    = None
         self.filter1_wheel = None
         self.filter2_wheel = None
@@ -138,7 +138,7 @@ class Instrument(object):
             #Kmirror
             ################
             try:
-                self.kmiror        = KMirror(self, self.newport, 
+                self.kmirror        = KMirror(self, self.newport, 
                                              self.open_sockets[20:])
                 logging.debug('K-Mirror initialized!')
             except InstrumentError:

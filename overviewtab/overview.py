@@ -3,7 +3,7 @@ import wx
 from focusREI import FocusREIPanel
 from dewarwheelpanel import WheelPanel
 from guideinfopanel import GuideInfoPanel
-#from kmirrorpanel import KmirrorPanel
+from kmirrorpanel import KmirrorPanel
 from schematicpanel import SchematicPanel
 from temppanel import TemperaturePanel
 
@@ -29,8 +29,7 @@ class OverviewPanel(wx.ScrolledWindow):
                                       instrument.filter2_wheel)
         self.Grism       = WheelPanel(self, 'grism', 
                                       instrument.grism_wheel)
-#        self.Kmirror     = KmirrorPanel(self, 'kmirror', 
-#                                        instrument.kmirror)
+        self.Kmirror     = KmirrorPanel(self, instrument.kmirror)
         self.GuideInfo   = GuideInfoPanel(self)
         self.FocusREI12  = FocusREIPanel(self, 'Focus Guide Cam',
                                          instrument.guide_focus)
@@ -47,8 +46,8 @@ class OverviewPanel(wx.ScrolledWindow):
         sizer = wx.GridBagSizer(vgap=2, hgap=2)
         
         # Add controls to gridbag
-#        sizer.Add(self.Kmirror, pos=(0,0), span=(1,1), 
-#                  flag=wx.LEFT|wx.ALIGN_CENTER_VERTICAL)
+        sizer.Add(self.Kmirror, pos=(0,0), span=(1,1), 
+                  flag=wx.LEFT|wx.ALIGN_CENTER_VERTICAL)
         sizer.Add(self.FocusREI12, pos=(0,1), span=(1,1), 
                   flag=wx.LEFT|wx.ALIGN_BOTTOM)
         sizer.Add(self.GuideInfo, pos=(1,2), span=(1,1), 

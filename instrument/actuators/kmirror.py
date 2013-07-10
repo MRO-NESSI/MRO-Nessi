@@ -84,6 +84,11 @@ class KMirror(InstrumentComponent):
                                   ' the K-Mirror.\n The following '
                                   ' error was raised...\n %s' % repr(e))
 
+    @property
+    def positionAngle(self):
+        return np.NewportStatusGet(self.controller, self.sockets[1], 
+                                   self.motor)[0]
+
     def move(self, position):
         """Moves the wheel to a selected position.
             
@@ -94,20 +99,47 @@ class KMirror(InstrumentComponent):
             InstrumentError
         
         Returns:
-            self.current_pos -- The current [float] position of the wheel. 
+            None
         """
         try:
             with self.lock:
                 np.NewportKmirrorMove(self.controller, self.sockets[0], 
                                    self.motor, position)
-                self.current_pos = np.NewportStatusGet(self.controller, 
-                                                       self.sockets[0],
-                                                       self.motor)[0]
+                self.current_pos = self.positionAngle
 
         except InstrumentError as e:
             raise InstrumentError('An error occured during a movement of'
                                   ' the K-Mirror. \n The following '
                                   ' error was raised...\n %s' % repr(e))
+
+        
+
+    def step(self, offset):
+        """Moves by a given offset angle.
+        
+        Arguments:
+            offset -- Angle offset to move.
+
+        Raises:
+            Instrument Error
+        
+        Returns:
+            None
+        """
+        self.move(offset + self.positionAngle)
+
+    def home(self):
+        """Moves motor to position 0.
+
+        Arguments:
+
+        Raises:
+            InstrumentError 
+
+        Returns:
+            None
+        """
+        self.move(0)
 
     def stop(self):
         """Stops motion politely. Called to stop tracking.
