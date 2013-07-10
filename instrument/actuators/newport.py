@@ -55,16 +55,18 @@ by the user.
         
     raise InstrumentError(errstr)
 
-
-def NewportWheel(controller, wheel, socket, current, position, home):
+def NewportWheelHome(controller, wheel, socket):
     """
-A thread that initiates a move in the dewar and then monitors The Newport GPIO
-for a bit flip that indicates the motor needs to be stopped.  If the motion 
-fails the function will log an error in the nessi error log. If the motion 
-succedes the function will log a message. The function returns the position 
-of the motor upon success.
 
-    Inputs: controller, name, socket, position, home.
+    """
+    pass
+
+
+def NewportWheelMove(controller, wheel, socket, current, position):
+    """
+
+
+    Inputs: controller, name, socket, position.
 
     controller: [xps]   Which instance of the XPS controller to use.
     wheel:      [str]   The name of the motor that is being used.  This is for
@@ -73,81 +75,79 @@ of the motor upon success.
                         controller.
     current:    [int]   What position the motor is currently at.
     position:   [int]   What position the motor should move to.
-    home:       [bool]  Determines whether the thread will find the home 
-                        position or a different position.
-"""
+    """
     # Initializing variables.
     group = cfg[wheel]["group"]
     state = 0
-    speed = int(cfg[wheel]["direction"])*100
-    # Different initializations depending on whether it is homing or not.
-    if home == True:
-        val = int(cfg[wheel]["home"]["val"])
-        bit = int(cfg[wheel]["home"]["bit"])
-        diff = 1
-        position = 0
-    else:
-        val = int(cfg[wheel]["position"]["val"])
-        bit = int(cfg[wheel]["position"]["bit"])
-        # self.diff is how many positions away from current the target position is.
-        diff = (int(cfg[wheel]["slots"]) - current + position) % int(cfg[wheel]["slots"])
+    speed = int(cfg[wheel]["direction"])*15
+    val = int(cfg[wheel]["position"]["val"])
+    bit = int(cfg[wheel]["position"]["bit"])
+    # diff is how many positions away from current the target position is.
+    diff = (int(cfg[wheel]["slots"]) - current + position) % int(cfg[wheel]["slots"])
 
-    if current != position or home == True:
-        # Starting motion.
-        Gset = controller.GroupSpinParametersSet(socket, cfg[wheel]["group"], speed, 800)
-        # Checking if the motion command was sent correctly.
-        # If so then the GPIO checking begins.
-        if Gset[0] != 0:
-            XPSErrorHandler(controller ,socket, Gset[0], "GroupSpinParametersSet")
-        else:
-            # A pause to let the motor begin moving before tracking it.
-            # This prevents the counter from catching the bit flip before motion begins.
-            time.sleep(1)
-            # This while loop runs until the motor is one position before the target.
-            # It has a one second delay after catching a bit flip to allow the motor to go past the switch so it is not double counted.
-            while state < diff-1:
+    if current != position:
+        value = controller.GPIODigitalGet(socket, "GPIO4.DI")
+        if value[0] != 0:
+            XPSErrorHandler(controller, socket, value[0], "GPIODigitalGet")
+        elif int(format(value[1], "016b")[::-1][bit]) != val:
+            Gset = controller.GroupSpinParametersSet(socket, 
+                                                     cfg[wheel]["group"], 
+                                                     speed, 800)
+            while True:
                 time.sleep(.1)
                 value = controller.GPIODigitalGet(socket, "GPIO4.DI")
-                #print 'loop 1', int(format(value[1], "016b")[::-1][bit])
                 if value[0] != 0:
-                    XPSErrorHandler(controller, socket, value[0], "GPIODigitalGet")
+                    XPSErrorHandler(controller, socket, value[0], 
+                                    "GPIODigitalGet")
                 elif int(format(value[1], "016b")[::-1][bit]) == val:
-                    time.sleep(1)
-                    state = state + 1
+                    diff = diff - 1
+                    break
                 else:
                     pass
-            # This loop counts the switch flip with no delay so the motor can be stopped at the position.
-            while state != diff:
-                time.sleep(.1)
-                value = controller.GPIODigitalGet(socket, "GPIO4.DI")
-                #print 'loop 2:', int(format(value[1], "016b")[::-1])
-                if value[0] != 0:
-                    XPSErrorHandler(controller, socket, value[0], "GPIODigitalGet")
-                elif  int(format(value[1], "016b")[::-1][bit]) == val:
-                    stop=controller.GroupSpinModeStop(socket, cfg[wheel]["group"], 1200)
-                    if stop[0] != 0:
-                        XPSErrorHandler(controller, socket, stop[0], "GroupSpinModeStop")
-                    elif int(format(value[1], "016b")[::-1][bit]) != val: 
-                        position = -1      
-                        raise InstrumentError("Motion Failed. Home and reinitiate move.")
+        else:
+            pass
+
+        for i in range(diff):
+            for j in range(2):
+                GMove = controller.GroupMoveRelative(socket, 
+                                                     cfg[wheel]["group"], 
+                                                     [300])
+                if GMove[0] != 0:
+                    XPSErrorHandler(controller, socket, GMove[0], 
+                                    "GroupMoveRelative")
+            # Starting motion.
+            Gset = controller.GroupSpinParametersSet(socket, 
+                                                     cfg[wheel]["group"],
+                                                     speed, 800)
+            # Checking if the motion command was sent correctly.
+            # If so then the GPIO checking begins.
+            if Gset[0] != 0:
+                XPSErrorHandler(controller ,socket, Gset[0],
+                                "GroupSpinParametersSet")
+            else:
+                # This while loop runs until the motor is one position before 
+                # the target. It has a one second delay after catching a bit 
+                # flip to allow the motor to go past the switch so it is not 
+                # double counted.
+                while True:
+                    time.sleep(.1)
+                    value = controller.GPIODigitalGet(socket, "GPIO4.DI")
+                    if value[0] != 0:
+                        XPSErrorHandler(controller, socket, value[0],
+                                        "GPIODigitalGet")
+                    elif int(format(value[1], "016b")[::-1][bit]) == val:
+                        stop=controller.GroupSpinModeStop(socket, 
+                                                          cfg[wheel]["group"],
+                                                          1200)
+                        if stop[0] != 0:
+                            XPSErrorHandler(controller, socket, stop[0],
+                                            "GroupSpinModeStop")
+                        break
                     else:
-                        state = state + 1
-                else:
-                    pass
-            # Stopping the motor
-#            stop=controller.GroupSpinModeStop(socket, cfg[wheel]["group"], 400)
-#            if stop[0] != 0:
-#                XPSErrorHandler(controller, socket, stop[0], "GroupSpinModeStop")
-#            # Checking to be sure the motor is in a valid position.
-#            elif int(format(value[1], "016b")[::-1][bit]) != val: 
-#                position = -1      
-#                logging.critical("motion failed, home and then reinitiate move")
-#            else:
-#                logging.info("motion succeded")
-             
-    else:
-        pass
-    return position
+                        pass
+            
+        return position
+                
 
 
 def NewportInitialize(controller, motor, socket, home_pos):

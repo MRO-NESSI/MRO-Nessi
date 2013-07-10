@@ -58,11 +58,10 @@ class DewarWheel(InstrumentComponent):
         """
         try:
             with self.lock:
-                self.current_pos = np.NewportWheel(self.controller, 
-                                                   self.name, 
-                                                   self.sockets[0],
+                self.current_pos = np.NewportWheelMove(self.controller, 
+                                                   self.name, self.sockets[0],
                                                    self.current_pos, 
-                                                   selected_pos, False)
+                                                   selected_pos)
                 return self.current_pos
 
         except Exception as e:
@@ -84,9 +83,9 @@ class DewarWheel(InstrumentComponent):
         """
         try:
             with self.lock:
-                self.current_pos = np.NewportWheel(self.controller, 
-                                                   self.name, self.sockets[0],
-                                                   0, 0, True)
+                self.current_pos = np.NewportWheelHome(self.controller, 
+                                                   self.name, self.sockets[0])
+
         except Exception as e:
             raise InstrumentError('An error occured during a homing of'
                                   ' the' + self.name + '\n The following '
