@@ -55,21 +55,23 @@ class KmirrorPanel(wx.Panel):
         # Layout
         ################################################################
         self.__DoLayout()
-        
+      
         # Event handlers
         ################################################################
-        self.Bind(wx.EVT_BUTTON, self.step_pos, self.step_p)
-        self.Bind(wx.EVT_BUTTON, self.step_neg, self.step_m)
-        self.Bind(wx.EVT_TOGGLEBUTTON, self.on_track, self.track_button)
+        self.step_p.Bind(wx.EVT_BUTTON, self.step_pos)
+        self.step_m.Bind(wx.EVT_BUTTON, self.step_neg)
+        self.track_button.Bind(wx.EVT_TOGGLEBUTTON, self.on_track)
         self.set_button.Bind(wx.EVT_BUTTON, self.on_set)
         self.Bind(wx.EVT_BUTTON, self.on_home, self.home_button)
-
-
-        # Set up a timer to update the current position angle
-        TIMER_ID = 100 # Random number; it doesn't matter
-        self.timer = wx.Timer(self, TIMER_ID)
-        self.timer.Start(2000) # poll every 5 seconds
-        wx.EVT_TIMER(self, TIMER_ID, self.on_timer)
+            
+        if self.kmirror is not None:
+            # Set up a timer to update the current position angle
+            TIMER_ID = 100 # Random number; it doesn't matter
+            self.timer = wx.Timer(self, TIMER_ID)
+            self.timer.Start(2000) # poll every 5 seconds
+            wx.EVT_TIMER(self, TIMER_ID, self.on_timer)
+        else:
+            self.Enable(False)
 
         
     def __DoLayout(self):
@@ -115,12 +117,10 @@ class KmirrorPanel(wx.Panel):
         
     @run_async(daemon=True)
     def on_set(self, event):
-        print 'starting'
         wx.CallAfter(self.Enable, False)
         try:
             pa = float(self.new_pa.GetValue())
             assert -170 <= pa <=170
-            print 'pa aquired'
             self.kmirror.move(pa)
         except InstrumentError:
             pass
@@ -128,13 +128,14 @@ class KmirrorPanel(wx.Panel):
             wx.CallAfter(wx.MessageBox,'Please select a valid number!', 
                          'INVALID Position Angle!', wx.OK | wx.ICON_ERROR)
         except AssertionError:
-            wx.CallAfter(wx.MessageBox,'Please select a valid number!', 
-                         'INVALID Position Angle [-170,170]!', 
+            wx.CallAfter(wx.MessageBox,'Please select a valid number!'
+                         ' Valid range is -170 to 170', 
+                         'INVALID Position Angle', 
                          wx.OK | wx.ICON_ERROR)
             
         wx.CallAfter(self.Enable, True)
 
-    @run_async
+    @run_async(daemon=True)
     def on_track(self, event):
         wx.CallAfter(self.Enable, False)
         children = self.GetChildren()
@@ -161,7 +162,7 @@ class KmirrorPanel(wx.Panel):
         except ValueError:
             pass
         
-    @run_async
+    @run_async(daemon=True)
     def step_pos(self, event):
         wx.CallAfter(self.Enable, False)
         try:
@@ -171,7 +172,7 @@ class KmirrorPanel(wx.Panel):
             pass
         wx.CallAfter(self.Enable, True)
 
-    @run_async
+    @run_async(daemon=True)
     def step_neg(self, event):
         wx.CallAfter(self.Enable, False)
         try:
@@ -181,7 +182,7 @@ class KmirrorPanel(wx.Panel):
             pass
         wx.CallAfter(self.Enable, True)
 
-    @run_async
+    @run_async(daemon=True)
     def on_home(self, event):
         wx.CallAfter(self.Enable, False)
         try:
