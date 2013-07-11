@@ -1,6 +1,5 @@
 from time import sleep
 from threading import Event
-import logging
 import wx
 
 from threadtools import run_async, callafter
@@ -95,7 +94,6 @@ class GuideCamPanel(wx.Panel):
         #Take Image
         i = self.parent.cam.takePicture()
         self.parent.DisplayImage(i)
-        logging.info('Guide cam picture taken!')
 
         if self.autosave_cb.GetValue():
             #Make Fits File
@@ -108,7 +106,6 @@ class GuideCamPanel(wx.Panel):
             try:
                 cadence = float(cadence)
             except:
-                logging.warning('GUIDE CAM: INVALID CADENCE TIME!')
                 wx.CallAfter(wx.MessageBox,'Please select cadence time in secconds!', 
                              'INVALID EXPOSURE TIME!', wx.OK | wx.ICON_ERROR)
                 self.endSeries()
@@ -127,18 +124,15 @@ class GuideCamPanel(wx.Panel):
     def OnBin(self, event):
         h = self.bin.GetValue()
         self.parent.cam.setBinning(h,h)
-        logging.info('Guide cam binning set to %i.' % h)
 
     def setExposure(self):
         #Set the exposure time
         try:
             self.parent.cam.setExposure(int(1000*float(self.exposure.GetValue())))
         except:
-            logging.warning('GUIDE CAM: INVALID EXPOSURE TIME!')
             wx.CallAfter(wx.MessageBox,'Please select exposure time in secconds!', 
                           'INVALID EXPOSURE TIME!', wx.OK | wx.ICON_ERROR)
             raise
-        logging.info('Guide cam exposure set to %s.' % self.exposure.GetValue())
 
     @run_async
     def Series(self, count, cadence):
@@ -146,18 +140,14 @@ class GuideCamPanel(wx.Panel):
             self.setExposure()
         except:
             self.endSeries()
-            logging.info('Series aborted!')
             return
 
-        logging.info('Beggining guide cam series...')
         for i in range(0, count):
             if self._series_stop.isSet():
-                logging.info('Series aborted!')
                 break
             self.takePicture()
             sleep(cadence)
         self.endSeries()
-        logging.info('Series complete!')
         
 
     @callafter

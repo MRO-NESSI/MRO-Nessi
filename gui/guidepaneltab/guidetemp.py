@@ -1,5 +1,4 @@
 from time import sleep
-import logging
 import wx
 
 from threadtools import run_async
@@ -11,16 +10,23 @@ class GuideTempPanel(wx.Panel):
         super(GuideTempPanel, self).__init__(parent)
 
         self.parent = parent
-        
-        self.temp_label = wx.StaticText(self, label="Current Temp: ")
-        self.temp = wx.StaticText(self, label="...              ")
-        self.settemp_label = wx.StaticText(self, label="Current Set Point (C): ")
-        self.settemp_field = wx.TextCtrl(self, -1, '', size=(50,-1), style=wx.TE_NO_VSCROLL)
+
+        #GUI Components
+        ################################################################
+        self.temp_label    = wx.StaticText(self, label="Current Temp: ")
+        self.temp          = wx.StaticText(self, label="...")
+        self.settemp_label = wx.StaticText(self, 
+                                           label="Current Set Point (C): ")
+        self.settemp_field = wx.TextCtrl(self, -1, '', size=(50,-1), 
+                                         style=wx.TE_NO_VSCROLL)
         self.settemp_field.SetValue('0')
         self.settemp_button = wx.Button(self, size=(80,-1), label="Set")
 
         self._DoLayout()
         self._DoBindings()
+
+        #Start monitor loop
+        ################################################################
         self._temperatureMonitor()
 
     def _DoLayout(self):
@@ -55,14 +61,12 @@ class GuideTempPanel(wx.Panel):
         except: 
             wx.CallAfter(wx.MessageBox,'FLI Camera has a temperature range of -55C to 45C.', 
                           'INVALID CAMERA TEMP!', wx.OK | wx.ICON_ERROR)
-            logging.warning('Invalide FLI camera temperature!')
             return
         self.parent.cam.setTemperature(temp)
-        logging.info('Guide cam set to %f.' % temp)
 
-    @run_async
+    @run_async(daemon=True)
     def _temperatureMonitor(self):
         """Loop to monitor the temperature."""
         while True:
             wx.CallAfter(self.temp.SetLabel, str(self.parent.cam.getTemperature()))
-            sleep(5)
+            sleep(2)

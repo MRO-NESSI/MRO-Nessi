@@ -131,8 +131,7 @@ class Instrument(object):
             logging.debug('Sockets filled!')
             newport_good = True
         except TimeoutError:
-            raise InstrumentInitializationError(
-                'Newport sockets could not be filled!')
+            sys.exc_clear()
 
         if newport_good:
             #Kmirror
