@@ -23,7 +23,7 @@ from wx.lib.agw.advancedsplash import AdvancedSplash
 
 from gui.gui import MainNessiFrame
 from instrument.instrument import Instrument
-from logtab.log import wxLogHandler, EVT_WX_LOG_EVENT
+from gui.logtab.log import wxLogHandler, EVT_WX_LOG_EVENT
 
 
 def main(argv=None):

@@ -57,12 +57,12 @@ class SettingsPanel(wx.Panel):
         self.__DoLayout()
 
         # Handlers
-        self.Bind(wx.EVT_BUTTON, self.editPreferences, self.editbtn)
-        self.Bind(wx.EVT_BUTTON, self.editAdvPreferences, self.editadvbtn)
-        self.Bind(wx.EVT_BUTTON, self.savePreferences, self.savebtn)
+        #self.Bind(wx.EVT_BUTTON, self.editPreferences, self.editbtn)
+        #self.Bind(wx.EVT_BUTTON, self.editAdvPreferences, self.editadvbtn)
+        #self.Bind(wx.EVT_BUTTON, self.savePreferences, self.savebtn)
 
         # load preferences
-        self.loadPreferences()
+        # self.loadPreferences()
 
    
     def __DoLayout(self):

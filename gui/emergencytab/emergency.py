@@ -1,15 +1,11 @@
 import wx
-from actuators.newport import XPSErrorHandler, NewportInitialize
 
 class EmergencyPanel(wx.Panel):
-    def __init__(self, parent, controller, socket, thorlabs1, thorlabs2):
+    def __init__(self, parent, instrument):
         super(EmergencyPanel, self).__init__(parent)
-        
-        self.controller = controller
-        self.socket = socket
-        self.thorlabs1 = thorlabs1
-        self.thorlabs2 = thorlabs2
-        self.groups = ['mask','filter1','filter2','grism','kmirror']
+
+        self.instrument = instrument
+
         # Attributes
         self.t = wx.StaticText(self, -1, "Emergency", (40,40))
         self.emergency = wx.Button(self, 1, label='KILL ALL', size=(400,200))
@@ -20,7 +16,7 @@ class EmergencyPanel(wx.Panel):
         self.font = wx.Font(pointSize = 40, family = wx.FONTFAMILY_DECORATIVE, style = wx.FONTSTYLE_NORMAL, weight = wx.FONTWEIGHT_BOLD)
         self.emergency.SetFont(self.font)  
         self.Bind(wx.EVT_BUTTON, self.OnEmergency, id = 1)
-        self.Bind(wx.EVT_BUTTON, self.OnReset, id = 2)
+#        self.Bind(wx.EVT_BUTTON, self.OnReset, id = 2)
 
         self.__DoLayout()
 
@@ -39,14 +35,5 @@ class EmergencyPanel(wx.Panel):
         self.SetSizerAndFit(boxSizer)
 
     def OnEmergency(self, event):
-        kill=self.controller.KillAll(self.socket)
-        # This checks to insure the kill command worked.  If it did not work, the standard error handler is called.
-        if kill[0] != 0:
-            XPSErrorHandler(self.controller, self.socket, kill[0], 'KillAll')
-        self.thorlabs1.home()
-        self.thorlabs2.home()
-
-    def OnReset(self, event):
-        for x in self.groups:
-            NewportInitialize(self.controller, x, self.socket, 0)
-        pass
+        #TODO: Ask the user what to do next.
+        self.instrument.killAll()

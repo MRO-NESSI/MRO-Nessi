@@ -3,11 +3,10 @@ import logging
 import wx
 
 from overviewtab.overview   import OverviewPanel
-#from kmirrortab.kmirror     import KMirrorPanel
-#from guidepaneltab.guiding  import GuidingPanel
-#from settingstab.settings   import SettingsPanel
+from guidepaneltab.guiding  import GuidePanel
+from settingstab.settings   import SettingsPanel
 from logtab.log             import LogPanel, wxLogHandler, EVT_WX_LOG_EVENT
-#from emergencytab.emergency import EmergencyPanel
+from emergencytab.emergency import EmergencyPanel
 
 class MainNessiFrame(wx.Frame):
     """Main Window for Nessi Control Software."""
@@ -32,21 +31,18 @@ class MainNessiFrame(wx.Frame):
         #Make tabs
         ################################################################
         self.overviewPanel  = OverviewPanel(self.nb, self.instrument)
-#        self.guidingPanel   = GuidingPanel(nb)
-#        self.settingsPanel  = SettingsPanel(nb)
-#        self.logPanel       = LogPanel(nb)
-#        self.emergencyPanel = EmergencyPanel(nb, self.x, 
-#                                             self.open_sockets[0], 
-#                                             page1.FocusREI12.motor, 
-#                                             page1.FocusREI34.motor)
+        self.guidingPanel   = GuidePanel(self.nb, self.instrument)
+        self.settingsPanel  = SettingsPanel(self.nb, )
+        self.logPanel       = LogPanel(self.nb)
+        self.emergencyPanel = EmergencyPanel(self.nb, self.instrument)
 
         #Add tabs to notebook
         ################################################################
         self.nb.AddPage(self.overviewPanel , "Overview")
- #       nb.AddPage(self.guidingPanel  , "Guiding")
- #       nb.AddPage(self.settingsPanel , "Settings")
- #       nb.AddPage(self.logPanel      , "Log")
- #       nb.AddPage(self.emergencyPanel, "Panic")
+        self.nb.AddPage(self.guidingPanel  , "Guiding")
+        self.nb.AddPage(self.settingsPanel , "Settings")
+        self.nb.AddPage(self.logPanel      , "Log")
+        self.nb.AddPage(self.emergencyPanel, "Panic")
 
         #Place notebook panel into a sizer
         ################################################################
