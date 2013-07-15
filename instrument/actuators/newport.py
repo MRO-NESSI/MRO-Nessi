@@ -13,22 +13,26 @@ cfg = ConfigObj(infile="nessisettings.ini")
 
 
 def XPSErrorHandler(controller, socket, code, name):
+    """This is a general error handling function for the newport controller 
+    functions. First the function checks for errors in communicating with the 
+    controller, then it fetches the error string and displays it in a message 
+    box. If the error string can not be found it will print the error code for
+    lookup by the user.
+
+        Arguments: controller, socket, code, name.
+
+            controller: [xps]   Which instance of the XPS controller to use.
+            socket:     [int]   Which socket to use to communicate with the XPS 
+                                controller.
+            code:       [int]   The error code returned by the function that 
+                                called this function.
+            name:       [str]   The name of the function that called this 
+                                function.
+
+        Returns: None.
+
+        Raises: InstrumentError.
     """
-This is a general error handling function for the newport controller 
-functions. First the function checks for errors in communicating with the 
-controller, then it fetches the error string and displays it in a message box.  
-If the error string can not be found it will print the error code for lookup 
-by the user.
-
-    Inputs: controller, socket, code, name.
-
-    controller: [xps]   Which instance of the XPS controller to use.
-    socket:     [int]   Which socket to use to communicate with the XPS 
-                        controller.
-    code:       [int]   The error code returned by the function that called 
-                        this function.
-    name:       [str]   The name of the function that called this function.
-"""
     errstr = ''
     fatality = None
     
@@ -59,9 +63,25 @@ by the user.
     raise InstrumentError(errstr)
 
 def NewportWheelHome(controller, wheel, socket):
-    """
+    """This function homes a dewar wheel.  This function will call the 
+    XPSErrorHandler function if any of the newport commands fail. Information
+    about the specific homing of the motors is contained in the nessisettings
+    configuration file.  This function does not have a Timeout and can run 
+    indefinitely if there are problems with the switches. 
+    
+        Arguments: controller, socket, wheel.
 
+            controller: [xps]   Which instance of the XPS controller to use.
+            socket:     [int]   Which socket to use to communicate with the XPS 
+                                controller.
+            wheel:      [str]   The name of the function that called this 
+                                function.
+
+        Returns: None.
+
+        Raises: None.
     """
+    # Config-file based variables.
     group     = cfg[wheel]["group"]
     speed     = int(cfg[wheel]["direction"])*30
     wheel_gap = int(cfg[wheel]["direction"])*340
@@ -70,9 +90,16 @@ def NewportWheelHome(controller, wheel, socket):
     posval    = int(cfg[wheel]["position"]["val"])
     posbit    = int(cfg[wheel]["position"]["bit"])  
 
+    # Start of the algorithm.  If the wheel is not at a position it goes to one. 
     value = controller.GPIODigitalGet(socket, "GPIO4.DI")
+
+    # This part of the if statement checks for an error reading the the GPIO.
     if value[0] != 0:
         XPSErrorHandler(controller, socket, value[0], "GPIODigitalGet")
+
+    # This portion initiates a slow move forward to find the next position if it
+    # is not already at one.  If it is then it passes to the next part of the 
+    # function.
     elif int(format(value[1], "016b")[::-1][posbit]) != posval:
         Gset = controller.GroupSpinParametersSet(socket, group, speed, 800)
         while True:
@@ -91,6 +118,10 @@ def NewportWheelHome(controller, wheel, socket):
                 pass
     else:
         pass
+
+    # This section of the function checks to see if the wheel is already homed.
+    # If so then the function returns otherwise it begins moving to each 
+    # successive position until it finds the home position. 
     value = controller.GPIODigitalGet(socket, "GPIO4.DI")
     if value[0] != 0:
         XPSErrorHandler(controller, socket, value[0], 
@@ -100,13 +131,21 @@ def NewportWheelHome(controller, wheel, socket):
     else:
         pass
 
+    # This section controls motion between positions.  First it moves the motor
+    # a known distance to be close to the next position, then the motor is moved
+    # slowly until the next position is reached.  This is determined by a while
+    # loop that reads the position switch to see when it opens.  Once at a 
+    # position the home switch is checked to see if the wheel has arrived.  If 
+    # so then the function returns, otherwise the loop repeats, moving to the 
+    # next position.
     for i in range(8):
+        # Moving close to the next position.
         for j in range(2):
             GMove = controller.GroupMoveRelative(socket, group, [wheel_gap])
             if GMove[0] != 0:
                 XPSErrorHandler(controller, socket, GMove[0], 
                                 "GroupMoveRelative")
-        # Starting motion.
+        # Starting slow motion to the next position.
         Gset = controller.GroupSpinParametersSet(socket, group, speed, 
                                                  800)
         # Checking if the motion command was sent correctly.
@@ -115,10 +154,7 @@ def NewportWheelHome(controller, wheel, socket):
             XPSErrorHandler(controller ,socket, Gset[0],
                             "GroupSpinParametersSet")
         else:
-            # This while loop runs until the motor is one position before 
-            # the target. It has a one second delay after catching a bit 
-            # flip to allow the motor to go past the switch so it is not 
-            # double counted.
+            # The while loop checks for a position switch to open.
             while True:
                 time.sleep(.1)
                 value = controller.GPIODigitalGet(socket, "GPIO4.DI")
@@ -133,6 +169,9 @@ def NewportWheelHome(controller, wheel, socket):
                     break
                 else:
                     pass
+        # Once at a position, the home switch is checked to see if it is the 
+        # home position.  If so then the function returns, otherwise this 
+        # iteration of the loop passes.
         value = controller.GPIODigitalGet(socket, "GPIO4.DI")
         if value[0] != 0:
             XPSErrorHandler(controller, socket, value[0], 
@@ -145,22 +184,31 @@ def NewportWheelHome(controller, wheel, socket):
 
 
 def NewportWheelMove(controller, wheel, socket, current, position):
+    """This function moves a dewar wheel to a selected position.  Since the 
+    positions are identical this is done by moving a determined number of 
+    positions from the current (known) position.  If the position is not known
+    then the wheel should be homed first.  This function does not have a
+    Timeout and can run indefinitely if there are problems with the switches.
+
+        Arguments: controller, name, socket, current, position.
+
+            controller: [xps]   Which instance of the XPS controller to use.
+            wheel:      [str]   The name of the motor that is being used.  
+                                This is for config file purposes.
+            socket:     [int]   Which socket to use to communicate with the XPS 
+                                controller.
+            current:    [int]   What position the motor is currently at.
+            position:   [int]   What position the motor should move to.
+        
+        Returns: position
+            
+            position:   [int]   Theposition the motor moved to based on switch 
+                                counts.
+    
+        Raises: None
     """
-
-
-    Inputs: controller, name, socket, position.
-
-    controller: [xps]   Which instance of the XPS controller to use.
-    wheel:      [str]   The name of the motor that is being used.  This is for
-                        config file purposes.
-    socket:     [int]   Which socket to use to communicate with the XPS 
-                        controller.
-    current:    [int]   What position the motor is currently at.
-    position:   [int]   What position the motor should move to.
-    """
-    # Initializing variables.
+    # Initializing config-file specific variables.
     group     = cfg[wheel]["group"]
-    state     = 0
     speed     = int(cfg[wheel]["direction"])*30
     wheel_gap = int(cfg[wheel]["direction"])*340
     val       = int(cfg[wheel]["position"]["val"])
@@ -169,7 +217,17 @@ def NewportWheelMove(controller, wheel, socket, current, position):
     diff      = (int(cfg[wheel]["slots"]) - current + position) % \
                 int(cfg[wheel]["slots"])
 
+    # First there is a check to see if the motor is already at the current 
+    # position. This check is only a check of inputs.  It does not check to see
+    # if the motor is in a position.  If a motor has been moved by hand or if a
+    # previous move had failed then this check could still pass despite being
+    # wrong.
     if current != position:
+        # If the motor passes the theoretical check then the function checks to 
+        # see if the motor is on a switch. If it is not for some reason then it 
+        # moves forward slowly until it finds a switch and sets the movement 
+        # counter down by one.  This is because it is a known error that the 
+        # motor can detect a switch being flipped but not stopping in time.
         value = controller.GPIODigitalGet(socket, "GPIO4.DI")
         if value[0] != 0:
             XPSErrorHandler(controller, socket, value[0], "GPIODigitalGet")
@@ -228,6 +286,9 @@ def NewportWheelMove(controller, wheel, socket, current, position):
                     else:
                         pass
             
+        return position
+    
+    else:
         return position
                 
 
