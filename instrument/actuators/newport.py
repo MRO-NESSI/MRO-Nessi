@@ -38,20 +38,23 @@ by the user.
         fatality = False
         # Getting the error string.
         error = controller.ErrorStringGet(socket, code)
-        # If the error string lookup fails, this message will display with the error code.
+        # If the error string lookup fails, this message will display with 
+        # the error code.
         if error[0] != 0:
             errstr = name + " : ERROR "+ str(code)
         # This displays the error string.
         else:
             errstr = name + " : " + error[1]
-    # This code handles the case where the connection to the controller fails after initial contact.
+    # This code handles the case where the connection to the controller fails
+    # after initial contact.
     else:
     
         fatality = True
         if code == -2:
             errstr = name + " : TCP timeout"
         elif code == -108:
-            errstr = name + " : The TCP/IP connection was closed by an administrator"
+            errstr = name + " : The TCP/IP connection was closed by an" + \
+                            "administrator"
         
     raise InstrumentError(errstr)
 
@@ -59,30 +62,27 @@ def NewportWheelHome(controller, wheel, socket):
     """
 
     """
-    group = cfg[wheel]["group"]
-    speed = int(cfg[wheel]["direction"])*15*2
-    homeval = int(cfg[wheel]["home"]["val"])
-    homebit = int(cfg[wheel]["home"]["bit"])
-    posval = int(cfg[wheel]["home"]["val"])
-    posbit = int(cfg[wheel]["home"]["val"])  
+    group     = cfg[wheel]["group"]
+    speed     = int(cfg[wheel]["direction"])*30
+    wheel_gap = int(cfg[wheel]["direction"])*340
+    homeval   = int(cfg[wheel]["home"]["val"])
+    homebit   = int(cfg[wheel]["home"]["bit"])
+    posval    = int(cfg[wheel]["position"]["val"])
+    posbit    = int(cfg[wheel]["position"]["bit"])  
 
     value = controller.GPIODigitalGet(socket, "GPIO4.DI")
     if value[0] != 0:
         XPSErrorHandler(controller, socket, value[0], "GPIODigitalGet")
     elif int(format(value[1], "016b")[::-1][posbit]) != posval:
-        Gset = controller.GroupSpinParametersSet(socket, 
-                                                 cfg[wheel]["group"], 
-                                                 speed, 800)
+        Gset = controller.GroupSpinParametersSet(socket, group, speed, 800)
         while True:
             time.sleep(.1)
-            value = controller.GPIODigitalGet(socket, "GPIO4.DI")
+            value = controller.GPIODigitalGet(socket, "GPIO4.DI") 
             if value[0] != 0:
                 XPSErrorHandler(controller, socket, value[0], 
                                 "GPIODigitalGet")
             elif int(format(value[1], "016b")[::-1][posbit]) == posval:
-                stop=controller.GroupSpinModeStop(socket, 
-                                                  cfg[wheel]["group"],
-                                                  1200)
+                stop=controller.GroupSpinModeStop(socket, group, 1200)
                 if stop[0] != 0:
                     XPSErrorHandler(controller, socket, stop[0],
                                     "GroupSpinModeStop")
@@ -90,6 +90,49 @@ def NewportWheelHome(controller, wheel, socket):
             else:
                 pass
     else:
+        pass
+    value = controller.GPIODigitalGet(socket, "GPIO4.DI")
+    if value[0] != 0:
+        XPSErrorHandler(controller, socket, value[0], 
+                        "GPIODigitalGet")
+    elif int(format(value[1], "016b")[::-1][homebit]) == homeval:
+        return
+    else:
+        pass
+
+    for i in range(8):
+        for j in range(2):
+            GMove = controller.GroupMoveRelative(socket, group, [wheel_gap])
+            if GMove[0] != 0:
+                XPSErrorHandler(controller, socket, GMove[0], 
+                                "GroupMoveRelative")
+        # Starting motion.
+        Gset = controller.GroupSpinParametersSet(socket, group, speed, 
+                                                 800)
+        # Checking if the motion command was sent correctly.
+        # If so then the GPIO checking begins.
+        if Gset[0] != 0:
+            XPSErrorHandler(controller ,socket, Gset[0],
+                            "GroupSpinParametersSet")
+        else:
+            # This while loop runs until the motor is one position before 
+            # the target. It has a one second delay after catching a bit 
+            # flip to allow the motor to go past the switch so it is not 
+            # double counted.
+            while True:
+                time.sleep(.1)
+                value = controller.GPIODigitalGet(socket, "GPIO4.DI")
+                if value[0] != 0:
+                    XPSErrorHandler(controller, socket, value[0],
+                                    "GPIODigitalGet")
+                elif int(format(value[1], "016b")[::-1][posbit]) == posval:
+                    stop=controller.GroupSpinModeStop(socket, group, 1200)
+                    if stop[0] != 0:
+                        XPSErrorHandler(controller, socket, stop[0],
+                                        "GroupSpinModeStop")
+                    break
+                else:
+                    pass
         value = controller.GPIODigitalGet(socket, "GPIO4.DI")
         if value[0] != 0:
             XPSErrorHandler(controller, socket, value[0], 
@@ -98,54 +141,7 @@ def NewportWheelHome(controller, wheel, socket):
             return
         else:
             pass
-
-        for i in range(8):
-            for j in range(2):
-                GMove = controller.GroupMoveRelative(socket, 
-                                                     cfg[wheel]["group"], 
-                                                     [350])
-                if GMove[0] != 0:
-                    XPSErrorHandler(controller, socket, GMove[0], 
-                                    "GroupMoveRelative")
-            # Starting motion.
-            Gset = controller.GroupSpinParametersSet(socket, 
-                                                     cfg[wheel]["group"],
-                                                     speed, 800)
-            # Checking if the motion command was sent correctly.
-            # If so then the GPIO checking begins.
-            if Gset[0] != 0:
-                XPSErrorHandler(controller ,socket, Gset[0],
-                                "GroupSpinParametersSet")
-            else:
-                # This while loop runs until the motor is one position before 
-                # the target. It has a one second delay after catching a bit 
-                # flip to allow the motor to go past the switch so it is not 
-                # double counted.
-                while True:
-                    time.sleep(.1)
-                    value = controller.GPIODigitalGet(socket, "GPIO4.DI")
-                    if value[0] != 0:
-                        XPSErrorHandler(controller, socket, value[0],
-                                        "GPIODigitalGet")
-                    elif int(format(value[1], "016b")[::-1][bit]) == val:
-                        stop=controller.GroupSpinModeStop(socket, 
-                                                          cfg[wheel]["group"],
-                                                          1200)
-                        if stop[0] != 0:
-                            XPSErrorHandler(controller, socket, stop[0],
-                                            "GroupSpinModeStop")
-                        break
-                    else:
-                        pass
-            value = controller.GPIODigitalGet(socket, "GPIO4.DI")
-            if value[0] != 0:
-                XPSErrorHandler(controller, socket, value[0], 
-                                "GPIODigitalGet")
-            elif int(format(value[1], "016b")[::-1][homebit]) == homeval:
-                return
-            else:
-                pass
-        return
+    return
 
 
 def NewportWheelMove(controller, wheel, socket, current, position):
@@ -163,22 +159,23 @@ def NewportWheelMove(controller, wheel, socket, current, position):
     position:   [int]   What position the motor should move to.
     """
     # Initializing variables.
-    group = cfg[wheel]["group"]
-    state = 0
-    speed = int(cfg[wheel]["direction"])*15*2
-    val = int(cfg[wheel]["position"]["val"])
-    bit = int(cfg[wheel]["position"]["bit"])
+    group     = cfg[wheel]["group"]
+    state     = 0
+    speed     = int(cfg[wheel]["direction"])*30
+    wheel_gap = int(cfg[wheel]["direction"])*340
+    val       = int(cfg[wheel]["position"]["val"])
+    bit       = int(cfg[wheel]["position"]["bit"])
     # diff is how many positions away from current the target position is.
-    diff = (int(cfg[wheel]["slots"]) - current + position) % int(cfg[wheel]["slots"])
+    diff      = (int(cfg[wheel]["slots"]) - current + position) % \
+                int(cfg[wheel]["slots"])
 
     if current != position:
         value = controller.GPIODigitalGet(socket, "GPIO4.DI")
         if value[0] != 0:
             XPSErrorHandler(controller, socket, value[0], "GPIODigitalGet")
         elif int(format(value[1], "016b")[::-1][bit]) != val:
-            Gset = controller.GroupSpinParametersSet(socket, 
-                                                     cfg[wheel]["group"], 
-                                                     speed, 800)
+            Gset = controller.GroupSpinParametersSet(socket, group, speed,
+                                                     800)
             while True:
                 time.sleep(.1)
                 value = controller.GPIODigitalGet(socket, "GPIO4.DI")
@@ -186,9 +183,7 @@ def NewportWheelMove(controller, wheel, socket, current, position):
                     XPSErrorHandler(controller, socket, value[0], 
                                     "GPIODigitalGet")
                 elif int(format(value[1], "016b")[::-1][bit]) == val:
-                    stop=controller.GroupSpinModeStop(socket, 
-                                                      cfg[wheel]["group"],
-                                                      1200)
+                    stop=controller.GroupSpinModeStop(socket, group, 1200)
                     if stop[0] != 0:
                         XPSErrorHandler(controller, socket, stop[0],
                                         "GroupSpinModeStop")
@@ -201,16 +196,13 @@ def NewportWheelMove(controller, wheel, socket, current, position):
 
         for i in range(diff):
             for j in range(2):
-                GMove = controller.GroupMoveRelative(socket, 
-                                                     cfg[wheel]["group"], 
-                                                     [350])
+                GMove = controller.GroupMoveRelative(socket, group, [wheel_gap])
                 if GMove[0] != 0:
                     XPSErrorHandler(controller, socket, GMove[0], 
                                     "GroupMoveRelative")
             # Starting motion.
-            Gset = controller.GroupSpinParametersSet(socket, 
-                                                     cfg[wheel]["group"],
-                                                     speed, 800)
+            Gset = controller.GroupSpinParametersSet(socket, group, speed,
+                                                     800)
             # Checking if the motion command was sent correctly.
             # If so then the GPIO checking begins.
             if Gset[0] != 0:
@@ -228,9 +220,7 @@ def NewportWheelMove(controller, wheel, socket, current, position):
                         XPSErrorHandler(controller, socket, value[0],
                                         "GPIODigitalGet")
                     elif int(format(value[1], "016b")[::-1][bit]) == val:
-                        stop=controller.GroupSpinModeStop(socket, 
-                                                          cfg[wheel]["group"],
-                                                          1200)
+                        stop=controller.GroupSpinModeStop(socket, group, 1200)
                         if stop[0] != 0:
                             XPSErrorHandler(controller, socket, stop[0],
                                             "GroupSpinModeStop")
@@ -257,7 +247,8 @@ This function returns nothing if succesful and calls XPSErrorHandler otherwise.
     home_pos:   [int]   Determines whether the thread will find the home 
                         position or a different position.
 """
-    # This function kills any motors that are still active from previous motions.
+    # This function kills any motors that are still active from previous 
+    # motions.
     GKill = controller.GroupKill(socket, cfg[motor]["group"])   
     if GKill[0] != 0:
         XPSErrorHandler(controller, socket, GKill[0], "GroupKill")
@@ -267,10 +258,14 @@ This function returns nothing if succesful and calls XPSErrorHandler otherwise.
     if GInit[0] != 0:
         XPSErrorHandler(controller, socket, GInit[0], "GroupInitialize")
 
-    # This function homes the motor and then moves the motor to a home position defined by the user.
-    GHomeSearch = controller.GroupHomeSearchAndRelativeMove(socket, cfg[motor]["group"],[home_pos])
+    # This function homes the motor and then moves the motor to a home position
+    # defined by the user.
+    GHomeSearch = controller.GroupHomeSearchAndRelativeMove(socket, 
+                                                            cfg[motor]["group"],
+                                                            [home_pos])
     if GHomeSearch[0] != 0:
-        XPSErrorHandler(controller, socket, GHomeSearch[0], "GroupHomeSearchAndRelativeMove")
+        XPSErrorHandler(controller, socket, GHomeSearch[0], 
+                        "GroupHomeSearchAndRelativeMove")
 
 
 def NewportKmirrorMove(controller, socket, motor, position):
@@ -286,19 +281,25 @@ This function moves the k-mirror to a choosen position at 10 deg/s.
                         file purposes.
     position:   [float] What value to move the k-mirror to.
 """
-    # This checks to see if the motor is in a continuous rotation state and if it is then the function disables continuous rotation. 
+    # This checks to see if the motor is in a continuous rotation state and if 
+    # it is then the function disables continuous rotation. 
 
     Gmode = controller.GroupJogModeDisable(socket, cfg[motor]["group"])
     if Gmode[0] != 0 and Gmode[0] != -22:
         XPSErrorHandler(controller, socket, Gmode[0], "GroupJogModeEnable")
 
     # This function sets the motion parameters to be used by the motor.
-    # If the parameters are set correctly then an absolute move is made to the position of choice.
-    Gset = controller.PositionerSGammaParametersSet(socket,cfg[motor]["positioner"], 10 , 200, .005, .05)
+    # If the parameters are set correctly then an absolute move is made to the 
+    # position of choice.
+    Gset = controller.PositionerSGammaParametersSet(socket,
+                                                    cfg[motor]["positioner"], 
+                                                    10 , 200, .005, .05)
     if Gset[0] != 0:
-        XPSErrorHandler(controller, socket, Gset[0], "PositionerSGammaParametersSet")
+        XPSErrorHandler(controller, socket, Gset[0],
+                        "PositionerSGammaParametersSet")
     else:
-        GMove = controller.GroupMoveAbsolute(socket, cfg[motor]["group"], [float(position)])
+        GMove = controller.GroupMoveAbsolute(socket, cfg[motor]["group"], 
+                                             [float(position)])
         if GMove[0] != 0:
             XPSErrorHandler(controller, socket, GMove[0], "GroupMoveAbsolute")
        
@@ -320,7 +321,8 @@ prepared and then sets a choosen velocity.
                         configured for continuous rotation. 
     velocity:   [float] What value to set the rotational velocity to in deg/s.
 """
-    # This checks if the motor is in a continuous rotation state and if not enables that state.
+    # This checks if the motor is in a continuous rotation state and if not 
+    # enables that state.
     Gmode = controller.GroupJogModeEnable(socket, cfg[motor]["group"])
     if Gmode[0] != 0 and Gmode[0] != -22:
         XPSErrorHandler(controller, socket, Gmode[0], "GroupJogModeEnable")
@@ -329,7 +331,8 @@ prepared and then sets a choosen velocity.
     # This sets the rotation rate for the motor. 
     # The motor will rotate until it is stopped or it hits a limit switch.
     velocity = speed*cfg[motor]["direction"]
-    GJog = controller.GroupJogParametersSet(socket, cfg[motor]["group"], [velocity],[400])
+    GJog = controller.GroupJogParametersSet(socket, cfg[motor]["group"],
+                                            [velocity],[400])
     if GJog[0] != 0:
         XPSErrorHandler(controller, socket, GJog[0], "GroupJogParametersSet")
 
@@ -346,14 +349,18 @@ def NewportStatusGet(controller, socket, motor):
                         file purposes.
 """
     info = []
-    position = controller.GroupPositionCurrentGet(socket, cfg[motor]["group"], 1)
+    position = controller.GroupPositionCurrentGet(socket, cfg[motor]["group"], 
+                                                  1)
     if position[0] != 0:
-        XPSErrorHandler(controller, socket, position[0], "GroupPositionCurrentGet")
+        XPSErrorHandler(controller, socket, position[0],
+                        "GroupPositionCurrentGet")
     else:
         info.append(position[1])
-    profile = controller.PositionerSGammaParametersGet(socket, cfg[motor]["positioner"])
+    profile = controller.PositionerSGammaParametersGet(socket, 
+                                                       cfg[motor]["positioner"])
     if profile[0] != 0:
-        XPSErrorHandler(controller, socket, profile[0], "PositionerSGammaParametersGet")
+        XPSErrorHandler(controller, socket, profile[0],
+                        "PositionerSGammaParametersGet")
     else:
         for i in profile[1:]:
             info.append(i)
@@ -365,20 +372,25 @@ def NewportStop(controller, socket, motor):
 
 """
     if motor == "kmirror":
-        GStop = controller.GroupJogParametersSet(socket, cfg[motor]["group"], [0],[200])
+        GStop = controller.GroupJogParametersSet(socket, cfg[motor]["group"], 
+                                                 [0],[200])
         if GStop[0] != 0:
-            XPSErrorHandler(controller, socket, GStop[0], "GroupJogParametersSet")
+            XPSErrorHandler(controller, socket, GStop[0], 
+                            "GroupJogParametersSet")
         else: 
             pass 
         JDisable = controller.GroupJogModeDisable(socket, cfg[motor]["group"])
         if JDisable[0] != 0:
-            XPSErrorHandler(controller, socket, JDisable[0], "GroupJogModeDisable")
+            XPSErrorHandler(controller, socket, JDisable[0],
+                            "GroupJogModeDisable")
         else: 
             pass        
     else:
-        GStop = controller.GroupSpinParametersSet(socket, cfg[motor]["group"], 0, 800)
+        GStop = controller.GroupSpinParametersSet(socket, cfg[motor]["group"],
+                                                  0, 800)
         if GStop[0] != 0:
-            XPSErrorHandler(controller, socket, GStop[0], "GroupSpinParametersSet")
+            XPSErrorHandler(controller, socket, GStop[0], 
+                            "GroupSpinParametersSet")
         else:
             pass
 
@@ -402,9 +414,11 @@ def NewportFocusLimit(controller, socket, motor):
                 XPSErrorHandler(controller, socket, value[0], "GPIODigitalGet")
             else:
                 stop = True
-                XPSErrorHandler(controller, socket, velocity[0], "GroupSpinCurrentGet")
+                XPSErrorHandler(controller, socket, velocity[0], 
+                                "GroupSpinCurrentGet")
 
-        elif int(format(value[1], "016b")[::-1][bitup]) == valup or int(format(value[1], "016b")[::-1][bitdown]) == valdown:
+        elif int(format(value[1], "016b")[::-1][bitup]) == valup or \
+             int(format(value[1], "016b")[::-1][bitdown]) == valdown:
             stop = True
 
         elif velocity[1] == 0:
@@ -436,13 +450,16 @@ def NewportFocusMove(controller, socket, motor, distance, speed, direction):
     delay = speed/(distance*.576)
     velocity = speed * direction * cfg[wheel]['direction']
     NewportFocusLimit(controller, socket[0], motor)
-    Gset = controller.GroupSpinParametersSet(socket[1], cfg[wheel]["group"], velocity, 600)
+    Gset = controller.GroupSpinParametersSet(socket[1], cfg[wheel]["group"], 
+                                             velocity, 600)
     if Gset[0] != 0:
-        XPSErrorHandler(controller, socket[1], Gset[0], "GroupSpinParametersSet")
+        XPSErrorHandler(controller, socket[1], Gset[0], 
+                        "GroupSpinParametersSet")
     else:
         pass 
     time.sleep(delay)
-    GStop = controller.GroupSpinParametersSet(socket[1], cfg[motor]["group"], 0, 600)
+    GStop = controller.GroupSpinParametersSet(socket[1], cfg[motor]["group"],
+                                              0, 600)
     if GStop[0] != 0:
         Kill = controller.KillAll(socket[1])
         if Kill[0] != 0:
@@ -462,7 +479,8 @@ def NewportFocusHome(controller, socket, motor):
     valdown = cfg[motor]["lower"]["val"]
     home = True
     vel = 200*cfg[wheel]['direction']
-    Gset = controller.GroupSpinParametersSet(socket, cfg[wheel]["group"], speed, 200)
+    Gset = controller.GroupSpinParametersSet(socket, cfg[wheel]["group"], 
+                                             speed, 200)
         # Checking if the motion command was sent correctly.
         # If so then the GPIO checking begins.
     if Gset[0] != 0:
@@ -517,15 +535,19 @@ user stops it in the NESSI GUI.
             time.sleep(1)
         else:
             angle = .5*(t_angle - PA - cfg['motor']["direction"]*H)
-            vel = ((-.262)*(.5)*3600*math.pi*math.cos(phi)*math.cos(A))/(math.cos(H)*180)
+            vel = ((-.262)*(.5)*3600*math.pi*math.cos(phi)*math.cos(A))/\
+                  (math.cos(H)*180)
             delta = vel - parent.vel
             parent.vel = parent.vel + delta
             velocity = parent.vel*cfg[motor]["direction"]
-            GJog = controller.GroupJogParametersSet(socket, cfg[motor]["group"], [velocity],[400])
+            GJog = controller.GroupJogParametersSet(socket, cfg[motor]["group"],
+                                                    [velocity],[400])
             if GJog[0] != 0:
-                XPSErrorHandler(controller, socket, GJog[0], "GroupJogParametersSet")
+                XPSErrorHandler(controller, socket, GJog[0],
+                                "GroupJogParametersSet")
             position = controller.GroupPositionCurrentGet(socket, 
-                                                          cfg[motor]["group"], 1)
+                                                          cfg[motor]["group"],
+                                                          1)
             if position[0] != 0:
                 XPSErrorHandler(controller, socket, position[0],
                                 "GroupPositionCurrentGet")

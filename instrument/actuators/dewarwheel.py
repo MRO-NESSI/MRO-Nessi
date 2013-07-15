@@ -36,7 +36,7 @@ class DewarWheel(InstrumentComponent):
         self.positions   = positions
 
         self.initialize()
-#        self.home()
+        self.home()
 
     @property
     def position(self):
@@ -83,8 +83,9 @@ class DewarWheel(InstrumentComponent):
         """
         try:
             with self.lock:
-                self.current_pos = np.NewportWheelHome(self.controller, 
+                np.NewportWheelHome(self.controller, 
                                                    self.name, self.sockets[0])
+                self.current_pos = 0
 
         except Exception as e:
             raise InstrumentError('An error occured during a homing of'
