@@ -6,10 +6,22 @@ from threadtools import run_async
 class GuideTempPanel(wx.Panel):
     """Panel to control the temperature of the guide cam."""
 
-    def __init__(self, parent):
+    def __init__(self, parent, cam):
+        """Build new GuideTempPanel.
+
+        Arguments:
+            parent -- parent panel
+            cam    -- FLI Camera.
+
+        Raises:
+            None
+        """
+        
         super(GuideTempPanel, self).__init__(parent)
 
-        self.parent = parent
+        #Attributes
+        ################################################################
+        self.cam    = cam
 
         #GUI Components
         ################################################################
@@ -25,9 +37,10 @@ class GuideTempPanel(wx.Panel):
         self._DoLayout()
         self._DoBindings()
 
-        #Start monitor loop
+        #Start monitor loop if camera exists
         ################################################################
-        self._temperatureMonitor()
+        if self.cam is not None:
+            self._temperatureMonitor()
 
     def _DoLayout(self):
         sz    = wx.GridBagSizer(vgap=3, hgap=3)
@@ -59,14 +72,16 @@ class GuideTempPanel(wx.Panel):
             temp = float(temp)
             if not -55 <= temp <= 45: raise Exception()
         except: 
-            wx.CallAfter(wx.MessageBox,'FLI Camera has a temperature range of -55C to 45C.', 
+            wx.CallAfter(wx.MessageBox, 'FLI Camera has a temperature'
+                         ' range of -55C to 45C.', 
                           'INVALID CAMERA TEMP!', wx.OK | wx.ICON_ERROR)
             return
-        self.parent.cam.setTemperature(temp)
+        self.cam.setTemperature(temp)
 
     @run_async(daemon=True)
     def _temperatureMonitor(self):
         """Loop to monitor the temperature."""
         while True:
-            wx.CallAfter(self.temp.SetLabel, str(self.parent.cam.getTemperature()))
+            wx.CallAfter(
+                self.temp.SetLabel, str(self.cam.getTemperature()))
             sleep(2)
