@@ -182,6 +182,10 @@ class Instrument(object):
             logging.debug('Sockets filled!')
             newport_good = True
         except TimeoutError:
+            logging.debug('Newport Sockets timed out!')
+            sys.exc_clear()
+        except InstrumentError:
+            logging.debug('Newport errored out initializing sockets!')
             sys.exc_clear()
 
         if newport_good:
@@ -286,17 +290,15 @@ class Instrument(object):
     def components(self):
         return self.actuators + self.sensors
         
-    @timeout(20)
+    @timeout(30)
     def _fill_socket_list(self):
-        for i in range(_sockets):
-            self.open_sockets.append(
-                self.newport.TCP_ConnectToServer('192.168.0.254',5001,1))
-        
-        # Checking the status of the connections.
-        for i in range(_sockets):
-            if self.open_sockets[i] == -1:
+        for i in range(40):
+            socket = self.newport.TCP_ConnectToServer('192.168.0.254',5001,1)
+            if socket is not -1:
+                self.open_sockets.append(socket)
+            else:
                 raise InstrumentError('Newport socket connection not opened'
-                                      ' at position ' + str(i))
+                                      ' at position %d!' % i)
     
     @timeout(10)
     def _close_sockets(self):
