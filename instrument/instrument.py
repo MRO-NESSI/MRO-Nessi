@@ -1,3 +1,12 @@
+"""
+.. module:: instrument
+   :platform: Unix
+   :synopsis: The main file to interface with the NESSI instrument.
+   
+.. moduleauthor:: Tyler Cecil <tcecil@mro.nmt.edu>
+
+"""
+
 import logging
 import sys
 
@@ -12,7 +21,7 @@ from   sensors.lakeshore    import LakeshoreController
 from   sensors.flicam       import FLICam
 from   threadtools          import timeout, TimeoutError
 
-sockets = 40
+
 
 class Instrument(object):
     """Class to represent the NESSI instrument.
@@ -22,9 +31,51 @@ class Instrument(object):
     will provide a tidy way to initialize and/or close all 
     connections.
     
+    Every component will be an instance of `instrument.component.Component`.
+
     This object alone should suffice to control NESSI entirely.
+
+    Attributes
+    ----------
+    cfg : ConfigObj
+        Configuration object.
+    newport : xps Object
+        Newport XPS controller.
+    open_sockets : [int]
+        List of open Newport Sockets.
+    kmirror : KMirror Object
+        Kmirro interface.
+    mask_wheel : DewarWheel
+        Mask Wheel interface.
+    filter1_wheel : DewarWheel
+        Filter 1 Wheel interface.
+    filter2_wheel : DewarWheel
+        Filter 2 Wheel interface.
+    grism_wheel : DewarWheel
+    guide_focus : ThorlabsController
+        Focus ring for Guide Camera interface.
+    REI34_focus : ThorlabsController
+        Focus rings for REI 3/4 interface.
+    temperature : LakeshoreController
+        Temperature sensor interface.
+    guide_cam : FLICam
+        Guide camera interface.
+    keywords
+        List of keywords information 
+
+    Methods
+    -------
+    update_telescope_data()
+        Reads in the telescope position, updates ra and dec.
+    def kill_all(msg=None)
+        Safely disconnects all instrument components
+    def move_telescope(ra, dec)
+        Move the telescope.
+     
     """
-    
+
+    _sockets = 40
+
     def __init__(self, ):
         """Initialize the NESSI instrument.
         
@@ -237,12 +288,12 @@ class Instrument(object):
         
     @timeout(20)
     def _fill_socket_list(self):
-        for i in range(40):
+        for i in range(_sockets):
             self.open_sockets.append(
                 self.newport.TCP_ConnectToServer('192.168.0.254',5001,1))
         
         # Checking the status of the connections.
-        for i in range(40):
+        for i in range(_sockets):
             if self.open_sockets[i] == -1:
                 raise InstrumentError('Newport socket connection not opened'
                                       ' at position ' + str(i))
