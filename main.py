@@ -54,10 +54,10 @@ def main(argv=None):
     splash = buildSplash('media/badass.png')
 
     #Splash logger
-    def onLogEvent(self, event):
+    def onLogEvent(event):
         msg = event.message.strip('\r') + '\n'
         print 'I WAS CALLED %s' % msg
-        wx.CallAfter(splash.SetText,msg)
+        wx.CallAfter(self.SetText,msg)
         wx.Yield()
         event.Skip()
 

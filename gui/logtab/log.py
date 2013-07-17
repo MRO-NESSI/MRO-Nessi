@@ -27,7 +27,7 @@ class wxLogHandler(logging.Handler):
         """
         does nothing for this handler
         """
-
+        pass
 
     def emit(self, record):
         """

@@ -1,4 +1,5 @@
 import logging
+from time import sleep
 
 import wx
 
@@ -32,7 +33,7 @@ class MainNessiFrame(wx.Frame):
         ################################################################
         self.overviewPanel  = OverviewPanel(self.nb, self.instrument)
         self.guidingPanel   = GuidePanel(self.nb, self.instrument)
-        self.settingsPanel  = SettingsPanel(self.nb, )
+        self.settingsPanel  = SettingsPanel(self.nb, self.instrument)
         self.logPanel       = LogPanel(self.nb)
         self.emergencyPanel = EmergencyPanel(self.nb, self.instrument)
 
@@ -64,7 +65,7 @@ class MainNessiFrame(wx.Frame):
 
         #LogEvent Callback
         ################################################################
-        def onLogEvent(self, event):
+        def onLogEvent(event):
             msg = event.message.strip('\r') + '\n'
             self.statusbar.SetStatusText(msg)
             event.Skip()
