@@ -89,6 +89,7 @@ class KMirror(InstrumentComponent):
         return np.NewportStatusGet(self.controller, self.sockets[1], 
                                    self.motor)[0]
 
+    @logCall(msg='Moving KMirror.')
     def move(self, position):
         """Moves the wheel to a selected position.
             
@@ -112,8 +113,7 @@ class KMirror(InstrumentComponent):
                                   ' the K-Mirror. \n The following '
                                   ' error was raised...\n %s' % repr(e))
 
-        
-
+    @logCall(msg='Stepping KMirror.')   
     def step(self, offset):
         """Moves by a given offset angle.
         
@@ -142,6 +142,7 @@ class KMirror(InstrumentComponent):
         """
         self.move(0)
 
+    @logCall(msg='Stopping KMirror.')
     def stop(self):
         """Stops motion politely. Called to stop tracking.
             

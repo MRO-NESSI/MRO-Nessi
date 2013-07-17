@@ -57,22 +57,24 @@ class logCall(object):
 
 
     def __init__(self, msg=None, logger=None):
-        self.ENTRY_MESSAGE = 'BEGINNING: %s' % msg
-        self.EXIT_MESSAGE  = 'FINISHED: %s'  % msg
+        self.msg = msg
         self.logger = logging if logger is None else logger
         
     def __call__(self, func):
         
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
+            self.ENTRY_MESSAGE = 'BEGINNING: %s' % self.msg
             self.ENTRY_MESSAGE += '\n\t Function Call: ' 
-            self.ENTRY_MESSAGE += func.__name__ + str(args)
+            self.ENTRY_MESSAGE += func.__name__ 
+            self.ENTRY_MESSAGE += '(' + ', '.join(map(str,args)) + ')'
             self.ENTRY_MESSAGE += '\n\t Keyword Arguments: '
             self.ENTRY_MESSAGE += str(kwargs)
+
+            self.EXIT_MESSAGE  = 'FINISHED: %s'  % self.msg
+
             self.logger.info(self.ENTRY_MESSAGE)
-
             result = func(*args, **kwargs)
-
             self.logger.info(self.EXIT_MESSAGE)
 
             return result

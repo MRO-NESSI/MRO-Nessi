@@ -1,10 +1,9 @@
 #!/usr/bin/env python
-import logging
 import serial
 from serial import SerialException, SerialTimeoutException
 from struct import pack, unpack
 
-from instrument.component import InstrumentComponent, InstrumentError
+from instrument.component import InstrumentComponent, InstrumentError, logCall
 
 class ThorlabsController(InstrumentComponent):
     """Represents a Thorlabs TDC001 controller."""
@@ -61,11 +60,12 @@ class ThorlabsController(InstrumentComponent):
             raise InstrumentError('An unknown error occurred!\n %s' 
                                   % repr(e))
 
-        logging.debug('%s initialized!' % self._name)
-                
     def __del__(self):
         """Perform cleanup operations."""
         self.ser.close()
+
+    def __str__(self):
+        return 'Thorlabs controller: %s' % self.name
 
     def _read_exit_status(self):
         """Reads exit status from controller.
@@ -106,7 +106,8 @@ class ThorlabsController(InstrumentComponent):
                                       ' out. Has it been powered off or '
                                       'disconnected?\n Closed connection to'
                                       ' Thorlab controller...')
-    
+            
+    @logCall(msg='Homeing Thorlabs')
     def home(self):
         """Home the motor.
         Arguments:
@@ -118,8 +119,6 @@ class ThorlabsController(InstrumentComponent):
         See MGMSG_MOT_MOVE_HOME
         Page 50 - APT_Communications_Protocol_Rev 6
         """
-        
-        logging.info('%s began homing...' % self._name)
         
         tx  = '\x43\x04' + ThorlabsController._channel + '\x00'
         tx += ThorlabsController._dest + ThorlabsController._source
@@ -136,8 +135,7 @@ class ThorlabsController(InstrumentComponent):
                                       ' Thorlab controller...')
 
         position = self.position
-        logging.info('%s finished homing. Current position is %i' %
-                     (self._name, position))
+
         self.instrument.keywords[self._name] = position
                      
 
@@ -145,6 +143,7 @@ class ThorlabsController(InstrumentComponent):
     def position(self):
         """Returns the position of actuator."""
         return self.status()['Position']
+
 
     def status(self):
         """Returns the status of the motor.
@@ -179,6 +178,7 @@ class ThorlabsController(InstrumentComponent):
         stat['Position'] = stat['Position'] * 0.02915111
         return stat
 
+    @logCall(msg='Moving Thorlabs')
     def move_relative(self, distance):
         """Move the stage a relative distance.  
 
@@ -197,8 +197,6 @@ class ThorlabsController(InstrumentComponent):
         See MGMSG_MOT_MOVE_RELATIVE
         Page 51 - APT_Communications_Protocol_Rev 6
         """
-
-        logging.info('%s began moving %i um...' % (self._name, distance))
 
         #convert distance in um to counts, make sure it is an integer.
         intcounts = round(distance / 0.02915111) #um per count
@@ -221,11 +219,10 @@ class ThorlabsController(InstrumentComponent):
                                       ' Thorlab controller...')
 
         position = self.position
-        logging.info('%s finished moving. Current position is %i' %
-                     (self._name, position))
+
         self.instrument.keywords[self._name] = position
 
-
+    @logCall(msg='Moving Thorlabs')
     def move_absolute(self, position):
         """Move the stage an absolute position.
 
@@ -244,8 +241,6 @@ class ThorlabsController(InstrumentComponent):
         See MGMSG_MOT_MOVE_ABSOLUTE
         Page 54 - APT_Communications_Protocol_Rev 6
         """
-
-        logging.info('%s began moving to %i...' % (self._name, position))
 
         #convert distance in um to counts, make sure it is an integer.
         intcounts = round(position / 0.02915111) #um per count
@@ -267,6 +262,5 @@ class ThorlabsController(InstrumentComponent):
                                       'disconnected?\n Closed connection to'
                                       ' Thorlab controller...')
         position = self.position
-        logging.info('%s finished moving. Current position is %i' %
-                     (self._name, position))
+
         self.instrument.keywords[self._name] = position
