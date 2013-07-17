@@ -3,6 +3,7 @@
 from configobj import ConfigObj
 import math
 import time
+import threading
 from wx.lib.pubsub import Publisher
 
 import XPS_C8_drivers as xps
@@ -10,25 +11,29 @@ from threadtools import run_async
 from instrument.component import InstrumentError
 
 cfg = ConfigObj(infile="nessisettings.ini")
-
+fpa_limit_flag = threading.Event()
 
 def XPSErrorHandler(controller, socket, code, name):
+    """This is a general error handling function for the newport controller 
+    functions. First the function checks for errors in communicating with the 
+    controller, then it fetches the error string and displays it in a message 
+    box. If the error string can not be found it will print the error code for
+    lookup by the user.
+
+        Arguments: controller, socket, code, name.
+
+            controller: [xps]   Which instance of the XPS controller to use.
+            socket:     [int]   Which socket to use to communicate with the XPS 
+                                controller.
+            code:       [int]   The error code returned by the function that 
+                                called this function.
+            name:       [str]   The name of the function that called this 
+                                function.
+
+        Returns: None.
+
+        Raises: InstrumentError.
     """
-This is a general error handling function for the newport controller 
-functions. First the function checks for errors in communicating with the 
-controller, then it fetches the error string and displays it in a message box.  
-If the error string can not be found it will print the error code for lookup 
-by the user.
-
-    Inputs: controller, socket, code, name.
-
-    controller: [xps]   Which instance of the XPS controller to use.
-    socket:     [int]   Which socket to use to communicate with the XPS 
-                        controller.
-    code:       [int]   The error code returned by the function that called 
-                        this function.
-    name:       [str]   The name of the function that called this function.
-"""
     errstr = ''
     fatality = None
     
@@ -59,9 +64,25 @@ by the user.
     raise InstrumentError(errstr)
 
 def NewportWheelHome(controller, wheel, socket):
-    """
+    """This function homes a dewar wheel.  This function will call the 
+    XPSErrorHandler function if any of the newport commands fail. Information
+    about the specific homing of the motors is contained in the nessisettings
+    configuration file.  This function does not have a Timeout and can run 
+    indefinitely if there are problems with the switches. 
+    
+        Arguments: controller, socket, wheel.
 
+            controller: [xps]   Which instance of the XPS controller to use.
+            socket:     [int]   Which socket to use to communicate with the XPS 
+                                controller.
+            wheel:      [str]   The name of the function that called this 
+                                function.
+
+        Returns: None.
+
+        Raises: None.
     """
+    # Config-file based variables.
     group     = cfg[wheel]["group"]
     speed     = int(cfg[wheel]["direction"])*30
     wheel_gap = int(cfg[wheel]["direction"])*340
@@ -70,9 +91,16 @@ def NewportWheelHome(controller, wheel, socket):
     posval    = int(cfg[wheel]["position"]["val"])
     posbit    = int(cfg[wheel]["position"]["bit"])  
 
+    # Start of the algorithm.  If the wheel is not at a position it goes to one. 
     value = controller.GPIODigitalGet(socket, "GPIO4.DI")
+
+    # This part of the if statement checks for an error reading the the GPIO.
     if value[0] != 0:
         XPSErrorHandler(controller, socket, value[0], "GPIODigitalGet")
+
+    # This portion initiates a slow move forward to find the next position if it
+    # is not already at one.  If it is then it passes to the next part of the 
+    # function.
     elif int(format(value[1], "016b")[::-1][posbit]) != posval:
         Gset = controller.GroupSpinParametersSet(socket, group, speed, 800)
         while True:
@@ -91,6 +119,10 @@ def NewportWheelHome(controller, wheel, socket):
                 pass
     else:
         pass
+
+    # This section of the function checks to see if the wheel is already homed.
+    # If so then the function returns otherwise it begins moving to each 
+    # successive position until it finds the home position. 
     value = controller.GPIODigitalGet(socket, "GPIO4.DI")
     if value[0] != 0:
         XPSErrorHandler(controller, socket, value[0], 
@@ -100,13 +132,21 @@ def NewportWheelHome(controller, wheel, socket):
     else:
         pass
 
+    # This section controls motion between positions.  First it moves the motor
+    # a known distance to be close to the next position, then the motor is moved
+    # slowly until the next position is reached.  This is determined by a while
+    # loop that reads the position switch to see when it opens.  Once at a 
+    # position the home switch is checked to see if the wheel has arrived.  If 
+    # so then the function returns, otherwise the loop repeats, moving to the 
+    # next position.
     for i in range(8):
+        # Moving close to the next position.
         for j in range(2):
             GMove = controller.GroupMoveRelative(socket, group, [wheel_gap])
             if GMove[0] != 0:
                 XPSErrorHandler(controller, socket, GMove[0], 
                                 "GroupMoveRelative")
-        # Starting motion.
+        # Starting slow motion to the next position.
         Gset = controller.GroupSpinParametersSet(socket, group, speed, 
                                                  800)
         # Checking if the motion command was sent correctly.
@@ -115,10 +155,7 @@ def NewportWheelHome(controller, wheel, socket):
             XPSErrorHandler(controller ,socket, Gset[0],
                             "GroupSpinParametersSet")
         else:
-            # This while loop runs until the motor is one position before 
-            # the target. It has a one second delay after catching a bit 
-            # flip to allow the motor to go past the switch so it is not 
-            # double counted.
+            # The while loop checks for a position switch to open.
             while True:
                 time.sleep(.1)
                 value = controller.GPIODigitalGet(socket, "GPIO4.DI")
@@ -133,6 +170,9 @@ def NewportWheelHome(controller, wheel, socket):
                     break
                 else:
                     pass
+        # Once at a position, the home switch is checked to see if it is the 
+        # home position.  If so then the function returns, otherwise this 
+        # iteration of the loop passes.
         value = controller.GPIODigitalGet(socket, "GPIO4.DI")
         if value[0] != 0:
             XPSErrorHandler(controller, socket, value[0], 
@@ -145,22 +185,31 @@ def NewportWheelHome(controller, wheel, socket):
 
 
 def NewportWheelMove(controller, wheel, socket, current, position):
+    """This function moves a dewar wheel to a selected position.  Since the 
+    positions are identical this is done by moving a determined number of 
+    positions from the current (known) position.  If the position is not known
+    then the wheel should be homed first.  This function does not have a
+    Timeout and can run indefinitely if there are problems with the switches.
+
+        Arguments: controller, name, socket, current, position.
+
+            controller: [xps]   Which instance of the XPS controller to use.
+            wheel:      [str]   The name of the motor that is being used.  
+                                This is for config file purposes.
+            socket:     [int]   Which socket to use to communicate with the XPS 
+                                controller.
+            current:    [int]   What position the motor is currently at.
+            position:   [int]   What position the motor should move to.
+        
+        Returns: position
+            
+            position:   [int]   Theposition the motor moved to based on switch 
+                                counts.
+    
+        Raises: None
     """
-
-
-    Inputs: controller, name, socket, position.
-
-    controller: [xps]   Which instance of the XPS controller to use.
-    wheel:      [str]   The name of the motor that is being used.  This is for
-                        config file purposes.
-    socket:     [int]   Which socket to use to communicate with the XPS 
-                        controller.
-    current:    [int]   What position the motor is currently at.
-    position:   [int]   What position the motor should move to.
-    """
-    # Initializing variables.
+    # Initializing config-file specific variables.
     group     = cfg[wheel]["group"]
-    state     = 0
     speed     = int(cfg[wheel]["direction"])*30
     wheel_gap = int(cfg[wheel]["direction"])*340
     val       = int(cfg[wheel]["position"]["val"])
@@ -169,7 +218,17 @@ def NewportWheelMove(controller, wheel, socket, current, position):
     diff      = (int(cfg[wheel]["slots"]) - current + position) % \
                 int(cfg[wheel]["slots"])
 
+    # First there is a check to see if the motor is already at the current 
+    # position. This check is only a check of inputs.  It does not check to see
+    # if the motor is in a position.  If a motor has been moved by hand or if a
+    # previous move had failed then this check could still pass despite being
+    # wrong.
     if current != position:
+        # If the motor passes the theoretical check then the function checks to 
+        # see if the motor is on a switch. If it is not for some reason then it 
+        # moves forward slowly until it finds a switch and sets the movement 
+        # counter down by one.  This is because it is a known error that the 
+        # motor can detect a switch being flipped but not stop in time.
         value = controller.GPIODigitalGet(socket, "GPIO4.DI")
         if value[0] != 0:
             XPSErrorHandler(controller, socket, value[0], "GPIODigitalGet")
@@ -194,13 +253,16 @@ def NewportWheelMove(controller, wheel, socket, current, position):
         else:
             pass
 
+        # This loop moves the wheel forward one position each iteration and runs
+        # until it reaches the specified position.
         for i in range(diff):
+            # This loop moves the motor close to the next position quickly.
             for j in range(2):
                 GMove = controller.GroupMoveRelative(socket, group, [wheel_gap])
                 if GMove[0] != 0:
                     XPSErrorHandler(controller, socket, GMove[0], 
                                     "GroupMoveRelative")
-            # Starting motion.
+            # Starting slow motion.
             Gset = controller.GroupSpinParametersSet(socket, group, speed,
                                                      800)
             # Checking if the motion command was sent correctly.
@@ -209,10 +271,8 @@ def NewportWheelMove(controller, wheel, socket, current, position):
                 XPSErrorHandler(controller ,socket, Gset[0],
                                 "GroupSpinParametersSet")
             else:
-                # This while loop runs until the motor is one position before 
-                # the target. It has a one second delay after catching a bit 
-                # flip to allow the motor to go past the switch so it is not 
-                # double counted.
+                # This loop monitors the position switch to stop the motor when 
+                # it reaches the switch.
                 while True:
                     time.sleep(.1)
                     value = controller.GPIODigitalGet(socket, "GPIO4.DI")
@@ -229,24 +289,30 @@ def NewportWheelMove(controller, wheel, socket, current, position):
                         pass
             
         return position
+    
+    else:
+        return position
                 
 
 
 def NewportInitialize(controller, motor, socket, home_pos):
-    """
-An initialization function for any motor controlled by the XPS controller.
-This function returns nothing if succesful and calls XPSErrorHandler otherwise.
+    """An initialization function for any motor controlled by the XPS 
+    controller. This function returns nothing if succesful and calls 
+    XPSErrorHandler otherwise.
 
-    Inputs: controller, motor, socket, home_position.
+        Arguments: controller, motor, socket, home_position.
     
-    controller: [xps]   Which instance of the XPS controller to use.
-    motor:      [str]   The name of the motor that is being used.  This is for
-                        config file purposes.
-    socket:     [int]   Which socket to use to communicate with the XPS 
-                        controller.
-    home_pos:   [int]   Determines whether the thread will find the home 
-                        position or a different position.
-"""
+            controller: [xps]   Which instance of the XPS controller to use.
+            motor:      [str]   The name of the motor that is being used.  This 
+                                is for config file purposes.
+            socket:     [int]   Which socket to use to communicate with the XPS 
+                                controller.
+            home_pos:   [int]   What position on the motor is defined as home.
+
+        Returns: None.
+
+        Raises: None.
+    """
     # This function kills any motors that are still active from previous 
     # motions.
     GKill = controller.GroupKill(socket, cfg[motor]["group"])   
@@ -269,18 +335,21 @@ This function returns nothing if succesful and calls XPSErrorHandler otherwise.
 
 
 def NewportKmirrorMove(controller, socket, motor, position):
+    """This function moves the k-mirror to a choosen position at 10 deg/s.
+
+        Arguments: controller, socket, motor, position.
+
+            controller: [xps]   Which instance of the XPS controller to use.
+            socket:     [int]   Which socket to use to communicate with the XPS 
+                                controller.
+            motor:      [str]   Which motor is being controlled.  This is for 
+                                config file purposes.
+            position:   [float] What value to move the k-mirror to.
+
+        Returns: None.
+
+        Raises: None.
     """
-This function moves the k-mirror to a choosen position at 10 deg/s.
-
-    Inputs: controller, socket, motor, jog_state, position.
-
-    controller: [xps]   Which instance of the XPS controller to use.
-    socket:     [int]   Which socket to use to communicate with the XPS 
-                        controller.
-    motor:      [str]   Which motor is being controlled.  This is for config 
-                        file purposes.
-    position:   [float] What value to move the k-mirror to.
-"""
     # This checks to see if the motor is in a continuous rotation state and if 
     # it is then the function disables continuous rotation. 
 
@@ -306,21 +375,25 @@ This function moves the k-mirror to a choosen position at 10 deg/s.
    
 
 def NewportKmirrorRotate(controller, socket, motor, speed):
+    """This function prepares the motor for continuous rotation if it isn't 
+    already prepared and then sets a choosen velocity.
+
+        Arguments: controller, socket, motor, velocity.
+
+            controller: [xps]   Which instance of the XPS controller to use.
+            socket:     [int]   Which socket to use to communicate with the XPS 
+                                controller.
+            motor:      [str]   Which motor is being controlled.  This is for 
+                                config file purposes.
+            jog_state:  [bool]  Whether or not the motor in question is already 
+                                configured for continuous rotation. 
+            velocity:   [float] What value to set the rotational velocity to in 
+                                deg/s.
+    
+        Returns: None.
+    
+        Raises: None.
     """
-This function prepares the motor for continuous rotation if it isn"t already 
-prepared and then sets a choosen velocity.
-
-    Inputs: controller, socket, motor, jog_state, velocity.
-
-    controller: [xps]   Which instance of the XPS controller to use.
-    socket:     [int]   Which socket to use to communicate with the XPS 
-                        controller.
-    motor:      [str]   Which motor is being controlled.  This is for config 
-                        file purposes.
-    jog_state:  [bool]  Whether or not the motor in question is already 
-                        configured for continuous rotation. 
-    velocity:   [float] What value to set the rotational velocity to in deg/s.
-"""
     # This checks if the motor is in a continuous rotation state and if not 
     # enables that state.
     Gmode = controller.GroupJogModeEnable(socket, cfg[motor]["group"])
@@ -338,17 +411,28 @@ prepared and then sets a choosen velocity.
 
    
 def NewportStatusGet(controller, socket, motor):
-    """
+    """This function retrieves a list of information about the motor. The 
+    position of the motor is only accurate for the kmirror.
 
-    Inputs: controller, socket, motor.
+        Arguments: controller, socket, motor.
     
-    controller: [xps]   Which instance of the XPS controller to use.
-    socket:     [int]   Which socket to use to communicate with the XPS
-                        controller.
-    motor:      [str]   Which Motor is being controlled.  This is for config
-                        file purposes.
-"""
+            controller: [xps]   Which instance of the XPS controller to use.
+            socket:     [int]   Which socket to use to communicate with the XPS
+                                controller.
+            motor:      [str]   Which Motor is being controlled.  This is for 
+                                config file purposes.
+
+        Returns: info.
+    
+            info:       [list]  A list of information about the motor.
+                                [position, velocity, acceleration, min jerk
+                                time, max jerk time]
+
+        Raises: None.
+    """
+    # Initializing the empty list.
     info = []
+    # Retrieving the position of the motor.
     position = controller.GroupPositionCurrentGet(socket, cfg[motor]["group"], 
                                                   1)
     if position[0] != 0:
@@ -356,22 +440,40 @@ def NewportStatusGet(controller, socket, motor):
                         "GroupPositionCurrentGet")
     else:
         info.append(position[1])
+    # Getting the rest of the information.
     profile = controller.PositionerSGammaParametersGet(socket, 
                                                        cfg[motor]["positioner"])
     if profile[0] != 0:
         XPSErrorHandler(controller, socket, profile[0],
                         "PositionerSGammaParametersGet")
     else:
+        # compiling the list of information.
         for i in profile[1:]:
             info.append(i)
     return info
 
 
 def NewportStop(controller, socket, motor):
-    """
+    """This function stops the motion of a given motor.  If the motor in 
+    question is the kmirror motor then it also disables its continuous rotation 
+    mode.
 
-"""
+        Arguments: controller, socket, motor.
+    
+            controller: [xps]   Which instance of the XPS controller to use.
+            socket:     [int]   Which socket to use to communicate with the XPS
+                                controller.
+            motor:      [str]   Which Motor is being controlled.  This is for 
+                                config file purposes.
+
+        Returns: None.
+
+        Raises: None.
+    """
+    # Checking if the motor is the kmirror motor. If so then it stops the motor
+    # and disables jogging. 
     if motor == "kmirror":
+        # Stopping.
         GStop = controller.GroupJogParametersSet(socket, cfg[motor]["group"], 
                                                  [0],[200])
         if GStop[0] != 0:
@@ -379,13 +481,16 @@ def NewportStop(controller, socket, motor):
                             "GroupJogParametersSet")
         else: 
             pass 
+        # Disabling jogging.
         JDisable = controller.GroupJogModeDisable(socket, cfg[motor]["group"])
         if JDisable[0] != 0:
             XPSErrorHandler(controller, socket, JDisable[0],
                             "GroupJogModeDisable")
         else: 
-            pass        
+            pass   
+    # The case for the other motors.  Only a stop command is required.     
     else:
+        # Stopping.
         GStop = controller.GroupSpinParametersSet(socket, cfg[motor]["group"],
                                                   0, 800)
         if GStop[0] != 0:
@@ -396,78 +501,134 @@ def NewportStop(controller, socket, motor):
 
 @run_async
 def NewportFocusLimit(controller, socket, motor):
-    """
+    """This function is an asynchronus function that monitors the switches for 
+    the FPA.  If the FPA reaches one of its limits then the motor is stopped 
+    immediately.  If a polite stop fails then a kill all command is sent. 
+    
+        Arguments: controller, socket, motor.
+    
+            controller: [xps]   Which instance of the XPS controller to use.
+            socket:     [int]   Which socket to use to communicate with the XPS
+                                controller.
+            motor:      [str]   Which Motor is being controlled.  This is for 
+                                config file purposes.
+    
+        Returns: None.
 
-"""
+        Raises: None.
+
+    """
+    # Setting config-file variables.
     bitup = cfg[motor]["upper"]["bit"]
     bitdown = cfg[motor]["lower"]["bit"]
     valup = cfg[motor]["upper"]["val"]
     valdown = cfg[motor]["lower"]["val"]
     stop = False
-    while stop == False:
-        value = controller.GPIODigitalGet(socket, "GPIO4.DI")
-        velocity = controller.GroupSpinCurrentGet(socket, cfg[motor]["group"])
+    limit = False
 
+    # This while loop runs until the motor is stopped by a different function or
+    # it runs into a limit switch. 
+    while stop == False:
+        # Polling the controller for motor info.
+        value = controller.GPIODigitalGet(socket, "GPIO4.DI")
+        velocity = controller.GroupVelocityCurrentGet(socket, 
+                                                      cfg[motor]["group"])
+        
+        # If either of the polls fails then the loop and the motor are stopped.
         if value[0] != 0 or velocity[0] != 0:
+            fpa_limit_flag.clear()
+            limit = True
+            stop = True
             if value[0] != 0:
-                stop = True
                 XPSErrorHandler(controller, socket, value[0], "GPIODigitalGet")
             else:
-                stop = True
                 XPSErrorHandler(controller, socket, velocity[0], 
-                                "GroupSpinCurrentGet")
+                                "GroupVelocityCurrentGet")
 
+        # Checking if either of the switches are reached.
         elif int(format(value[1], "016b")[::-1][bitup]) == valup or \
              int(format(value[1], "016b")[::-1][bitdown]) == valdown:
+            fpa_limit_flag.clear()
+            limit = True
             stop = True
 
-        elif velocity[1] == 0:
+        # Checking if the motor was stopped.
+        elif fpa_limit_flag.is_set() == False:
             stop = True
 
         else:
             pass 
 
-    GStop = controller.GroupSpinModeStop(socket, cfg[motor]["group"], 400)
-    if GStop[0] != 0:
-        XPSErrorHandler(controller, socket, GStop[0], "GroupSpinModeStop")
-    else:
-        pass
+    if limit == True:
+        # Stopping the motor politely.
+        kill = controller.GroupKill(socket, cfg[motor]['group'])
+        if kill[0] != 0:
+            # Stopping the motor impolitely.
+            killall = controller.KillAll(socket)
+            if killall[0] != 0:
+                XPSErrorHandler(controller, socket, killall[0], "KillAll")
+            XPSErrorHandler(controller, socket, kill[0], "GroupKill")
            
 
 def NewportFocusMove(controller, socket, motor, distance, speed, direction):
-    """
-    Inputs: controller, socket, motor, distance, speed, direction.
+    """This function moves the FPA.  The user sets the distance speed and 
+    direction of the motion.  
+        Arguments: controller, socket, motor, distance, speed, direction.
 
-    controller: [xps]   Which instance of the XPS controller to use.
-    socket:     [list]  A list of two sockets to use to communicate with the 
-                        XPS controller.
-    motor:      [str]   Which motor is being controlled.  This is for config 
-                        file purposes.
-    distance:   [float] How far to move the array.
-    speed:      [int]   How fast to move the array.
-    direction:  [+-1]   which direction to move.
+            controller: [xps]   Which instance of the XPS controller to use.
+            socket:     [list]  A list of two sockets to use to communicate with 
+                                the XPS controller.
+            motor:      [str]   Which motor is being controlled.  This is for 
+                                config file purposes.
+            distance:   [float] How far to move the array (in micrometers).
+            speed:      [int]   How fast to move the array.
+            direction:  [+-1]   which direction to move.
+    
+        Returns: travel.
+
+            travel:     [float] How far the motor moved.  In the case of an 
+                                error this will be set to the string 'ERROR'.
+    
+        Raises: None.
 """
-    delay = speed/(distance*.576)
+    fpa_limit_flag.set()
+    deg_distance = distance*.576
     velocity = speed * direction * cfg[wheel]['direction']
+    
+    SGamma = controller.PositionerSGammaParametersSet(socket[1], 
+                                                      cfg[wheel]["positioner"], 
+                                                      velocity, 600, .005, .05)
+    if SGamma[0] != 0:
+        fpa_limit_flag.clear()
+        XPSErrorHandler(controller, socket[1], SGamma[0], 
+                        "PositionerSGammaParametersSet")                
+    
+    count = int(math.floor(deg_distance/360))
+    remainder = deg_distance % 360
+
     NewportFocusLimit(controller, socket[0], motor)
-    Gset = controller.GroupSpinParametersSet(socket[1], cfg[wheel]["group"], 
-                                             velocity, 600)
-    if Gset[0] != 0:
-        XPSErrorHandler(controller, socket[1], Gset[0], 
-                        "GroupSpinParametersSet")
+    for i in range(count):
+        if fpa_limit_flag.is_set() == False:
+            return 'ERROR'
+        
+        else:
+            GMove = controller.GroupMoveRelative(socket[1], cfg[motor]["group"], 
+                                             [360])
+            if GMove[0] != 0:
+                XPSErrorHandler(controller, socket[1], Gmove[0], 
+                                "GroupMoveRelative")
+    if fpa_limit_flag.is_set() == False:
+        return 'ERROR'
+    
     else:
-        pass 
-    time.sleep(delay)
-    GStop = controller.GroupSpinParametersSet(socket[1], cfg[motor]["group"],
-                                              0, 600)
-    if GStop[0] != 0:
-        Kill = controller.KillAll(socket[1])
-        if Kill[0] != 0:
-            XPSErrorHandler(controller, socket[1], Kill[0], "KillAll")        
-        XPSErrorHandler(controller, socket[1], GStop[0], "GroupSpinModeStop")
-        travel = 'ERROR'
-    else:
-        travel = distance
+        GMove = controller.GroupMoveRelative(socket[1], cfg[motor]["group"], 
+                                             [remainder])
+        if GMove[0] != 0:
+            XPSErrorHandler(controller, socket[1], Gmove[0], 
+                            "GroupMoveRelative")
+
+    travel = distance   
+    fpa_limit_flag.clear()
     return travel 
     
 
@@ -478,9 +639,9 @@ def NewportFocusHome(controller, socket, motor):
     bitdown = cfg[motor]["lower"]["bit"]
     valdown = cfg[motor]["lower"]["val"]
     home = True
-    vel = 200*cfg[wheel]['direction']
+    vel = -200*cfg[wheel]['direction']
     Gset = controller.GroupSpinParametersSet(socket, cfg[wheel]["group"], 
-                                             speed, 200)
+                                             vel, 200)
         # Checking if the motion command was sent correctly.
         # If so then the GPIO checking begins.
     if Gset[0] != 0:

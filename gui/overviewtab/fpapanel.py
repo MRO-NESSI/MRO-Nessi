@@ -75,7 +75,10 @@ class FPAPanel(wx.Panel):
             else:
                 speed = 10**math.floor(math.log10(math.fabs(move))) 
                 direction = math.copysign(1,move)           
-                new.NewportFocusMove(self.controller, self.socket[0], self.motor, move, speed, direction)
+                travel = new.NewportFocusMove(self.controller, self.socket[0],
+                                              self.motor, move, speed, 
+                                              direction)
+                self.pa = self.pa + travel
 
         except ValueError:
             pass
@@ -110,7 +113,9 @@ class FPAPanel(wx.Panel):
         try:
             step = self.step_size.GetValue()
             speed = 10**math.floor(math.log10(math.fabs(step)))   
-            new.NewportFocusMove(self.controller, self.socket[0], self.motor, move, speed, direction)
+            travel = new.NewportFocusMove(self.controller, self.socket[0],
+                                          self.motor, step, speed, direction)
+            self.pa = self.pa + travel
         except ValueError:
             pass
         for child in children:
