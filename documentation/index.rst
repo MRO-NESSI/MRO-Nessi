@@ -1,17 +1,30 @@
-.. instrument documentation master file, created by
-   sphinx-quickstart on Mon Jul 15 16:17:09 2013.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+==================
+NESSI --- A How-To
+==================
 
-Welcome to instrument's documentation!
-======================================
+Welcome to *the* NESSI documentation. Here we will strive
+to do three things: provide information about the NESSI instrument
+itself, explain how to use NESSI and the NESSI software, and show the
+inner workings of the NESSI software and electronic components. 
 
-Contents:
+
+If one wishes to understand the workings and design of NESSI, they
+should navigate to :doc:`The Instrument <instrument>`. If one wants to learn how to
+use NESSI and the NESSI software, navigate to :doc:`Tutorial <tutorial>`. If one
+wishes to understand and debug the NESSI software, they should
+navigate to :doc:`Software API <api>`.
+
+Table of Contents
+=================
 
 .. toctree::
-   :maxdepth: 4
+   :maxdepth: 2
+   
+   The Instrument <instrument>
 
-   instrument
+   Tutorial <tutorial>
+
+   Software API <api>
 
 
 Indices and tables
