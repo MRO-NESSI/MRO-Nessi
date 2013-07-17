@@ -1,5 +1,7 @@
+import functools
 import logging
 from threading import Lock
+
 
 class InstrumentComponent(object):
     """Abstract component to the NESSI instrument.
@@ -49,3 +51,30 @@ class KillAllError(InstrumentError):
     def __init__(self, msg):
         self.msg = msg
         logging.critical(msg)
+
+class logCall(object):
+    """Will log the function call with descriptor message"""
+
+
+    def __init__(self, msg=None, logger=None):
+        self.ENTRY_MESSAGE = 'BEGINNING: %s' % msg
+        self.EXIT_MESSAGE  = 'FINISHED: %s'  % msg
+        self.logger = logging if logger is None else logger
+        
+    def __call__(self, func):
+        
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            self.ENTRY_MESSAGE += '\n\t Function Call: ' 
+            self.ENTRY_MESSAGE += func.__name__ + str(args)
+            self.ENTRY_MESSAGE += '\n\t Keyword Arguments: '
+            self.ENTRY_MESSAGE += str(kwargs)
+            self.logger.info(self.ENTRY_MESSAGE)
+
+            result = func(*args, **kwargs)
+
+            self.logger.info(self.EXIT_MESSAGE)
+
+            return result
+
+        return wrapper

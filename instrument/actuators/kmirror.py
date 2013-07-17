@@ -1,5 +1,5 @@
 import instrument.actuators.newport as np
-from instrument.component import InstrumentComponent, InstrumentError
+from instrument.component import InstrumentComponent, InstrumentError, logCall
 
 class KMirror(InstrumentComponent):
     """Represents the Newport controlled K-Mirror.
@@ -128,6 +128,7 @@ class KMirror(InstrumentComponent):
         """
         self.move(offset + self.positionAngle)
 
+    @logCall(msg='Homeing the Kmirror.')
     def home(self):
         """Moves motor to position 0.
 
