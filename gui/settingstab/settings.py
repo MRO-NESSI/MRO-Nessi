@@ -1,11 +1,10 @@
-import prefcontrol
 import wx
 
 
 class SettingsPanel(wx.Panel):
-    def __init__(self, parent, *args, **kwargs):
+    def __init__(self, parent, instrument):
         super(SettingsPanel, self).__init__(parent)
-        
+
         # Attributes                
         self.scopeLbl = wx.StaticText(self, wx.ID_ANY, "Telescope Server:")
         self.scopeTxt = wx.TextCtrl(self, wx.ID_ANY, "")
