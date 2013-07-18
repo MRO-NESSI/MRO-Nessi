@@ -131,13 +131,6 @@ class MainNessiFrame(wx.Frame):
         wx.AboutBox(info)
 
 """
-        #Logger GUI Handlers
-        logTabFormatter = logging.Formatter(
-            '[%(asctime)s] %(filename)s:%(funcName)s - %(message)s')
-        logTabHandler = wxLogHandler(page5)
-        logTabHandler.setFormatter(logTabFormatter)
-        logTabHandler.setLevel(logging.INFO)
-        logging.getLogger('').addHandler(logTabHandler)
 
         logging.info('NESSI initialized.')
 """

@@ -5,6 +5,7 @@ import wx.lib.newevent
 from wx.richtext import RichTextCtrl
 
 # create event type
+################################################################
 wxLogEvent, EVT_WX_LOG_EVENT = wx.lib.newevent.NewEvent()
 
 
@@ -12,12 +13,14 @@ class wxLogHandler(logging.Handler):
     """
     A handler class which sends log strings to a wx object
     """
+
     def __init__(self, wxDest=None):
         """
         Initialize the handler
         @param wxDest: the destination object to post the event to 
         @type wxDest: wx.Window
         """
+
         logging.Handler.__init__(self)
         self.wxDest = wxDest
         self.level = logging.DEBUG
@@ -47,28 +50,55 @@ class LogPanel(wx.Panel):
     def __init__(self, parent, *args, **kwargs):
         super(LogPanel, self).__init__(parent)
 
-        # Attributes
-        self.logTxt = wx.StaticText(self, wx.ID_ANY, "Instrument Log:")
-        self.log = RichTextCtrl(self, -1, size=(-1,130), style=wx.TE_MULTILINE|wx.TE_READONLY)
-        self.log.SetBackgroundColour('#B0D6B0')
-        self.obs_logTxt = wx.StaticText(self, wx.ID_ANY, "Observing Comments:")
-        self.obs_log = wx.TextCtrl(self, -1, size=(-1,75), style=wx.TE_MULTILINE)
-        self.log_button = wx.Button(self, label="Log")
-        self.log_button.Bind(wx.EVT_BUTTON, self.onLog)
+        #GUI Components
+        ################################################################
+        #Main Log
+        self.logLable = wx.StaticText(self, wx.ID_ANY, "Instrument Log:")
+        self.logText  = RichTextCtrl(self, -1, size=(-1,130), 
+                                     style=wx.TE_MULTILINE|wx.TE_READONLY)
+        self.logText.SetBackgroundColour('#B0D6B0')
+
         
+        #Observer Field
+        self.obs_logTxt = wx.StaticText(self, wx.ID_ANY, 
+                                        "Observing Comments:")
+        self.obs_log    = wx.TextCtrl(self, -1, size=(-1,75), 
+                                      style=wx.TE_MULTILINE)
+        self.log_button = wx.Button(self, label="Log")
+
+        #Guiding Log
         self.guidelogTxt = wx.StaticText(self, wx.ID_ANY, "Guiding Log:")
-        self.guidelog = wx.TextCtrl(self, -1, size=(-1,130), style=wx.TE_MULTILINE|wx.TE_READONLY)
+        self.guidelog    = wx.TextCtrl(self, -1, size=(-1,130), 
+                                       style=wx.TE_MULTILINE|wx.TE_READONLY)
         self.guidelog.SetBackgroundColour('#B0D6B0')
 
-        # Layout       
+
+        #Init Logging
+        ################################################################
+        self.initLogger()
+
+        #Layout       
+        ################################################################
         self.__DoLayout()
 
-        #Taken from http://wiki.wxpython.org/StyledTextCtrl%20Log%20Window%20Demo
-        self.log._styles = [None]*32
-        self.log._free = 1
+        #Bind Things
+        ################################################################
+        self.log_button.Bind(wx.EVT_BUTTON, self.onLog)
+        self.Bind(EVT_WX_LOG_EVENT, self.onLogEvent)
+
 
         #EVT_WX_LOG_EVENT
-        self.Bind(EVT_WX_LOG_EVENT, self.onLogEvent)
+        
+    def initLogger(self):
+        logTabFormatter = logging.Formatter(
+            '[%(asctime)s] %(filename)s:- %(message)s')
+        logTabHandler   = wxLogHandler(self)
+
+        logTabHandler.setFormatter(logTabFormatter)
+        logTabHandler.setLevel(logging.INFO)
+        logging.getLogger('').addHandler(logTabHandler)
+
+        
         
     def __DoLayout(self):
         mainSizer = wx.BoxSizer(wx.VERTICAL)
@@ -78,14 +108,27 @@ class LogPanel(wx.Panel):
         guideSizer.AddGrowableCol(0)
         guideSizer.AddGrowableRow(0)
         
-        instSizer.Add(self.logTxt, 0, wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL)
-        instSizer.Add(self.log, 1, wx.EXPAND | wx.ALIGN_CENTER_VERTICAL)
-        instSizer.Add(self.obs_logTxt, 0, wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL)
+        #Main Log
+        ################################################################
+        instSizer.Add(
+            self.logLable, 0, wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL)
+        instSizer.Add(
+            self.logText, 1, wx.EXPAND | wx.ALIGN_CENTER_VERTICAL)
+
+        #Observer Notes
+        ################################################################
+        instSizer.Add(
+            self.obs_logTxt, 0, wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL)
         instSizer.Add(self.obs_log, 0, wx.EXPAND)
-        instSizer.Add(self.log_button, 0, wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL)
-                    
-        guideSizer.Add(self.guidelogTxt, 0, wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL)
-        guideSizer.Add(self.guidelog, 0, wx.EXPAND | wx.ALIGN_CENTER_VERTICAL)            
+        instSizer.Add(
+            self.log_button, 0, wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL)
+
+        #Guider Log
+        ################################################################
+        guideSizer.Add(
+            self.guidelogTxt, 0, wx.ALIGN_LEFT | wx.ALIGN_CENTER_VERTICAL)
+        guideSizer.Add(
+            self.guidelog, 0, wx.EXPAND | wx.ALIGN_CENTER_VERTICAL)
                         
         mainSizer.Add(instSizer, 1, wx.EXPAND|wx.ALL, 5)
         mainSizer.Add(guideSizer, 0, wx.EXPAND|wx.ALL, 5)
@@ -107,8 +150,8 @@ class LogPanel(wx.Panel):
             'CRITICAL' : 'red'
             }
         msg = event.message.strip('\r') + '\n'
-        self.log.SetInsertionPointEnd()
-        self.log.BeginTextColour(colors[event.levelname])
-        self.log.WriteText(msg)
-        self.log.EndTextColour()
+        self.logText.SetInsertionPointEnd()
+        self.logText.BeginTextColour(colors[event.levelname])
+        self.logText.WriteText(msg)
+        self.logText.EndTextColour()
         event.Skip()
