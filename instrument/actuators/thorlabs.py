@@ -60,12 +60,13 @@ class ThorlabsController(InstrumentComponent):
             raise InstrumentError('An unknown error occurred!\n %s' 
                                   % repr(e))
 
+
     def __del__(self):
         """Perform cleanup operations."""
         self.ser.close()
 
     def __str__(self):
-        return 'Thorlabs controller: %s' % self.name
+        return 'Thorlabs controller: %s' % self._name
 
     def _read_exit_status(self):
         """Reads exit status from controller.
