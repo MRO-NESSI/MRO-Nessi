@@ -268,7 +268,7 @@ class Instrument(object):
     def actuators(self):
         actuators = [
             self.newport      ,
-            self.kmiror       ,
+            self.kmirror       ,
             self.mask_wheel   ,
             self.filter1_wheel,
             self.filter2_wheel,

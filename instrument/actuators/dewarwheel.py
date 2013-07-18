@@ -1,5 +1,5 @@
 import newport as np
-from instrument.component import InstrumentComponent, InstrumentError
+from instrument.component import InstrumentComponent, InstrumentError, logCall
 
 class DewarWheel(InstrumentComponent):
     """Represents a Newport controlled wheel in the dewar.
@@ -20,7 +20,7 @@ class DewarWheel(InstrumentComponent):
             name       -- Name of the wheel to control -> str 
             sockets    -- List of integers representing TCP sockets ->[Int]
             positions  -- Possible positions for the wheel -> [str]
-
+;
         Raises:
              InstrumentError
         """
@@ -38,12 +38,16 @@ class DewarWheel(InstrumentComponent):
         self.initialize()
         self.home()
 
+    def __str__(self):
+        return self.name
+
     @property
     def position(self):
         """Returns the name of the current position."""
 
         return self.positions[self.current_pos]
 
+    @logCall(msg='Moving Dewar Wheel.')
     def move(self, selected_pos):
         """Moves the wheel to a selected position.
             
@@ -69,6 +73,7 @@ class DewarWheel(InstrumentComponent):
                                   ' the' + self.name + '\n The following '
                                   ' error was raised...\n %s' % repr(e))  
 
+    @logCall(msg='Homeing Dewar Wheel.')
     def home(self):
         """Homes the wheel.
             

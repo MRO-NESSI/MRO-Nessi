@@ -150,24 +150,25 @@ class FocusREIPanel(wx.Panel):
         wx.CallAfter(self.curr_pos.SetLabel, '...')
         wx.CallAfter(self.Enable, False)
 
-        #Get desired location
-        ################################################################
-        loc = self.goto_value.GetValue()
-        if not loc.isdigit():
-            wx.CallAfter(wx.MessageBox,'Please select a valid number!', 
-                         'INVALID FOCUS POSITION!', wx.OK | wx.ICON_ERROR)
-            self.updateCurrPos()
-            wx.CallAfter(self.Enable, True)
-            return
 
-        #Move motor
-        ################################################################
         try:
+            #Get desired location
+            ################################################################
+            loc = self.goto_value.GetValue()
+            loc = float(loc)
+
+            #Move motor
+            ################################################################
             self.motor.move_absolute(loc)        
+
         except InstrumentError:
             wx.CallAfter(self.curr_pos.SetLabel,
                          'ERROR!')
             return
+        
+        except ValueError:
+            wx.CallAfter(wx.MessageBox,'Please select a valid number!', 
+                         'INVALID FOCUS POSITION!', wx.OK | wx.ICON_ERROR)
 
         #Enable frame
         ################################################################
@@ -182,3 +183,4 @@ class FocusREIPanel(wx.Panel):
             wx.CallAfter(self.curr_pos.SetLabel,
                          'ERROR!')
             return            
+
