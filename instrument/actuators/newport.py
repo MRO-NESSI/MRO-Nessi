@@ -586,15 +586,18 @@ def NewportFocusMove(controller, socket, motor, distance, speed, direction):
     
         Returns: travel.
 
-            travel:     [float] How far the motor moved.  In the case of an 
-                                error this will be set to the string 'ERROR'.
+            travel:     [float] How far the motor moved in micrometers.  In the 
+                                case of an error this will be set to the string 
+                                'ERROR'.
     
         Raises: None.
 """
+    # Initializing variables of motion and setting the fpa_limit_flag to true.
     fpa_limit_flag.set()
     deg_distance = distance*.576
-    velocity = speed * direction * cfg[wheel]['direction']
-    
+    velocity = speed 
+    true_direction = direction * cfg[wheel]['direction']
+    # initializing the motors motion profile and checking to for success.
     SGamma = controller.PositionerSGammaParametersSet(socket[1], 
                                                       cfg[wheel]["positioner"], 
                                                       velocity, 600, .005, .05)
@@ -603,23 +606,33 @@ def NewportFocusMove(controller, socket, motor, distance, speed, direction):
         XPSErrorHandler(controller, socket[1], SGamma[0], 
                         "PositionerSGammaParametersSet")                
     
+    # determining how many rotaions to move the motor.
     count = int(math.floor(deg_distance/360))
-    remainder = deg_distance % 360
+    remainder = true_direction * (deg_distance % 360)
 
+    # Starting the monitoring thread.
     NewportFocusLimit(controller, socket[0], motor)
+    
+    # This loop checks to be sure the motor is allowed to move.  If so then it 
+    # rotates the motor 360 degrees in the appropriate direction and then 
+    # repeats.
     for i in range(count):
+        # Check of motor movability.
         if fpa_limit_flag.is_set() == False:
             return 'ERROR'
         
         else:
+            # Movement.
             GMove = controller.GroupMoveRelative(socket[1], cfg[motor]["group"], 
-                                             [360])
+                                             [true_direction * 360])
             if GMove[0] != 0:
                 XPSErrorHandler(controller, socket[1], Gmove[0], 
                                 "GroupMoveRelative")
+    # A last check to determine if the motor can move.
     if fpa_limit_flag.is_set() == False:
         return 'ERROR'
     
+    # Moving the motor the last fraction of a rotation.
     else:
         GMove = controller.GroupMoveRelative(socket[1], cfg[motor]["group"], 
                                              [remainder])
@@ -627,37 +640,59 @@ def NewportFocusMove(controller, socket, motor, distance, speed, direction):
             XPSErrorHandler(controller, socket[1], Gmove[0], 
                             "GroupMoveRelative")
 
+    # Returning the distance traveled and setting the fpa_limit_flag to false so
+    # that the limit tracking thread stops.
     travel = distance   
     fpa_limit_flag.clear()
     return travel 
     
 
 def NewportFocusHome(controller, socket, motor):
-    """
+    """This function homes the FPA .  It runs the FPA towards the bottom of its
+    motion until it hits the lower limit switch.  When it reaches the switch a 
+    stop command is sent.  If that fails then kill commands will be sent.
 
-"""
+        Arguments: controller, socket, motor.
+    
+            controller: [xps]   Which instance of the XPS controller to use.
+            socket:     [int]   Which socket to use to connect to the XPS 
+                                controller.
+            motor:      [str]    Which motor is being controlled.  This is for 
+                                config file purposes. 
+
+        Returns: None.
+
+        Raises: None.
+    """
+    # Initializing motor variables.
     bitdown = cfg[motor]["lower"]["bit"]
     valdown = cfg[motor]["lower"]["val"]
-    home = True
     vel = -200*cfg[wheel]['direction']
+    group = cfg[wheel]['group']
+    
+    # Starting motion. 
     Gset = controller.GroupSpinParametersSet(socket, cfg[wheel]["group"], 
                                              vel, 200)
-        # Checking if the motion command was sent correctly.
-        # If so then the GPIO checking begins.
     if Gset[0] != 0:
         XPSErrorHandler(controller ,socket, Gset[0], "GroupSpinParametersSet")
     else:
-        while home == True:
+        # This loop watches for the limit switch to be activated.
+        while True:
             value = controller.GPIODigitalGet(socket, "GPIO4.DI")
             if int(format(value[1], "016b")[::-1][bitdown]) == valdown:
-                home = False
+                break
             else:
                 time.sleep(.1)
-    stop = controller.GroupSpinModeStop(socket, cfg[wheel]["group"], 400)
+    # When the loop terminates a stop command is sent.  If that command fails a
+    # group kill command is sent.  If that fails a kill all command is sent. 
+    stop = controller.GroupSpinModeStop(socket, group, 400)
     if stop[0] != 0:
-        Kill = controller.KillAll(socket)
+        Kill = controller.GroupKill(socket, group)
         if Kill[0] != 0:
-            XPSErrorHandler(controller, socket, Kill[0], "KillAll")        
+            KillAll = controller.KillAll(socket)
+            if KillAll[0] != 0:
+                XPSErrorHandler(controller, socket, KillAll[0], "KillAll")            
+            XPSErrorHandler(controller, socket, Kill[0], "GroupKill")        
         XPSErrorHandler(controller, socket, stop[0], "GroupSpinModeStop")    
     else:
         pass
