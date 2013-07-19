@@ -65,6 +65,9 @@ class ThorlabsController(InstrumentComponent):
         """Perform cleanup operations."""
         self.ser.close()
 
+    def kill(self):
+        self.ser.close()
+
     def __str__(self):
         return 'Thorlabs controller: %s' % self._name
 

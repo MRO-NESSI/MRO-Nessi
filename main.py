@@ -135,4 +135,9 @@ def initLogger(level=logging.DEBUG, logdir='logfiles'):
     logging.getLogger('').addHandler(logfileHandler)
                         
 if __name__ == "__main__":
+#    try:
     main()
+#    except KeyboardInterrupt:
+#        wx.MessageBox('Are you ok?', 
+#                      'KILL ALL RAISED!', wx.YES_NO | wx.ICON_ERROR)
+

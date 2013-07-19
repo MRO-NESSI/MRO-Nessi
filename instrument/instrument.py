@@ -8,6 +8,7 @@
 """
 
 import logging
+import thread
 import sys
 
 from configobj import ConfigObj
@@ -112,40 +113,40 @@ class Instrument(object):
         ################################################################
         #TODO: Be sure to be getting decimal degrees
         self.keywords = {
-            "OBSERVER"  : "Observer",
-            "INST"      : "NESSI",
-            "TELESCOP"  : "MRO 2.4m",
-            "FILENAME"  : "default",
-            "IMGTYPE"   : "imgtyp",
-            "RA"        : "TCS down" ,   
-            "DEC"       : "TCS down",  
-            "AIRMASS"   : "TCS down",       
-            "TELALT"    : "TCS down",
-            "TELAZ"     : "TCS down",
-            "TELFOCUS"  : "TCS down",
-            "PA"        : "TCS down",
-            "JD"        : "TCS down",
-            "GDATE"     : "TCS down",
-            "WINDVEL"   : "No Env data",
-            "WINDGUST"  : "No Env data",
-            "WINDDIR"   : "No Env data",
-            "REI12"     : 0.0, # focus position
-            "REI34"     : 0.0, # focus position
-            "MASK"      : "None",
-            "FILTER1"   : "None",
-            "FILTER2"   : "None",
-            "GRISM"     : "None",
-            "EXP"       : 0.0,
-            "CAMTEMP"   : 0.0,
-            "CTYPE1"    : "RA---TAN",
-            "CTYPE2"    : "DEC--TAN",
-            "CRPIX1"    : 512.0,
-            "CRPIX2"    : 512.0,
-            "CDELT1"    : 0.0, 
-            "CDELT2"    : 0.0,
-            "CRVAL1"    : 0.0, 
-            "CRVAL2"    : 0.0,
-            "CROTA2"    : 0.0
+            "OBSERVER"  : "Observer",    #Who is look
+            "INST"      : "NESSI",       #Instrument
+            "TELESCOP"  : "MRO 2.4m",    #Telescope
+            "FILENAME"  : "default",     #FOR THE FITS
+            "IMGTYPE"   : "imgtyp",      #FOR THE FITS
+            "RA"        : "TCS down" ,   #RA
+            "DEC"       : "TCS down",    #Declination
+            "AIRMASS"   : "TCS down",    #Pull from MRO 
+            "TELALT"    : "TCS down",    #''
+            "TELAZ"     : "TCS down",    #''
+            "TELFOCUS"  : "TCS down",    #''
+            "PA"        : "TCS down",    #Parallactic Angle
+            "JD"        : "TCS down",    #??????????
+            "GDATE"     : "TCS down",    #Gregorian Date
+            "WINDVEL"   : "No Env data", #Wind vel
+            "WINDGUST"  : "No Env data", #Wind gust
+            "WINDDIR"   : "No Env data", #Wind dir
+            "REI12"     : 0.0,           #focus position ???
+            "REI34"     : 0.0,           #focus position (Dewar focus)
+            "MASK"      : "None",        #mask
+            "FILTER1"   : "None",        #filter1
+            "FILTER2"   : "None",        #filter2
+            "GRISM"     : "None",        #grism
+            "EXP"       : 0.0,           #??????????
+            "CAMTEMP"   : 0.0,           #Guide cam temp
+            "CTYPE1"    : "RA---TAN",    #?????????
+            "CTYPE2"    : "DEC--TAN",    #?????????
+            "CRPIX1"    : 512.0,         #?????????
+            "CRPIX2"    : 512.0,         #?????????
+            "CDELT1"    : 0.0,           #?????????
+            "CDELT2"    : 0.0,           #?????????
+            "CRVAL1"    : 0.0,           #?????????
+            "CRVAL2"    : 0.0,           #?????????
+            "CROTA2"    : 0.0            #?????????
             }
 
         #Init components
@@ -267,7 +268,7 @@ class Instrument(object):
     @property
     def actuators(self):
         actuators = [
-            self.newport      ,
+#            self.newport      ,
             self.kmirror       ,
             self.mask_wheel   ,
             self.filter1_wheel,
@@ -330,7 +331,14 @@ class Instrument(object):
         """
         #TODO: Implement!
 
-        raise KillAllError(msg)
+        print dir(thread.interrupt_main)
+        print thread.interrupt_main.__doc__
+        print type(thread.interrupt_main)
+
+        thread.interrupt_main.__call__()
+
+            
+        
 
     def move_telescope(self, ra, dec):
         """Will move the telescope to a new RA and DEC.
