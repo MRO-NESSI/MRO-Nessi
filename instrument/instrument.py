@@ -21,7 +21,7 @@ from   component            import InstrumentError, KillAllError
 from   sensors.lakeshore    import LakeshoreController
 from   sensors.flicam       import FLICam
 from   threadtools          import timeout, TimeoutError
-
+from   telescope.telescope  import Telescope
 
 
 class Instrument(object):
@@ -109,53 +109,13 @@ class Instrument(object):
         self.temperature = None
         self.guide_cam   = None
 
-        #Define keywords
+        #Init Telescope connection
         ################################################################
-        #TODO: Be sure to be getting decimal degrees
-        self.keywords = {
-            "OBSERVER"  : "Observer",    #Who is look
-            "INST"      : "NESSI",       #Instrument
-            "TELESCOP"  : "MRO 2.4m",    #Telescope
-            "FILENAME"  : "default",     #FOR THE FITS
-            "IMGTYPE"   : "imgtyp",      #FOR THE FITS
-            "RA"        : "TCS down" ,   #RA
-            "DEC"       : "TCS down",    #Declination
-            "AIRMASS"   : "TCS down",    #Pull from MRO 
-            "TELALT"    : "TCS down",    #''
-            "TELAZ"     : "TCS down",    #''
-            "TELFOCUS"  : "TCS down",    #''
-            "PA"        : "TCS down",    #Parallactic Angle
-            "JD"        : "TCS down",    #??????????
-            "GDATE"     : "TCS down",    #Gregorian Date
-            "WINDVEL"   : "No Env data", #Wind vel
-            "WINDGUST"  : "No Env data", #Wind gust
-            "WINDDIR"   : "No Env data", #Wind dir
-            "REI12"     : 0.0,           #focus position ???
-            "REI34"     : 0.0,           #focus position (Dewar focus)
-            "MASK"      : "None",        #mask
-            "FILTER1"   : "None",        #filter1
-            "FILTER2"   : "None",        #filter2
-            "GRISM"     : "None",        #grism
-            "EXP"       : 0.0,           #??????????
-            "CAMTEMP"   : 0.0,           #Guide cam temp
-            "CTYPE1"    : "RA---TAN",    #?????????
-            "CTYPE2"    : "DEC--TAN",    #?????????
-            "CRPIX1"    : 512.0,         #?????????
-            "CRPIX2"    : 512.0,         #?????????
-            "CDELT1"    : 0.0,           #?????????
-            "CDELT2"    : 0.0,           #?????????
-            "CRVAL1"    : 0.0,           #?????????
-            "CRVAL2"    : 0.0,           #?????????
-            "CROTA2"    : 0.0            #?????????
-            }
+        self.telescope = Telescope('eos.nmt.edu', 7624)
 
         #Init components
         ################################################################
         self._init_components()
-
-        #Get Telescope data
-        ################################################################
-        self.update_telescope_data()
 
     def _init_components(self):
         """Initialize the instrument components and connections. Logs
@@ -264,11 +224,54 @@ class Instrument(object):
             self.guide_cam = FLICam(self)
         except InstrumentError:
             sys.exc_clear()
+
+    @property
+    def keywords(self):
+        #Define keywords
+        ################################################################
+        #TODO: Be sure to be getting decimal degrees
+        keywords = {
+            "OBSERVER" : "Observer",    #TODO: Get from somewhere
+            "INST"     : "NESSI",       
+            "TELESCOP" : "MRO 2.4m",    #TODO:Get from indi?
+            "FILENAME" : "default",     #TODO:Do these later?
+            "IMGTYPE"  : "imgtyp",      
+            "RA"       : self.telescope.ra,
+            "DEC"      : self.telescope.dec,
+            "AIRMASS"  : self.telescope.airmass,
+            "TELALT"   : self.telescope.altitude,
+            "TELAZ"    : self.telescope.azimuth,
+            "TELFOCUS" : "TCS down",    #TODO:Where is?
+            "PA"       : self.telescope.parallactic_angle,
+            "JD"       : self.telescope.julian_date,
+            "GDATE"    : "TCS down",    #TODO:Generate
+            "WINDVEL"  : self.telescope.wind_speed,
+            "WINDGUST" : self.telescope.wind_gust,
+            "WINDDIR"  : self.telescope.wind_direction,
+            "REI12"    : 0.0,           #focus position ???
+            "REI34"    : 0.0,           #focus position (Dewar focus)
+            "MASK"     : self.mask_wheel.position,
+            "FILTER1"  : self.filter1_wheel.position,
+            "FILTER2"  : self.filter2_wheel.position,
+            "GRISM"    : self.grism_wheel.position,
+            "EXP"      : 0.0,           #??????????
+            "CAMTEMP"  : self.guide_cam.getTemperature(),
+            "CTYPE1"   : "RA---TAN",    #?????????
+            "CTYPE2"   : "DEC--TAN",    #?????????
+            "CRPIX1"   : 512.0,         #?????????
+            "CRPIX2"   : 512.0,         #?????????
+            "CDELT1"   : 0.0,           #?????????
+            "CDELT2"   : 0.0,           #?????????
+            "CRVAL1"   : 0.0,           #?????????
+            "CRVAL2"   : 0.0,           #?????????
+            "CROTA2"   : 0.0            #?????????
+            }
         
+        return keywords
+
     @property
     def actuators(self):
         actuators = [
-#            self.newport      ,
             self.kmirror       ,
             self.mask_wheel   ,
             self.filter1_wheel,
@@ -294,7 +297,8 @@ class Instrument(object):
     @timeout(30)
     def _fill_socket_list(self):
         for i in range(40):
-            socket = self.newport.TCP_ConnectToServer('192.168.0.254',5001,1)
+            socket = self.newport.TCP_ConnectToServer(
+                '192.168.0.254',5001,1)
             if socket is not -1:
                 self.open_sockets.append(socket)
             else:
@@ -306,16 +310,6 @@ class Instrument(object):
         for i in range(len(self.open_sockets)):
             self.newport.TCP_CloseSocket(self.open_sockets[i])            
         
-    def update_telescope_data(self):
-        """Will communicate with the telescope via indiclient
-        and fetch the indivectors that are relevant to us.
-        It will the put this information into the keywords
-        dictionary.
-
-        returns None
-         """
-        #TODO: Implement!
-        pass
 
     def kill_all(self, msg=None):
         """Will call the kill function on all components and delete their
@@ -338,20 +332,6 @@ class Instrument(object):
         thread.interrupt_main.__call__()
 
             
-        
-
-    def move_telescope(self, ra, dec):
-        """Will move the telescope to a new RA and DEC.
-
-        Arguments:
-            ra  -- New right ascension
-            dec -- New declination
-
-        returns None
-        """
-        #TODO: Implement!
-        pass
-
     def __del__(self):
         self.kill_all('Instrument is being deleted.')
 
