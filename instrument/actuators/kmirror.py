@@ -35,7 +35,6 @@ class KMirror(InstrumentComponent):
         self.home_pos = 0
         self.current_pos = 0
         self.track_status = False
-        self.keywords = instrument.keywords
 
         self.initialize()
 

@@ -8,7 +8,6 @@
 """
 
 import logging
-import thread
 import sys
 
 from configobj import ConfigObj
@@ -22,7 +21,6 @@ from   sensors.lakeshore    import LakeshoreController
 from   sensors.flicam       import FLICam
 from   threadtools          import timeout, TimeoutError
 from   telescope.telescope  import Telescope
-
 
 class Instrument(object):
     """Class to represent the NESSI instrument.
@@ -95,7 +93,7 @@ class Instrument(object):
         #Newport things
         self.newport       = None
         self.open_sockets  = None
-        self.kmirror        = None        
+        self.kmirror       = None        
         self.mask_wheel    = None
         self.filter1_wheel = None
         self.filter2_wheel = None
@@ -116,6 +114,8 @@ class Instrument(object):
         #Init components
         ################################################################
         self._init_components()
+
+#        raise InstrumentError('DICKS!')
 
     def _init_components(self):
         """Initialize the instrument components and connections. Logs
@@ -149,6 +149,8 @@ class Instrument(object):
             logging.debug('Newport errored out initializing sockets!')
             sys.exc_clear()
 
+
+
         if newport_good:
             #Kmirror
             ################
@@ -158,6 +160,7 @@ class Instrument(object):
                 logging.debug('K-Mirror initialized!')
             except InstrumentError:
                 sys.exc_clear()
+
 
             #Mask
             #################
@@ -199,7 +202,7 @@ class Instrument(object):
             except InstrumentError:
                 sys.exc_clear()
 
-
+                
         #Thorlabs components
         ################################################################
         try:
@@ -212,7 +215,7 @@ class Instrument(object):
         except InstrumentError:
             sys.exc_clear()
 
-
+            
         #Sensors
         ################################################################
         try:
@@ -224,6 +227,8 @@ class Instrument(object):
             self.guide_cam = FLICam(self)
         except InstrumentError:
             sys.exc_clear()
+
+
 
     @property
     def keywords(self):
@@ -294,7 +299,7 @@ class Instrument(object):
     def components(self):
         return self.actuators + self.sensors
         
-    @timeout(30)
+    @timeout(10)
     def _fill_socket_list(self):
         for i in range(40):
             socket = self.newport.TCP_ConnectToServer(
@@ -324,17 +329,12 @@ class Instrument(object):
         returns None
         """
         #TODO: Implement!
+        print msg
+        pass
 
-        print dir(thread.interrupt_main)
-        print thread.interrupt_main.__doc__
-        print type(thread.interrupt_main)
 
-        thread.interrupt_main.__call__()
-
-            
     def __del__(self):
-        self.kill_all('Instrument is being deleted.')
-
+        del self.telescope
 
 class InstrumentInitializationError(InstrumentError):
     pass
