@@ -59,6 +59,13 @@ class MainNessiFrame(wx.Frame):
         ################################################################
         self.initStatusbarLogger()
 
+        #Closeing handler
+        ################################################################
+        def OnClose(event):
+            exit(0)
+
+        self.Bind(wx.EVT_CLOSE, OnClose)
+
 
     def initStatusbarLogger(self, level=logging.INFO):
         """Sets up the logger to print to the status bar."""
