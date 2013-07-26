@@ -11,6 +11,9 @@ class Telescope(object):
         """
         self._indi = indiclient(host, port)
 
+    def __del__(self):
+        self._indi.quit()
+
     @property
     def ra(self):
         ra = self._indi.get_element(
