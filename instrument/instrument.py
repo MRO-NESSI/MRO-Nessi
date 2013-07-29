@@ -107,15 +107,17 @@ class Instrument(object):
         self.temperature = None
         self.guide_cam   = None
 
-        #Init Telescope connection
-        ################################################################
-        self.telescope = Telescope('eos.nmt.edu', 7624)
-
         #Init components
         ################################################################
         self._init_components()
 
-#        raise InstrumentError('DICKS!')
+        raise InstrumentError('DICKS!')
+
+    def connectTelescope():
+        self.telescope = Telescope('eos.nmt.edu', 7624)
+
+    def closeTelescope():
+        self._indi.quit()
 
     def _init_components(self):
         """Initialize the instrument components and connections. Logs
@@ -332,9 +334,6 @@ class Instrument(object):
         print msg
         pass
 
-
-    def __del__(self):
-        del self.telescope
 
 class InstrumentInitializationError(InstrumentError):
     pass
