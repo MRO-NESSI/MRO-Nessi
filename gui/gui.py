@@ -136,8 +136,3 @@ class MainNessiFrame(wx.Frame):
         info.SetCopyright(  '(C) 2013 Luke Schmidt, Matt Napolitano,'
                             ' Tyler Cecil, NMT/MRO')
         wx.AboutBox(info)
-
-"""
-
-        logging.info('NESSI initialized.')
-"""
