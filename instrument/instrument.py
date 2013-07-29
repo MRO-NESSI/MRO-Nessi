@@ -113,12 +113,12 @@ class Instrument(object):
         ################################################################
         self._init_components()
 
-        raise InstrumentError('DICKS!')
+#        raise InstrumentError('DICKS!')
 
-    def connectTelescope():
+    def connectTelescope(self):
         self.telescope = Telescope('eos.nmt.edu', 7624)
 
-    def closeTelescope():
+    def closeTelescope(self):
         if isinstance(self.telescope, Telescope):
             self.telescope._indi.quit()
 

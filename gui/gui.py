@@ -8,6 +8,7 @@ from guidepaneltab.guiding  import GuidePanel
 from settingstab.settings   import SettingsPanel
 from logtab.log             import LogPanel, wxLogHandler, EVT_WX_LOG_EVENT
 from emergencytab.emergency import EmergencyPanel
+from threadtools            import shutdown
 
 class MainNessiFrame(wx.Frame):
     """Main Window for Nessi Control Software."""
@@ -62,7 +63,7 @@ class MainNessiFrame(wx.Frame):
         #Closeing handler
         ################################################################
         def OnClose(event):
-            exit(0)
+            shutdown()
 
         self.Bind(wx.EVT_CLOSE, OnClose)
 

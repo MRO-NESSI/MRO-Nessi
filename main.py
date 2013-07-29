@@ -76,7 +76,7 @@ def main(argv=None):
     ################################################################
     def shutdownHandler(signum, frame):
         logging.info("Shutting Down...")
-        splash.Destroy()
+        
         app.Destroy()
         try:
             instrument.closeTelescope()
