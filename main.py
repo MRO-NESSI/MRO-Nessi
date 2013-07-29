@@ -14,17 +14,17 @@ from logging.handlers import TimedRotatingFileHandler
 from os import makedirs
 from os.path import isdir, join
 import sys
+import traceback
 
 from configobj import ConfigObj
 import wxversion
 wxversion.select('2.8')
 import wx
-from wx.lib.agw.advancedsplash import AdvancedSplash
+from wx.lib.agw import advancedsplash 
 
 from gui.gui import MainNessiFrame
 from instrument.instrument import Instrument
 from gui.logtab.log import wxLogHandler, EVT_WX_LOG_EVENT
-
 
 def main(argv=None):
     """Run the entirety of the nessi software.
@@ -36,7 +36,7 @@ def main(argv=None):
     Returns:
         None
     """
-
+    
     #Init wx App
     ################################################################
     app = wx.App()
@@ -56,8 +56,7 @@ def main(argv=None):
     #Splash logger
     def onLogEvent(event):
         msg = event.message.strip('\r') + '\n'
-        print 'I WAS CALLED %s' % msg
-        wx.CallAfter(self.SetText,msg)
+        wx.CallAfter(splash.SetText,msg)
         wx.Yield()
         event.Skip()
 
@@ -73,7 +72,19 @@ def main(argv=None):
 
     #Build instrument
     ################################################################
-    instrument = Instrument()
+    try:
+        instrument = Instrument()
+    except Exception as e:
+        wx.MessageBox('An unknown error was raised during the'
+                      ' initialization of the instrument. See log'
+                      ' for details. NESSI will shut down.', 
+                      'UNKNOWN INITIALIZATION ERROR!', 
+                      wx.OK | wx.ICON_ERROR)
+        logging.critical(traceback.format_exc())
+        app.Destroy()
+
+        #TODO: Raise SIGABT
+        return
 
     #Make main frame
     ################################################################
@@ -102,7 +113,10 @@ def buildSplash(image_dir):
     """
 
     bitmap = wx.Bitmap(image_dir, wx.BITMAP_TYPE_PNG)
-    splash = AdvancedSplash(None, bitmap=bitmap)
+    splash = advancedsplash.AdvancedSplash(
+        None, bitmap = bitmap, timeout=0,
+        agwStyle = advancedsplash.AS_NOTIMEOUT | 
+        advancedsplash.AS_CENTER_ON_SCREEN)
     splash.SetText('NESSI initializing...')
     return splash
 
