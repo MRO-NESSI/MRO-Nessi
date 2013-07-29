@@ -13,6 +13,7 @@ import logging
 from logging.handlers import TimedRotatingFileHandler
 from os import makedirs
 from os.path import isdir, join
+import signal
 import sys
 import traceback
 
@@ -25,6 +26,7 @@ from wx.lib.agw import advancedsplash
 from gui.gui import MainNessiFrame
 from instrument.instrument import Instrument
 from gui.logtab.log import wxLogHandler, EVT_WX_LOG_EVENT
+from threadtools import shutdown
 
 def main(argv=None):
     """Run the entirety of the nessi software.
@@ -70,6 +72,19 @@ def main(argv=None):
     ################################################################
     cfg = ConfigObj('nessisettings.ini')
 
+    #SIGABRT Handler setup
+    ################################################################
+    def shutdownHandler(signum, frame):
+        logging.info("Shutting Down...")
+        splash.Destroy()
+        app.Destroy()
+        try:
+            instrument.closeTelescope()
+        finally:
+            exit(0)
+
+    signal.signal(signal.SIGABRT, shutdownHandler)
+
     #Build instrument
     ################################################################
     try:
@@ -81,10 +96,9 @@ def main(argv=None):
                       'UNKNOWN INITIALIZATION ERROR!', 
                       wx.OK | wx.ICON_ERROR)
         logging.critical(traceback.format_exc())
-        app.Destroy()
+        shutdown()
 
-        #TODO: Raise SIGABT
-        return
+    instrument.connectTelescope()
 
     #Make main frame
     ################################################################

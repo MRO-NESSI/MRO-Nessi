@@ -1,10 +1,14 @@
 # Chapter 11: Responsive Interfaces, Using Threads and Timers
 # Recipe 3: Threading Tools
 #
-import wx
+
+from os import kill, getpid
 import signal
 import threading
 from types import FunctionType, MethodType
+
+import wx
+
 
 __all__ = ['callafter', 'synchfunct', 'ClassSynchronizer']
 
@@ -49,6 +53,8 @@ class run_async(object):
 
         return async_func        
 
+def shutdown():
+    kill(getpid(), signal.SIGABRT)
 
 def callafter(funct):
     """Decorator to automatically use CallAfter if

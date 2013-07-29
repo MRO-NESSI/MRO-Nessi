@@ -59,8 +59,6 @@ class Instrument(object):
         Temperature sensor interface.
     guide_cam : FLICam
         Guide camera interface.
-    keywords
-        List of keywords information 
 
     Methods
     -------
@@ -107,6 +105,10 @@ class Instrument(object):
         self.temperature = None
         self.guide_cam   = None
 
+        #Define telescope
+        ################################################################
+        self.telescope = None
+
         #Init components
         ################################################################
         self._init_components()
@@ -117,7 +119,8 @@ class Instrument(object):
         self.telescope = Telescope('eos.nmt.edu', 7624)
 
     def closeTelescope():
-        self._indi.quit()
+        if isinstance(self.telescope, Telescope):
+            self.telescope._indi.quit()
 
     def _init_components(self):
         """Initialize the instrument components and connections. Logs
