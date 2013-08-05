@@ -182,10 +182,18 @@ def NewportWheelHome(controller, wheel, socket):
         elif int(format(value[1], "016b")[::-1][homebit]) == homeval:
             return
         else:
-            message = "Error: Homing of " + str(wheel) + \ 
-                      " failed.  Retry or check switches."
-            raise InstrumentError(message)
-    return
+            pass
+
+    value = controller.GPIODigitalGet(socket, "GPIO4.DI")
+    if value[0] != 0:
+        XPSErrorHandler(controller, socket, value[0], 
+                            "GPIODigitalGet")
+    elif int(format(value[1], "016b")[::-1][homebit]) == homeval:
+        return
+    else:
+        message = "Error: Homing of " + str(wheel) + \
+                  " failed.  Retry or check switches."
+        raise InstrumentError(message)
 
 
 def NewportWheelMove(controller, wheel, socket, current, position):
