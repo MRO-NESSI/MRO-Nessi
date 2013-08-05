@@ -80,7 +80,9 @@ def NewportWheelHome(controller, wheel, socket):
 
         Returns: None.
 
-        Raises: None.
+        Raises: InstrumentError.
+            
+            InstrumentError:    This is raised if the wheel fails to home.
     """
     # Config-file based variables.
     group     = cfg[wheel]["group"]
@@ -180,7 +182,9 @@ def NewportWheelHome(controller, wheel, socket):
         elif int(format(value[1], "016b")[::-1][homebit]) == homeval:
             return
         else:
-            pass
+            message = "Error: Homing of " + str(wheel) + \ 
+                      " failed.  Retry or check switches."
+            raise InstrumentError(message)
     return
 
 
