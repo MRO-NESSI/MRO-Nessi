@@ -73,7 +73,7 @@ class Instrument(object):
 
     _sockets = 40
 
-    def __init__(self, ):
+    def __init__(self, cfg):
         """Initialize the NESSI instrument.
         
         Those components which cannot initialize will become None,
@@ -84,7 +84,7 @@ class Instrument(object):
 
         #Config object
         ################################################################
-        self.cfg = ConfigObj('nessisettings.ini')
+        self.cfg = cfg
         
         #Define list of actuators
         ################################################################
@@ -281,28 +281,28 @@ class Instrument(object):
 
     @property
     def actuators(self):
-        actuators = [
-            self.kmirror       ,
-            self.mask_wheel   ,
-            self.filter1_wheel,
-            self.filter2_wheel,
-            self.grism_wheel  ,
-            self.guide_focus  ,
-            self.REI34_focus  ,
-            ]
+        actuators = {
+            'kmirror'        : self.kmirror      ,
+            'Mask Wheel'     : self.mask_wheel   ,
+            'Filter 1 Wheel' : self.filter1_wheel,
+            'Filter 2 Wheel' : self.filter2_wheel,
+            'Grism Wheel'    : self.grism_wheel  ,
+            'Guide Focus'    : self.guide_focus  ,
+            'REI34 Focus'    : self.REI34_focus  ,
+            }
         return actuators
 
     @property
     def sensors(self):
-        sensors = [
-            self.temperature ,
-            self.guide_cam   ,
-            ]
+        sensors = {
+            'Temperature Sensor' : self.temperature ,
+            'Guide Cam'          : self.guide_cam   ,
+            }
         return sensors
 
     @property
     def components(self):
-        return self.actuators + self.sensors
+        return dict(self.actuators, **self.sensors)
         
     @timeout(10)
     def _fill_socket_list(self):

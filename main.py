@@ -85,21 +85,9 @@ def main(argv=None):
 
     signal.signal(signal.SIGABRT, shutdownHandler)
 
-    #Build instrument
-    ################################################################
-    try:
-        instrument = Instrument()
-    except Exception as e:
-        wx.MessageBox('An unknown error was raised during the'
-                      ' initialization of the instrument. See log'
-                      ' for details. NESSI will shut down.', 
-                      'UNKNOWN INITIALIZATION ERROR!', 
-                      wx.OK | wx.ICON_ERROR)
-        logging.critical(traceback.format_exc())
-        shutdown()
 
-    instrument.connectTelescope()
-
+    instrument = buildInstrument(cfg)
+    
     #Make main frame
     ################################################################
     frame = MainNessiFrame(instrument)
@@ -113,6 +101,51 @@ def main(argv=None):
     ################################################################
     frame.Show()
     app.MainLoop()
+
+
+
+def buildInstrument(cfg):
+    #Build instrument
+    ################################################################
+    try:
+        instrument = Instrument(cfg)
+    except Exception as e:
+        wx.MessageBox('An unknown error was raised during the'
+                      ' initialization of the instrument. See log'
+                      ' for details. NESSI will shut down.', 
+                      'UNKNOWN INITIALIZATION ERROR!', 
+                      wx.OK | wx.ICON_ERROR)
+        logging.critical(traceback.format_exc())
+        shutdown()
+
+    #Check for components that did not initialize
+    ################################################################
+    failedComponents = [compName for compName, comp in 
+                        instrument.components.items() if comp == None]
+    
+    if failedComponents:
+        dlg = wx.MessageDialog(None, 'The following instrument components'
+                               ' did not initialize: ' + str(failedComponents) + '\n'
+                               'Would you like to continue anyway?',
+                               'Instrument Partially Initialized!',
+                               wx.YES_NO | wx.ICON_QUESTION)
+        moveon = dlg.ShowModal() == wx.ID_YES
+        dlg.Destroy()
+        
+        if not moveon:
+            shutdown()
+
+    try:
+        instrument.connectTelescope()
+    except:
+        wx.MessageBox('Unable to connect to telescope! NESSI must shut'
+                      ' down!', 'TELESCOPE CONNECTION ERROR!',
+                      wx.OK | wx.ICON_ERROR)
+        logging.critical(traceback.format_exec())
+        shutdown()
+
+    return instrument
+
 
     
 def buildSplash(image_dir):
@@ -163,9 +196,4 @@ def initLogger(level=logging.DEBUG, logdir='logfiles'):
     logging.getLogger('').addHandler(logfileHandler)
                         
 if __name__ == "__main__":
-#    try:
     main()
-#    except KeyboardInterrupt:
-#        wx.MessageBox('Are you ok?', 
-#                      'KILL ALL RAISED!', wx.YES_NO | wx.ICON_ERROR)
-
