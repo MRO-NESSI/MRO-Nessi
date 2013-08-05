@@ -18,6 +18,7 @@ import sys
 import traceback
 
 from configobj import ConfigObj
+import ds9
 import wxversion
 wxversion.select('2.8')
 import wx
@@ -27,6 +28,10 @@ from gui.gui import MainNessiFrame
 from instrument.instrument import Instrument
 from gui.logtab.log import wxLogHandler, EVT_WX_LOG_EVENT
 from threadtools import shutdown
+
+CONFIG_PATH        = 'nessisettings.ini'
+SPLASH_BITMAP_PATH = 'media/badass.png'
+
 
 def main(argv=None):
     """Run the entirety of the nessi software.
@@ -53,29 +58,20 @@ def main(argv=None):
 
     #Set up splash page
     ################################################################
-    splash = buildSplash('media/badass.png')
-
-    #Splash logger
-    def onLogEvent(event):
-        msg = event.message.strip('\r') + '\n'
-        wx.CallAfter(splash.SetText,msg)
-        wx.Yield()
-        event.Skip()
-
-    splashHandler = wxLogHandler(splash)
-    splashHandler.setLevel(logging.INFO)
-    logging.getLogger('').addHandler(splashHandler)
-
-    splash.Bind(EVT_WX_LOG_EVENT, onLogEvent)
-
+    splash, splashHandler = buildSplash(SPLASH_BITMAP_PATH)
+    
     #Build configure object
     ################################################################
-    cfg = ConfigObj('nessisettings.ini')
+    cfg = ConfigObj(CONFIG_PATH)
 
     #SIGABRT Handler setup
     ################################################################
     def shutdownHandler(signum, frame):
         logging.info("Shutting Down...")
+
+        #close DS9
+        for d in ds9.ds9_openlist():
+            d.set('exit')
         
         app.Destroy()
         try:
@@ -85,7 +81,8 @@ def main(argv=None):
 
     signal.signal(signal.SIGABRT, shutdownHandler)
 
-
+    #Build Instrument
+    ################################################################
     instrument = buildInstrument(cfg)
     
     #Make main frame
@@ -103,8 +100,17 @@ def main(argv=None):
     app.MainLoop()
 
 
-
 def buildInstrument(cfg):
+    """Given a config object, construct the instrument.
+    This will give the user a graphic way to handle initialization
+    errors, as well.
+
+    Arguments:
+        cfg - ConfigObj
+    Returns:
+        instrument object
+    """
+
     #Build instrument
     ################################################################
     try:
@@ -135,6 +141,8 @@ def buildInstrument(cfg):
         if not moveon:
             shutdown()
 
+    #Connect to telescope
+    ################################################################
     try:
         instrument.connectTelescope()
     except:
@@ -150,13 +158,19 @@ def buildInstrument(cfg):
     
 def buildSplash(image_dir):
     """Make a splash page to display logging info.
+    Will also initialize the logger to print to splash
+    page.
+
+    Note: The splash page does not appear to update it's
+    text, unless a message box comes up. This needs to be
+    looked into.
     
     Arguments:
         image_dir -- Path to the image of the splash screen.
     Raises:
         None
     Returns
-        A splash screen [AdvancedSplash]
+        (A splash screen, splashHandler) ([AdvancedSplash], [wxLogHandler])
     """
 
     bitmap = wx.Bitmap(image_dir, wx.BITMAP_TYPE_PNG)
@@ -165,7 +179,22 @@ def buildSplash(image_dir):
         agwStyle = advancedsplash.AS_NOTIMEOUT | 
         advancedsplash.AS_CENTER_ON_SCREEN)
     splash.SetText('NESSI initializing...')
-    return splash
+
+    #Splash logger
+    ################################################################
+    def onLogEvent(event):
+        msg = event.message.strip('\r') + '\n'
+        wx.CallAfter(splash.SetText,msg)
+        wx.Yield()
+        event.Skip()
+
+    splashHandler = wxLogHandler(splash)
+    splashHandler.setLevel(logging.INFO)
+    logging.getLogger('').addHandler(splashHandler)
+
+    splash.Bind(EVT_WX_LOG_EVENT, onLogEvent)
+
+    return splash, splashHandler
 
 
 def initLogger(level=logging.DEBUG, logdir='logfiles'):
