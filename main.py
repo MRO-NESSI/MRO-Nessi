@@ -11,7 +11,7 @@ __date__ = '2013'
 
 import logging
 from logging.handlers import TimedRotatingFileHandler
-from os import makedirs
+from os import makedirs, execl
 from os.path import isdir, join
 import signal
 import sys
@@ -31,7 +31,6 @@ from threadtools import shutdown
 
 CONFIG_PATH        = 'nessisettings.ini'
 SPLASH_BITMAP_PATH = 'media/badass.png'
-
 
 def main(argv=None):
     """Run the entirety of the nessi software.
@@ -64,7 +63,7 @@ def main(argv=None):
     ################################################################
     cfg = ConfigObj(CONFIG_PATH)
 
-    #SIGABRT Handler setup
+    #SIGABRT Handler setup (signaled by a "shutdown")
     ################################################################
     def shutdownHandler(signum, frame):
         logging.info("Shutting Down...")
@@ -80,6 +79,29 @@ def main(argv=None):
             exit(0)
 
     signal.signal(signal.SIGABRT, shutdownHandler)
+
+    #SIGINT Handler setup (signaled by a "kill all" or keyboard.)
+    ################################################################
+    def sigintHandler(signum, frame):
+        #instrument.kill_all()
+        instrument.closeTelescope()
+
+        dlg = wx.MessageDialog(None, 'A KILLALL has been raised!\n'
+                               ' Would you like to restart the program?',
+                               '!!!KILL ALL!!!',
+                               wx.YES_NO | wx.ICON_QUESTION)
+        restart = dlg.ShowModal() == wx.ID_YES
+        dlg.Destroy()
+        
+        if restart:
+            app.Destroy()
+
+            selfpid = sys.executable
+            execl(selfpid, selfpid, * sys.argv)
+        else:
+            shutdown()
+
+    signal.signal(signal.SIGINT, sigintHandler)
 
     #Build Instrument
     ################################################################

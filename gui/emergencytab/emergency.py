@@ -1,3 +1,6 @@
+from os import kill, getpid
+import signal
+
 import wx
 
 class EmergencyPanel(wx.Panel):
@@ -48,4 +51,6 @@ class EmergencyPanel(wx.Panel):
 
     def OnEmergency(self, event):
         #TODO: Ask the user what to do next.
-        self.instrument.kill_all()
+        #self.instrument.kill_all()
+        #instead, lets raise a SIGINT
+        kill(getpid(), signal.SIGINT)
