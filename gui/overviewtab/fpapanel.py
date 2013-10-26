@@ -1,6 +1,6 @@
 import wx
 import logging
-import actuators.newport as new
+import instrument.actuators.newport as new
 import wx.lib.agw.floatspin as FS
 import math
 from threadtools import run_async
