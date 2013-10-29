@@ -29,7 +29,8 @@ class FPAPanel(wx.Panel):
         self.step_m = wx.Button(self, id=2, size=(30,-1), label="-")
         self.set_button = wx.Button(self,  size=(62,-1), label="Set")
         self.stop_button = wx.Button(self,  size=(62,-1), label="Stop")
-        self.home_button = wx.Button(self, size=(62,-1), label="Home")      
+        self.home_button = wx.Button(self, size=(62,-1), label="Home")
+        self.cal_button = wx.Button(self, size=(62,-1), label="Calibrate")       
         self.step_txt = wx.StaticText(self, label="Step Size "+u"\u00B5"+"m:")
         self.step_size = FS.FloatSpin(self,digits=6)
         self.position=FS.FloatSpin(self,digits=6)
@@ -46,6 +47,7 @@ class FPAPanel(wx.Panel):
         self.Bind(wx.EVT_BUTTON, self.on_set, self.set_button)
         self.Bind(wx.EVT_BUTTON, self.on_stop, self.stop_button)
         self.Bind(wx.EVT_BUTTON, self.on_home, self.home_button)
+        self.Bind(wx.EVT_BUTTON, self.on_cal, self.cal_button)
         self.SetInitialSize()
 
 
@@ -62,6 +64,7 @@ class FPAPanel(wx.Panel):
 
         sizer.Add(self.stop_button,  pos=(3,1), flag=wx.ALIGN_LEFT)
         sizer.Add(self.home_button,  pos=(3,2), span=(1,2), flag=wx.ALIGN_LEFT)
+        sizer.Add(self.cal_button,  pos=(3,3), span=(1,2), flag=wx.ALIGN_LEFT)
 
         # Add the grid bag to the static box and make everything fit
         self.SetSizer(sizer)
@@ -127,3 +130,14 @@ class FPAPanel(wx.Panel):
             new.NewportFocusHome(self.controller, self.socket[0], self.motor)
         except:
             raise
+
+    def on_cal(self, event):
+        work = True 
+        travel = 0       
+        while work:
+            try:
+                travel = travel + new.NewportFocusMove(self.controller, self.socket[0],
+                                          self.motor, 1, 10, 1)
+                print travel
+            except:
+                work = False
