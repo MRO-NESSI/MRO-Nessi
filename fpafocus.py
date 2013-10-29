@@ -1,12 +1,13 @@
 #!/usr/bin/env python
 
+import sys
 import wx
 import wx.lib.agw.floatspin as FS
-import actuators.XPS_C8_drivers as xps
+import instrument.actuators.XPS_C8_drivers as xps
 import time
 import math
-import actuators.newport as new
-from overviewtab.fpapanel import FPAPanel
+import instrument.actuators.newport as new
+from gui.overviewtab.fpapanel import FPAPanel
 from threadtools import timeout, TimeoutError
 
 x = xps.XPS()
@@ -18,15 +19,15 @@ def socket_list():
         s.append(x.TCP_ConnectToServer('192.168.0.254',5001,1))
    
     for i in range(5):
-        if self.open_sockets[i] == -1:
-            s=[0,1,2,3,4]
-            break
+        if s[i] == -1:
+            print 'XPS socet connections failed.'
+            sys.exit()
 
 try:
     socket_list()
 except TimeoutError:
-    print "XPS connection failed."
-    s=[0,1,2,3,4]
+    print "XPS connection timed out."
+    sys.exit()
     
 
 class FPA(wx.App):
@@ -45,29 +46,17 @@ class FPAFrame(wx.Frame):
         self.panel0 = FPAPanel(self,'array', x,s[1:])
         self.panel1 = Emergency(self)
         self.__DoLayout()
-        
-#        self.Bind(wx.EVT_CLOSE,self.OnClose)
         self.SetInitialSize()
+
     # This function will handle the layout of the different elements of the program.
     def __DoLayout(self):
-        '''A basic layout handler for the frame.  Layout information is available in KMIRRORREADME.'''
+        '''A basic layout handler for the frame.'''
         # This establishes which layout manager we are using.
         sizer=wx.GridBagSizer()
         sizer.Add(self.panel0,(0,0),(1,1))
         sizer.Add(self.panel1,(1,0),(1,1))
         self.SetSizer(sizer)
     
-#    def OnClose(self,event):
-#        print 'closing'
-#        try:
-#            kill=x.KillAll(s[0])
-#            print kill[0]
-#            if kill[0] != 0:
-#                new.XPSErrorHandler(x,s[0], kill[0], 'KillAll')
-#            event.Skip()
-#           
-#        except:
-#            raise 
 
 class Emergency(wx.Panel):
     def __init__(self,*args,**kwargs):

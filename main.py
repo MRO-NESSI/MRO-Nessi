@@ -103,6 +103,23 @@ def main(argv=None):
 
     signal.signal(signal.SIGINT, sigintHandler)
 
+    #SIGPOLL Will force python to write FITS headers to a FIFO
+    #So that OWL may use it
+    ################################################################
+    def sigpollHandler(signum, frame):
+        #Not that keywords will attempt to read components that
+        #may be locked. Instrument must be "idle" for this to work
+        #without delay.
+        mkfifo('fitsFifo')
+
+        fitsKeywords = instrument.keywords
+
+        f = open('fitsFifo', 'w')
+        f.write(str(fitsKeywords))
+        f.close()
+    
+    signal.signal(signal.SIGPOLL, sigpollHander)
+
     #Build Instrument
     ################################################################
     instrument = buildInstrument(cfg)

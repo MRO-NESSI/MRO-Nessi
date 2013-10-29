@@ -729,7 +729,7 @@ user stops it in the NESSI GUI.
 
 """
     Gmode = controller.GroupJogModeEnable(socket, cfg[motor]["group"])
-    if Gmode[0] != 0:
+    if Gmode[0] != 0 and Gmode[0] != -22:
         XPSErrorHandler(controller, socket, Gmode[0], "GroupJogModeEnable")
     phi = math.radians(33.984861)
     
@@ -742,14 +742,14 @@ user stops it in the NESSI GUI.
             parent.trackstatus = False
             time.sleep(1)
         else:
-            angle = .5*(t_angle - PA - cfg['motor']["direction"]*H)
-            vel = ((-.262)*(.5)*3600*math.pi*math.cos(phi)*math.cos(A))/\
-                  (math.cos(H)*180)
+            angle = .5*(t_angle - PA - int(cfg[motor]["direction"])*H)
+            vel = ((-.262)*(.5)*180*math.cos(phi)*math.cos(A))/\
+                  (math.cos(H)*3600*math.pi)
             delta = vel - parent.vel
             parent.vel = parent.vel + delta
-            velocity = parent.vel*cfg[motor]["direction"]
+            velocity = parent.vel*int(cfg[motor]["direction"])
             GJog = controller.GroupJogParametersSet(socket, cfg[motor]["group"],
-                                                    [velocity],[400])
+                                                    [velocity],[200])
             if GJog[0] != 0:
                 XPSErrorHandler(controller, socket, GJog[0],
                                 "GroupJogParametersSet")
