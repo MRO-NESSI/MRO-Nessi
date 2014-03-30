@@ -118,7 +118,7 @@ def main(argv=None):
         f.write(str(fitsKeywords))
         f.close()
     
-    signal.signal(signal.SIGPOLL, sigpollHander)
+    signal.signal(signal.SIGPOLL, sigpollHandler)
 
     #Build Instrument
     ################################################################
