@@ -1,3 +1,12 @@
+"""
+.. module:: guidecampanel.py
+   :platform: Unix
+   :synopsis: A panel to deal with guidecam interface.
+   
+.. moduleauthor:: Tyler Cecil <tcecil@mro.nmt.edu>
+
+"""
+
 from time import sleep
 from threading import Event
 import wx
