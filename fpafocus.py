@@ -22,9 +22,10 @@ def socket_list():
         if s[i] == -1:
             print 'XPS socet connections failed.'
             sys.exit()
+    return s
 
 try:
-    socket_list()
+    s = socket_list()
 except TimeoutError:
     print "XPS connection timed out."
     sys.exit()
