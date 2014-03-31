@@ -3,11 +3,12 @@
 from configobj import ConfigObj
 import math
 import time
+from time import clock
 import threading
 from wx.lib.pubsub import Publisher
 
 import XPS_C8_drivers as xps
-from threadtools import run_async, timeout
+from threadtools import run_async, timeout, TimeoutError
 from instrument.component import InstrumentError
 
 
@@ -301,10 +302,13 @@ def NewportWheelMove(controller, wheel, socket, current, position):
         return position
                 
 
-@timeout(20)
+#@timeout(20)
 def wheelcheck(controller, socket, bit, val, group):
 # This loop monitors the position switch to stop the motor when 
 # it reaches the switch.
+    ##MAX_SEARCH_TIME = 20
+    ##init_time = time.time()
+    ##tmp = 0
     while True:
         time.sleep(.1)
         value = controller.GPIODigitalGet(socket, "GPIO4.DI")
@@ -319,6 +323,10 @@ def wheelcheck(controller, socket, bit, val, group):
             break
         else:
             pass
+        ##tmp = time.time() - init_time
+        ##if(tmp >= MAX_SEARCH_TIME):
+        ##    raise TimeoutError()
+        ##print tmp
 
 
 def NewportInitialize(controller, motor, socket, home_pos):
