@@ -308,7 +308,7 @@ class Instrument(object):
     def _fill_socket_list(self):
         for i in range(40):
             socket = self.newport.TCP_ConnectToServer(
-                '192.168.0.254',5001,1)
+                '10.90.20.1',5001,1)
             if socket is not -1:
                 self.open_sockets.append(socket)
             else:
