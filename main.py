@@ -69,8 +69,11 @@ def main(argv=None):
         logging.info("Shutting Down...")
 
         #close DS9
-        for d in ds9.ds9_openlist():
-            d.set('exit')
+        try:
+            for d in ds9.ds9_openlist():
+                d.set('exit')
+        except ValueError:
+            pass
         
         app.Destroy()
         try:
@@ -84,7 +87,13 @@ def main(argv=None):
     ################################################################
     def sigintHandler(signum, frame):
         #instrument.kill_all()
-        instrument.closeTelescope()
+        try:
+            instrument.closeTelescope()
+        except:
+            dlg = wx.MessageDialog(None, 'instrument.closeTelescope() failed!'
+                                   ' Report to someone who writes software!',
+                                   '!!!KILL ALL --- Telescope Close Failed!!!',
+                                   wx.YES_NO | wx.ICON_QUESTION)
 
         dlg = wx.MessageDialog(None, 'A KILLALL has been raised!\n'
                                ' Would you like to restart the program?',
@@ -118,7 +127,7 @@ def main(argv=None):
         f.write(str(fitsKeywords))
         f.close()
     
-    signal.signal(signal.SIGPOLL, sigpollHander)
+    signal.signal(signal.SIGPOLL, sigpollHandler)
 
     #Build Instrument
     ################################################################
@@ -183,7 +192,8 @@ def buildInstrument(cfg):
     #Connect to telescope
     ################################################################
     try:
-        instrument.connectTelescope()
+        #instrument.connectTelescope()
+        pass
     except:
         wx.MessageBox('Unable to connect to telescope! NESSI must shut'
                       ' down!', 'TELESCOPE CONNECTION ERROR!',
