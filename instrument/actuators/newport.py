@@ -301,7 +301,7 @@ def NewportWheelMove(controller, wheel, socket, current, position):
         return position
                 
 
-@timeout(1)
+@timeout(20)
 def wheelcheck(controller, socket, bit, val, group):
 # This loop monitors the position switch to stop the motor when 
 # it reaches the switch.
