@@ -9,8 +9,14 @@
 
 import logging
 import sys
+import os
+#os.environ["NUMERIX"] = "numarray" # make pyfits use numarray
 
 from configobj import ConfigObj
+#import numarray as num
+import pyfits
+import pywcs
+import PyGuide
 
 from   actuators.dewarwheel import DewarWheel
 from   actuators.kmirror    import KMirror
@@ -337,6 +343,58 @@ class Instrument(object):
         print msg
         pass
 
+    def get_centroid(fits_image, intitialxy):
+        """Given a fits image, will return a centroid using
+        PyGuid.Centroid.centroid. Will raise an error if the
+        centroid is not ok.
+
+        Arguments
+        ---------
+        fits_image --- a fits image (probably returned from the cam)
+        intitialxy --- That thing.
+        
+        Returns
+        -------
+        PyGuid.Centroid object
+        
+        Raises
+        ------
+        Instrument Error
+        """
+        mask     = None
+        satMask  = None
+        rad      = 15
+        ccdInfo  = PyGuide.CCDInfo(100.0, 12.5, 1.5, 65535)
+
+        data     = fits_image[0].data
+        centroid = PyGuide.Centroid.centroid(data, mask, satMask, 
+                                             initialxy, rad, ccdInfo)
+        
+        if not centroid.isOk:
+            raise InstrumentError("Centroid could not be found!")
+
+        return centroid
+
+    def calc_xy_shift(t0_centroid, t1_centroid, fits_header):
+        """Given two PyGuid.Centroid objects, calculates the
+        xy shift between the two, as Fortran-like sky coordinates
+
+        Arguments
+        ---------
+        t0_centroid --- Centroid of t=0
+        t1_centroid --- Centroid of t=1
+
+        Returns
+        -------
+        sky coordinates
+        """
+        shift  = pixelmath.xy_move(t0_centroid, t1_centroid)
+        wcs    = pywcs.WCS(fits_header)
+        pixcrd = np.array([[512.0+shift[0][0],512.0+shift[0][1]]], 
+                              np.float_)
+
+        sky    = wcs.wcs_pix2sky(pixcrd, 1)
+        return sky
 
 class InstrumentInitializationError(InstrumentError):
     pass
