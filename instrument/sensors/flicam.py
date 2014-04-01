@@ -1,6 +1,7 @@
 from time import sleep
 
 import pyfli as p
+import pyfits
 
 from instrument.component import InstrumentComponent, InstrumentError
 
@@ -72,6 +73,26 @@ class FLICam(InstrumentComponent):
                                   ' raised...\n %s' % repr(e))
             
         return p.grabFrame(self._id)
+
+    def takePictureFITS(self):
+        """Takes a picture with the guide cam.
+
+        Arguments:
+
+        Raises:
+            InstrumentError
+        
+        returns pyfits.HDUList of image
+        """
+
+        d   = self.takePicture()
+        hdu = pyfits.PrimaryHDU(d)
+        keywords = self.instrument.keywords
+
+        for key in keywords:
+            hdu.header.set(key, keywords[key])
+
+        return pyfits.HDUList([hdu])
 
     def getTemperature(self):
         """Returns the temperature of the FLI Camera.

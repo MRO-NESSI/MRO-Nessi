@@ -239,6 +239,10 @@ class Instrument(object):
         except InstrumentError:
             sys.exc_clear()
 
+        #Connect to Telescope
+        ################################################################
+        self.connectTelescope()
+
 
 
     @property
