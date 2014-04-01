@@ -116,7 +116,7 @@ class Instrument(object):
 #        raise InstrumentError('DICKS!')
 
     def connectTelescope(self):
-        self.telescope = Telescope('eos.nmt.edu', 7624)
+        self.telescope = Telescope('192.168.0.5', 7624)
 
     def closeTelescope(self):
         if isinstance(self.telescope, Telescope):
