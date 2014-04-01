@@ -1,24 +1,38 @@
 import wx
 
 class GuidingPanel(wx.Panel):
-    
+    """Sub-pannel for guidecam GUIDING. Controls either
+    single or double star tracking"""
+
     def __init__(self, parent):
         super(GuidingPanel, self).__init__(parent)
 
+        #Attributes
+        ################################################################
         self.parent = parent
 
-        self.star1 = wx.StaticText(self, label="Star 1: ")
-        self.star2 = wx.StaticText(self, label="Star 2: ")
+        #Star Labels
+        ################################################################
+        self.star1    = wx.StaticText(self, label="Star 1: ")
+        self.star2    = wx.StaticText(self, label="Star 2: ")
         self.star1_xy = wx.StaticText(self, label="(x.000,y.000)")
         self.star2_xy = wx.StaticText(self, label="(x.000,y.000)")
+
+        #Start Guiding Button
+        ################################################################
         self.guide = wx.ToggleButton(self, 1, size=(100,-1), label="Start Guiding")
+
+        #Logging Option Button
+        ################################################################
         self.log_onoff = wx.CheckBox(self, -1, 'Guiding Log On', (10,10))
-        self.guide_state = self.guide.GetValue()
+
+        #Cadence
+        ################################################################
         self.cadence_text = wx.StaticText(self, label="Cadence (s): ")
-        self.cadence = wx.TextCtrl(self, -1, '10.0', size=(50,-1), style=wx.TE_NO_VSCROLL)
+        self.cadence      = wx.TextCtrl(self, -1, '10.0', size=(50,-1), 
+                                        style=wx.TE_NO_VSCROLL)
 
         self._DoLayout()
-
         self.guide.Bind(wx.EVT_TOGGLEBUTTON, self.OnGuide)
 
     def _DoLayout(self):
