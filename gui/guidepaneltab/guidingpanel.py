@@ -1,3 +1,7 @@
+import logging
+from time import sleep
+from threading import Event
+
 import wx
 
 class GuidingPanel(wx.Panel):
@@ -51,11 +55,74 @@ class GuidingPanel(wx.Panel):
 
     def OnGuide(self, event):
         if self.guide.GetValue():
-            self.parent.guideCamPanel.Enable(False)
-            self.guide.SetLabel("Stop Guiding")
-            self.guide.SetForegroundColour((34,139,34))
+            self.StartGuide()
         else:
-            self.parent.guideCamPanel.Enable(True)
-            self.guide.SetLabel("StartGuiding")
-            self.guide.SetForegroundColour((0,0,0))
+            self.StopGuide()
 
+    def StartGuide(self):
+        self.parent.guideCamPanel.Enable(False)
+        self.guide.SetLabel("Stop Guiding")
+        self.guide.SetForegroundColour((34,139,34))
+        self._guide_stop = Event()
+        self.guid(self)
+
+    def StopGuide(self):
+        self.parent.guideCamPanel.Enable(True)
+        self.guide.SetLabel("StartGuiding")
+        self.guide.SetForegroundColour((0,0,0))
+        self._guide_stop.set()
+
+
+    @run_async(daemon=True)
+    def guide(self):
+        #TODO: Set initialxy
+        t0_centroid = None
+        tn_centroid = None
+        fits_file   = None
+        
+        cadence     = self.cadence.GetValue()
+        try:
+            cadence = float(cadence)
+        except:
+            wx.CallAfter(wx.MessageBox,'Please select cadence time in secconds!', 
+                             'INVALID EXPOSURE TIME!', wx.OK | wx.ICON_ERROR)
+            self.StopGuide()
+            return
+
+        logging.info("Begging Guiding...")
+
+        try:
+            fits_file = self.instrument.guidecam.takePictureFITS()
+            t0_centroid = tn_centroid = self.instrument.get_centroid(
+                fits_file , initialxy)
+        except InstrumentError:
+            logging.error("Could not get guiding centroid!")
+            self.StopGuide()
+            return
+
+        logging.info("t0_centroid aquired...")
+        
+        while not self._guide_stop.isSet():
+            fits_file = self.instrument.guidecam.takePictureFITS()
+
+            try:
+                tn_centroid = self.instrument.get_centroid(
+                    fits_file, tn_centroid.xyCtr)
+            except InstrumentError:
+                logging.error("Could not get guiding centroid!")
+                self.StopGuide()
+                return
+
+            logging.info("tn_centroid aquired...")
+
+            new_sky = self.instrument.calc_xy_shift(t0_centroid, 
+                                                    t1_centroid,
+                                                    fits_file[0].header)
+            logging.info("Moving telescope to new sky vector: [%f, %f]" 
+                         % (new_sky[0][0] / 15.0, new_sky[0][1]))
+            
+            self.telescope.ra  = new_sky[0][0] / 15.0
+            self.telesceop.dec = new_sky[0][1]
+            
+            logging.info("Sleeping for %f" % cadence)
+            sleep(cadence)
