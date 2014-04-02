@@ -92,6 +92,6 @@ class GuidePanel(wx.Panel):
             None
         """
 
-        image[:] = np.fliplr(image)[:]
+        #image[:] = np.fliplr(image)[:]
         self.d.set_np2arr(image)
         self.d.set("zoom to fit")
