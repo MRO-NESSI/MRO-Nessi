@@ -3,12 +3,14 @@
 from configobj import ConfigObj
 import math
 import time
+from time import clock
 import threading
 from wx.lib.pubsub import Publisher
 
 import XPS_C8_drivers as xps
-from threadtools import run_async
+from threadtools import run_async, timeout, TimeoutError
 from instrument.component import InstrumentError
+
 
 cfg = ConfigObj(infile="nessisettings.ini")
 fpa_limit_flag = threading.Event()
@@ -283,28 +285,48 @@ def NewportWheelMove(controller, wheel, socket, current, position):
                 XPSErrorHandler(controller ,socket, Gset[0],
                                 "GroupSpinParametersSet")
             else:
-                # This loop monitors the position switch to stop the motor when 
-                # it reaches the switch.
-                while True:
-                    time.sleep(.1)
-                    value = controller.GPIODigitalGet(socket, "GPIO4.DI")
-                    if value[0] != 0:
-                        XPSErrorHandler(controller, socket, value[0],
-                                        "GPIODigitalGet")
-                    elif int(format(value[1], "016b")[::-1][bit]) == val:
-                        stop=controller.GroupSpinModeStop(socket, group, 1200)
-                        if stop[0] != 0:
-                            XPSErrorHandler(controller, socket, stop[0],
-                                            "GroupSpinModeStop")
-                        break
-                    else:
-                        pass
+                try:
+                    wheelcheck(controller, socket, bit, val, group)
+                except TimeoutError:
+                    stop=controller.GroupSpinModeStop(socket, group, 1200)
+                    if stop[0] != 0:
+                        XPSErrorHandler(controller, socket, stop[0],
+                                                        "GroupSpinModeStop")
+                    message = wheel + " wheel failed to find a position and"+\
+                    " may now be out of sync.  Home wheel and try again."
+                    raise InstrumentError(message)
             
         return position
     
     else:
         return position
                 
+
+#@timeout(20)
+def wheelcheck(controller, socket, bit, val, group):
+# This loop monitors the position switch to stop the motor when 
+# it reaches the switch.
+    ##MAX_SEARCH_TIME = 20
+    ##init_time = time.time()
+    ##tmp = 0
+    while True:
+        time.sleep(.1)
+        value = controller.GPIODigitalGet(socket, "GPIO4.DI")
+        if value[0] != 0:
+            XPSErrorHandler(controller, socket, value[0],
+                                        "GPIODigitalGet")
+        elif int(format(value[1], "016b")[::-1][bit]) == val:
+            stop=controller.GroupSpinModeStop(socket, group, 1200)
+            if stop[0] != 0:
+                XPSErrorHandler(controller, socket, stop[0],
+                                            "GroupSpinModeStop")
+            break
+        else:
+            pass
+        ##tmp = time.time() - init_time
+        ##if(tmp >= MAX_SEARCH_TIME):
+        ##    raise TimeoutError()
+        ##print tmp
 
 
 def NewportInitialize(controller, motor, socket, home_pos):
@@ -608,10 +630,10 @@ def NewportFocusMove(controller, socket, motor, distance, speed, direction):
     fpa_limit_flag.set()
     deg_distance = distance*.576
     velocity = speed 
-    true_direction = direction * cfg[wheel]['direction']
+    true_direction = direction * cfg[motor]['direction']
     # initializing the motors motion profile and checking to for success.
     SGamma = controller.PositionerSGammaParametersSet(socket[1], 
-                                                      cfg[wheel]["positioner"], 
+                                                      cfg[motor]["positioner"], 
                                                       velocity, 600, .005, .05)
     if SGamma[0] != 0:
         fpa_limit_flag.clear()
@@ -679,11 +701,11 @@ def NewportFocusHome(controller, socket, motor):
     # Initializing motor variables.
     bitdown = cfg[motor]["lower"]["bit"]
     valdown = cfg[motor]["lower"]["val"]
-    vel = -200*cfg[wheel]['direction']
-    group = cfg[wheel]['group']
+    vel = -200*int(cfg[motor]['direction'])
+    group = cfg[motor]['group']
     
     # Starting motion. 
-    Gset = controller.GroupSpinParametersSet(socket, cfg[wheel]["group"], 
+    Gset = controller.GroupSpinParametersSet(socket, cfg[motor]["group"], 
                                              vel, 200)
     if Gset[0] != 0:
         XPSErrorHandler(controller ,socket, Gset[0], "GroupSpinParametersSet")

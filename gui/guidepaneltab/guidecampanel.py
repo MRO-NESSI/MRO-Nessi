@@ -7,6 +7,8 @@
 
 """
 
+import logging
+
 from time import sleep
 from threading import Event
 import wx
@@ -16,31 +18,60 @@ from threadtools import run_async, callafter
 class GuideCamPanel(wx.Panel):    
     def __init__(self, parent):
         super(GuideCamPanel, self).__init__(parent)
-        
+
         self.parent = parent
 
+        #Exposure Time
+        ################################################################
         self.exp_text = wx.StaticText(self, -1, label="Exposure (s):")
-        self.exposure = wx.TextCtrl(self, -1, '', size=(50,-1), style=wx.TE_NO_VSCROLL)
+        self.exposure = wx.TextCtrl(self, -1, '', size=(50,-1), 
+                                    style=wx.TE_NO_VSCROLL)
         self.exposure.SetValue('0.25')
-        self.take = wx.Button(self, size=(100, -1), label="Take Image")
+
+        #Take Image Button
+        ################################################################
+        self.take = wx.Button(self, size=(100, -1), 
+                              label="Take Image")
+
+        #Binning
+        ################################################################
         self.bin_text = wx.StaticText(self, -1, label="Bin (NxN): ")
-        self.bin = wx.SpinCtrl(self, id=-1, value='', min=1, max=4, initial=1, size=(40, -1))
-               
-        self.series = wx.SpinCtrl(self, id=-1, value='', min=1, max=1000, initial=3, size=(50, -1))
-        self.series_text = wx.StaticText(self, -1, label="Series: ")
-        self.scadence_text = wx.StaticText(self, -1, label="Cadence (s):")
-        self.scadence = wx.TextCtrl(self, -1, '', size=(50,-1), style=wx.TE_NO_VSCROLL)
-        self.scadence.SetValue('2.0')
-        self.take_series = wx.ToggleButton(self, 2, size=(100, -1), label="Take Series")
-        self.sname = wx.TextCtrl(self, -1, 'img', size=(130,-1), style=wx.TE_NO_VSCROLL)
-        self.sname_text = wx.StaticText(self, -1, label="Series Name: ")
-        self.autosave_on_text = wx.StaticText(self, label="Autosave: ")
-        self.autosave_cb = wx.CheckBox(self, -1, " " , (10,10))
-        self.autosave_cb.SetValue(False)
+        self.bin      = wx.SpinCtrl(self, id=-1, value='', 
+                                    min=1, max=4, initial=1, 
+                                    size=(40, -1))
         
-        self.rb_light = wx.RadioButton(self, -1, 'Light', (10, 10), style=wx.RB_GROUP)
-        self.rb_dark = wx.RadioButton(self, -1, 'Dark', (10, 30))
-        self.rb_flat = wx.RadioButton(self, -1, 'Flat', (10, 50))
+        #Series Controll Settings
+        ################################################################
+        self.series        = wx.SpinCtrl(self, id=-1, value='', min=1, 
+                                        max=1000, initial=3, 
+                                        size=(50, -1))
+        self.series_text   = wx.StaticText(self, -1, label="Series: ")
+        self.scadence_text = wx.StaticText(self, -1, label="Cadence (s):")
+        self.scadence      = wx.TextCtrl(self, -1, '', size=(50,-1), 
+                                         style=wx.TE_NO_VSCROLL)
+        self.scadence.SetValue('2.0')
+
+        self.sname            = wx.TextCtrl(self, -1, 'img', size=(130,-1), 
+                                            style=wx.TE_NO_VSCROLL)
+        self.sname_text       = wx.StaticText(self, -1, 
+                                              label="Series Name: ")
+        self.autosave_on_text = wx.StaticText(self, label="Autosave: ")
+        self.autosave_cb      = wx.CheckBox(self, -1, " " , (10,10))
+        self.autosave_cb.SetValue(False)
+
+
+        #Take Series Button
+        ################################################################
+        self.take_series = wx.ToggleButton(self, 2, size=(100, -1), 
+                                           label="Take Series")
+
+
+        #Lighting Radio Buttons
+        ################################################################
+        self.rb_light = wx.RadioButton(self, -1, 'Light', (10, 10), 
+                                       style=wx.RB_GROUP)
+        self.rb_dark  = wx.RadioButton(self, -1, 'Dark', (10, 30))
+        self.rb_flat  = wx.RadioButton(self, -1, 'Flat', (10, 50))
 
         self._DoLayout()
         self._DoBindings()
@@ -103,6 +134,7 @@ class GuideCamPanel(wx.Panel):
         #Take Image
         i = self.parent.cam.takePicture()
         self.parent.DisplayImage(i)
+        self.parent.d.set('zoom to fit')
 
         if self.autosave_cb.GetValue():
             #Make Fits File
@@ -110,7 +142,7 @@ class GuideCamPanel(wx.Panel):
 
     def OnExposeSeries(self, event):
         if self.take_series.GetValue():
-            count = self.series.GetValue()
+            count   = self.series.GetValue()
             cadence = self.scadence.GetValue()
             try:
                 cadence = float(cadence)
@@ -123,16 +155,16 @@ class GuideCamPanel(wx.Panel):
             self.take.Enable(False)
             self.take_series.SetLabel('Cancel Series')
             self.take_series.SetForegroundColour((34,139,34))
-            self._series_thread = self.Series(count, cadence)
             self._series_stop = Event()
+            self.Series(count, cadence)
         else:
             self._series_stop.set()
-            
-            
 
+            
     def OnBin(self, event):
         h = self.bin.GetValue()
         self.parent.cam.setBinning(h,h)
+
 
     def setExposure(self):
         #Set the exposure time
@@ -143,7 +175,8 @@ class GuideCamPanel(wx.Panel):
                           'INVALID EXPOSURE TIME!', wx.OK | wx.ICON_ERROR)
             raise
 
-    @run_async
+    
+    @run_async(daemon=True)
     def Series(self, count, cadence):
         try:
             self.setExposure()
@@ -155,6 +188,7 @@ class GuideCamPanel(wx.Panel):
             if self._series_stop.isSet():
                 break
             self.takePicture()
+            logging.debug("Guid cam series: %i of %i" % (i, count))
             sleep(cadence)
         self.endSeries()
         

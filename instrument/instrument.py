@@ -9,8 +9,14 @@
 
 import logging
 import sys
+import os
+#os.environ["NUMERIX"] = "numarray" # make pyfits use numarray
 
 from configobj import ConfigObj
+#import numarray as num
+import pyfits
+import pywcs
+import PyGuide
 
 from   actuators.dewarwheel import DewarWheel
 from   actuators.kmirror    import KMirror
@@ -116,7 +122,7 @@ class Instrument(object):
 #        raise InstrumentError('DICKS!')
 
     def connectTelescope(self):
-        self.telescope = Telescope('eos.nmt.edu', 7624)
+        self.telescope = Telescope('192.168.0.5', 7624)
 
     def closeTelescope(self):
         if isinstance(self.telescope, Telescope):
@@ -233,6 +239,10 @@ class Instrument(object):
         except InstrumentError:
             sys.exc_clear()
 
+        #Connect to Telescope
+        ################################################################
+        self.connectTelescope()
+
 
 
     @property
@@ -255,10 +265,10 @@ class Instrument(object):
             "PA"       : self.telescope.parallactic_angle,
             "JD"       : self.telescope.julian_date,
             "GDATE"    : "TCS down",    #TODO:Generate
-            "WINDVEL"  : self.telescope.wind_speed,
-            "WINDGUST" : self.telescope.wind_gust,
-            "WINDDIR"  : self.telescope.wind_direction,
-            "REI12"    : 0.0,           #focus position ???
+            #"WINDVEL"  : self.telescope.wind_speed,
+            #"WINDGUST" : self.telescope.wind_gust,
+            #"WINDDIR"  : self.telescope.wind_direction,
+            "AGR"      : 0.0,           #focus position ???
             "REI34"    : 0.0,           #focus position (Dewar focus)
             "MASK"     : self.mask_wheel.position,
             "FILTER1"  : self.filter1_wheel.position,
@@ -337,6 +347,58 @@ class Instrument(object):
         print msg
         pass
 
+    def get_centroid(self, fits_image, initialxy):
+        """Given a fits image, will return a centroid using
+        PyGuid.Centroid.centroid. Will raise an error if the
+        centroid is not ok.
+
+        Arguments
+        ---------
+        fits_image --- a fits image (probably returned from the cam)
+        intitialxy --- That thing.
+        
+        Returns
+        -------
+        PyGuid.Centroid object
+        
+        Raises
+        ------
+        Instrument Error
+        """
+        mask     = None
+        satMask  = None
+        rad      = 15
+        ccdInfo  = PyGuide.CCDInfo(100.0, 12.5, 1.5, 65535)
+
+        data     = fits_image[0].data
+        centroid = PyGuide.Centroid.centroid(data, mask, satMask, 
+                                             initialxy, rad, ccdInfo)
+        
+        if not centroid.isOK:
+            raise InstrumentError("Centroid could not be found!")
+
+        return centroid
+
+    def calc_xy_shift(self, t0_centroid, t1_centroid, fits_header):
+        """Given two PyGuid.Centroid objects, calculates the
+        xy shift between the two, as Fortran-like sky coordinates
+
+        Arguments
+        ---------
+        t0_centroid --- Centroid of t=0
+        t1_centroid --- Centroid of t=1
+
+        Returns
+        -------
+        sky coordinates
+        """
+        shift  = pixelmath.xy_move(t0_centroid, t1_centroid)
+        wcs    = pywcs.WCS(fits_header)
+        pixcrd = np.array([[512.0+shift[0][0],512.0+shift[0][1]]], 
+                              np.float_)
+
+        sky    = wcs.wcs_pix2sky(pixcrd, 1)
+        return sky
 
 class InstrumentInitializationError(InstrumentError):
     pass
