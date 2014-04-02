@@ -72,7 +72,9 @@ class FLICam(InstrumentComponent):
                                   ' guide cam!\n The following error was'
                                   ' raised...\n %s' % repr(e))
             
-        return p.grabFrame(self._id)
+        image = p.grabFrame(self._id)
+        image[:] = np.fliplr(image)[:]
+        return image
 
     def takePictureFITS(self):
         """Takes a picture with the guide cam.
