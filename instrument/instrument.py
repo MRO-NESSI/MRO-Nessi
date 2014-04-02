@@ -268,10 +268,10 @@ class Instrument(object):
             "CAMTEMP"  : self.guide_cam.getTemperature(),
             "CTYPE1"   : "RA---TAN",    #?????????
             "CTYPE2"   : "DEC--TAN",    #?????????
-            "CRPIX1"   : 512.0,         #?????????
-            "CRPIX2"   : 512.0,         #?????????
-            "CDELT1"   : 0.0,           #?????????
-            "CDELT2"   : 0.0,           #?????????
+            "CRPIX1"   : 1024.0,        # ref point pixel x
+            "CRPIX2"   : 1024.0,        # ref point pixel y
+            "CDELT1"   : 0.000147222222,# deg per pixel x
+            "CDELT2"   : 0.000147222222,# deg per pixel y
             "CRVAL1"   : 0.0,           #?????????
             "CRVAL2"   : 0.0,           #?????????
             "CROTA2"   : 0.0            #?????????
