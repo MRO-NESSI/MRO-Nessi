@@ -134,6 +134,7 @@ class GuideCamPanel(wx.Panel):
         #Take Image
         i = self.parent.cam.takePicture()
         self.parent.DisplayImage(i)
+        self.parent.d.set('zoom to fit')
 
         if self.autosave_cb.GetValue():
             #Make Fits File
