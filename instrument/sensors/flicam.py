@@ -1,5 +1,6 @@
 from time import sleep
 
+import numpy as np
 import pyfli as p
 import pyfits
 

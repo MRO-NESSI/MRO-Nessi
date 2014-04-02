@@ -132,7 +132,7 @@ class GuideCamPanel(wx.Panel):
     @callafter
     def takePicture(self):
         #Take Image
-        i = self.parent.cam.takePicture()
+        i = self.parent.cam.takePictureFITS()
         self.parent.DisplayImage(i)
         self.parent.d.set('zoom to fit')
 

@@ -149,6 +149,7 @@ class GuidingPanel(wx.Panel):
             logging.info("Moving telescope to new sky vector: [%f, %f]" 
                          % (new_sky[0][0] / 15.0, new_sky[0][1]))
             
+            # convert RA in decimal degrees back to RA in decimal hours
             #self.telescope.ra  = new_sky[0][0] / 15.0
             #self.telesceop.dec = new_sky[0][1]
             

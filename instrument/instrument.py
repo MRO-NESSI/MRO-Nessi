@@ -379,22 +379,27 @@ class Instrument(object):
 
         return centroid
 
-    def calc_xy_shift(self, t0_centroid, t1_centroid, fits_header):
+    def calc_xy_shift(self, t0_centroid, tn_centroid, fits_header):
         """Given two PyGuid.Centroid objects, calculates the
         xy shift between the two, as Fortran-like sky coordinates
 
         Arguments
         ---------
         t0_centroid --- Centroid of t=0
-        t1_centroid --- Centroid of t=1
+        tn_centroid --- Centroid of t=1
+        fits_header --- FITS header for tn_centroid
 
         Returns
         -------
         sky coordinates
         """
-        shift  = pixelmath.xy_move(t0_centroid, t1_centroid)
-        wcs    = pywcs.WCS(fits_header)
-        pixcrd = np.array([[512.0+shift[0][0],512.0+shift[0][1]]], 
+        #TODO: USE CRPIX IN THE KEYWORDS
+        center_x = 528.0
+        center_x = 513.5
+
+        shift    = pixelmath.xy_move(t0_centroid, tn_centroid)
+        wcs      = pywcs.WCS(fits_header)
+        pixcrd   = np.array([[center_x+shift[0][0],center_y+shift[0][1]]], 
                               np.float_)
 
         sky    = wcs.wcs_pix2sky(pixcrd, 1)
