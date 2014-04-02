@@ -7,7 +7,7 @@
 """
 
 __author__ = 'Luke Schmidt, Matt Napolitano, Tyler Cecil'
-__date__ = '2013'
+__date__   = '2013'
 
 import logging
 from logging.handlers import TimedRotatingFileHandler
@@ -15,6 +15,7 @@ from os import makedirs, execl
 from os.path import isdir, join
 import signal
 import sys
+import SocketServer
 import traceback
 
 from configobj import ConfigObj
@@ -27,10 +28,12 @@ from wx.lib.agw import advancedsplash
 from gui.gui import MainNessiFrame
 from instrument.instrument import Instrument
 from gui.logtab.log import wxLogHandler, EVT_WX_LOG_EVENT
-from threadtools import shutdown
+from threadtools import run_async, shutdown
 
 CONFIG_PATH        = 'nessisettings.ini'
 SPLASH_BITMAP_PATH = 'media/badass.png'
+HOST               = 'localhost'
+PORT               = 8989
 
 def main(argv=None):
     """Run the entirety of the nessi software.
@@ -76,6 +79,7 @@ def main(argv=None):
             pass
         
         app.Destroy()
+        self.socket.shutdown()
         try:
             instrument.closeTelescope()
         finally:
@@ -128,6 +132,27 @@ def main(argv=None):
         f.close()
     
     signal.signal(signal.SIGPOLL, sigpollHandler)
+
+    #Socket Server for sending keywords
+    ################################################################
+    class KeywordTCPHandler(SocketServer.StreamRequestHandler):
+        def handle(self):
+            logging.info("Dumping keywords to stream socket...")
+
+            keywords = instrument.keywords
+            for key in keywords:
+                self.wfile.write("%s\t%s\n" % (key, keywords[key]))
+
+            logging.info("Socket closing...")
+
+    server = SocketServer.TCPServer((HOST, PORT), KeywordTCPHandler)
+    
+    @run_async(daemon=True)
+    def startServer():
+        server.serve_forever()
+    
+    startServer()
+        
 
     #Build Instrument
     ################################################################
