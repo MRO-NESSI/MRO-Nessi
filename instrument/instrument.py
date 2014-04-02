@@ -119,10 +119,12 @@ class Instrument(object):
         ################################################################
         self._init_components()
 
-#        raise InstrumentError('DICKS!')
 
     def connectTelescope(self):
-        self.telescope = Telescope('192.168.0.5', 7624)
+        try:
+            self.telescope = Telescope('192.168.0.5', 7624)
+        except:
+            raise InstrumentError('Unable to connect to telescope!')
 
     def closeTelescope(self):
         if isinstance(self.telescope, Telescope):
@@ -241,7 +243,10 @@ class Instrument(object):
 
         #Connect to Telescope
         ################################################################
-        self.connectTelescope()
+        try:
+            self.connectTelescope()
+        except InstrumentError:
+            sys.exc_clear()
 
 
 
@@ -256,26 +261,38 @@ class Instrument(object):
             "TELESCOP" : "MRO 2.4m",    #TODO:Get from indi?
             "FILENAME" : "default",     #TODO:Do these later?
             "IMGTYPE"  : "imgtyp",      
-            "RA"       : self.telescope.ra,
-            "DEC"      : self.telescope.dec,
-            "AIRMASS"  : self.telescope.airmass,
-            "TELALT"   : self.telescope.altitude,
-            "TELAZ"    : self.telescope.azimuth,
+            "RA"       : 
+            self.telescope.ra if self.telescope else None,
+            "DEC"      : 
+            self.telescope.dec if self.telescope else None,
+            "AIRMASS"  : 
+            self.telescope.airmass if self.telescope else None,
+            "TELALT"   : 
+            self.telescope.altitude if self.telescope else None,
+            "TELAZ"    : 
+            self.telescope.azimuth if self.telescope else None,
             "TELFOCUS" : "TCS down",    #TODO:Where is?
-            "PA"       : self.telescope.parallactic_angle,
-            "JD"       : self.telescope.julian_date,
+            "PA"       : 
+            self.telescope.parallactic_angle if self.telescope else None,
+            "JD"       : 
+            self.telescope.julian_date if self.telescope else None,
             "GDATE"    : "TCS down",    #TODO:Generate
             #"WINDVEL"  : self.telescope.wind_speed,
             #"WINDGUST" : self.telescope.wind_gust,
             #"WINDDIR"  : self.telescope.wind_direction,
             "AGR"      : 0.0,           #focus position ???
             "REI34"    : 0.0,           #focus position (Dewar focus)
-            "MASK"     : self.mask_wheel.position,
-            "FILTER1"  : self.filter1_wheel.position,
-            "FILTER2"  : self.filter2_wheel.position,
-            "GRISM"    : self.grism_wheel.position,
+            "MASK"     : 
+            self.mask_wheel.position if self.mask_wheel else None,
+            "FILTER1"  : 
+            self.filter1_wheel.position if self.filter1_wheel else None,
+            "FILTER2"  : 
+            self.filter2_wheel.position if self.filter2_wheel else None,
+            "GRISM"    : 
+            self.grism_wheel.position if self.grism_wheel else None,
             "EXP"      : 0.0,           #??????????
-            "CAMTEMP"  : self.guide_cam.getTemperature(),
+            "CAMTEMP"  : 
+            self.guide_cam.getTemperature() if self.guide_cam else None,
             "CTYPE1"   : "RA---TAN",    #?????????
             "CTYPE2"   : "DEC--TAN",    #?????????
             "CRPIX1"   : 1024.0,        # ref point pixel x
@@ -312,7 +329,9 @@ class Instrument(object):
 
     @property
     def components(self):
-        return dict(self.actuators, **self.sensors)
+        dictionary              = dict(self.actuators, **self.sensors)
+        dictionary['Telescope'] = self.telescope
+        return dictionary
         
     @timeout(10)
     def _fill_socket_list(self):
