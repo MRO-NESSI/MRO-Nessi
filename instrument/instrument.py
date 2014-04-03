@@ -310,6 +310,16 @@ class Instrument(object):
         return keywords
 
     @property
+    def keywordsH2RG(self):
+        keywords = self.keywords
+        keywords['CRPIX1'] = 1024.0
+        keywords['CRPIX2'] = 1024.0
+        keywords['CDELT1'] = 0.000147222222
+        keywords['CDELT2'] = 0.000147222222
+        return keywords
+
+
+    @property
     def actuators(self):
         actuators = {
             'kmirror'        : self.kmirror      ,

@@ -139,11 +139,7 @@ def main(argv=None):
         def handle(self):
             logging.info("Dumping keywords to stream socket...")
 
-            keywords = instrument.keywords
-            keywords['CRPIX1'] = 1024.0
-            keywords['CRPIX2'] = 1024.0
-            keywords['CDELT1'] = 0.000147222222
-            keywords['CDELT2'] = 0.000147222222
+            keywords = instrument.keywordsH2RG
             for key in keywords:
                 self.wfile.write("%s\t%s\n" % (key, keywords[key]))
 
