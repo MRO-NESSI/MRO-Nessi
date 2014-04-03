@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+p#!/usr/bin/env python
 """
  Control software for NESSI
  
@@ -140,6 +140,10 @@ def main(argv=None):
             logging.info("Dumping keywords to stream socket...")
 
             keywords = instrument.keywords
+            keywords['CRPIX1'] = 1024.0
+            keywords['CRPIX2'] = 1024.0
+            keywords['CDELT1'] = 0.000147222222
+            keywords['CDELT2'] = 0.000147222222
             for key in keywords:
                 self.wfile.write("%s\t%s\n" % (key, keywords[key]))
 
