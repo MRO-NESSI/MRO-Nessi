@@ -66,6 +66,29 @@ def main(argv=None):
     ################################################################
     cfg = ConfigObj(CONFIG_PATH)
 
+    #Socket Server for sending keywords
+    #Note this section must be beffore SIGABRT, in order for socket
+    #to be in the namespace of the SIGABRT closure.
+    ################################################################
+    class KeywordTCPHandler(SocketServer.StreamRequestHandler):
+        def handle(self):
+            logging.info("Dumping keywords to stream socket...")
+
+            keywords = instrument.keywordsH2RG
+            for key in keywords:
+                self.wfile.write("%s\t%s\n" % (key, keywords[key]))
+
+            logging.info("Socket closing...")
+
+    server = SocketServer.TCPServer((HOST, PORT), KeywordTCPHandler)
+
+    @run_async(daemon=True)
+    def startServer():
+        server.serve_forever()
+    
+    startServer()
+
+
     #SIGABRT Handler setup (signaled by a "shutdown")
     ################################################################
     def shutdownHandler(signum, frame):
@@ -79,7 +102,7 @@ def main(argv=None):
             pass
         
         app.Destroy()
-        self.socket.shutdown()
+        server.shutdown()
         try:
             instrument.closeTelescope()
         finally:
@@ -132,27 +155,7 @@ def main(argv=None):
         f.close()
     
     signal.signal(signal.SIGPOLL, sigpollHandler)
-
-    #Socket Server for sending keywords
-    ################################################################
-    class KeywordTCPHandler(SocketServer.StreamRequestHandler):
-        def handle(self):
-            logging.info("Dumping keywords to stream socket...")
-
-            keywords = instrument.keywordsH2RG
-            for key in keywords:
-                self.wfile.write("%s\t%s\n" % (key, keywords[key]))
-
-            logging.info("Socket closing...")
-
-    server = SocketServer.TCPServer((HOST, PORT), KeywordTCPHandler)
-    
-    @run_async(daemon=True)
-    def startServer():
-        server.serve_forever()
-    
-    startServer()
-        
+            
 
     #Build Instrument
     ################################################################
