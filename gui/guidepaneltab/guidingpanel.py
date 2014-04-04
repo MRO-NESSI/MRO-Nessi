@@ -94,7 +94,9 @@ class GuidingPanel(wx.Panel):
 
     @run_async(daemon=True)
     def guide_routine(self):
+        logging.info('getting initialxy...')
         initialxy   = self.getInitialXY()
+        logging.info('done getting intialxy!')
         t0_centroid = None
         tn_centroid = None
         fits_file   = None

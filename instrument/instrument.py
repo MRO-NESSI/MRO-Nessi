@@ -8,11 +8,13 @@
 """
 
 import logging
+import math
 import sys
 import os
 #os.environ["NUMERIX"] = "numarray" # make pyfits use numarray
 
 from configobj import ConfigObj
+import numpy as np
 #import numarray as num
 import pyfits
 import pywcs
@@ -411,6 +413,23 @@ class Instrument(object):
 
         return centroid
 
+    #Calculate distance to move in xy coords
+    def xy_move(self, centroidMaster, centroidMinion):
+        #what is the shift? Think of the output as how much to shift 
+        #the frame by, not move the point.
+        deltaxy = [centroidMinion[0] - centroidMaster[0], 
+                   centroidMinion[1] - centroidMaster[1]]
+        #set threshold for telescope movement - makes assumption 
+        #of 0.23"/px plate scale and minimum movement of 0.05" 
+        #(0.05/0.23 = 0.21)
+        if math.sqrt(deltaxy[0]**2 + deltaxy[1]**2) <= 0.21:
+            move = False
+            return deltaxy, move
+        else:
+            move = True
+            return deltaxy, move
+
+
     def calc_xy_shift(self, t0_centroid, tn_centroid, fits_header):
         """Given two PyGuid.Centroid objects, calculates the
         xy shift between the two, as Fortran-like sky coordinates
@@ -427,9 +446,9 @@ class Instrument(object):
         """
         #TODO: USE CRPIX IN THE KEYWORDS
         center_x = 528.0
-        center_x = 513.5
+        center_y = 513.5
 
-        shift    = pixelmath.xy_move(t0_centroid, tn_centroid)
+        shift    = self.xy_move(t0_centroid.xyCtr, tn_centroid.xyCtr)
         wcs      = pywcs.WCS(fits_header)
         pixcrd   = np.array([[center_x+shift[0][0],center_y+shift[0][1]]], 
                               np.float_)
