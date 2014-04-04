@@ -130,9 +130,9 @@ class KmirrorPanel(wx.Panel):
     def on_set(self, event):
         wx.CallAfter(self.Enable, False)
         try:
-            pa = float(self.new_pa.GetValue())
-            assert -170 <= pa <=170
-            self.kmirror.move(pa)
+            ua = float(self.new_pa.GetValue())
+            assert -170 <= ua <=170
+            self.kmirror.moveToUserAngle(ua)
         except InstrumentError:
             pass
         except ValueError:
@@ -151,6 +151,8 @@ class KmirrorPanel(wx.Panel):
             self.StartTracking()
         else:
             self.StopTracking()
+
+
     def StartTracking(self):
         """Called by on_track (the function that is run when hitting
         the Track button) in the event that the KMirror is currently
@@ -165,10 +167,13 @@ class KmirrorPanel(wx.Panel):
         ->None
         """
         self.Enable(False)
+        self.track_button.Enable(True)
         self.track_button.SetLabel("Stop Tracking")
         self.track_button.SetForegroundColour((34,139,34))
 
+        self._track_event = Event()
         t_angle = self.t_angle.GetValue()
+        ua = float(self.new_pa.GetValue())
         try:
             t_angle = float(t_angle)
         except:
@@ -178,8 +183,13 @@ class KmirrorPanel(wx.Panel):
             self.StopTracking()
             return
         
-        self._track_event = Event()
-        self.kmirror(t_angle, self._track_event)
+        self.DiscreteTracking(1, ua, self._track_event)
+
+    @run_async(daemon=True)
+    def DiscreteTracking(self, cadence, ua, stop_event):
+        while not stop_event.isSet():
+            self.kmirror.moveToUserAngle(ua)
+            sleep(cadence)
 
     def StopTracking(self):
         """Called by on_track (the function that is run when hitting
