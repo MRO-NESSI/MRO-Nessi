@@ -732,7 +732,7 @@ def NewportFocusHome(controller, socket, motor):
         pass
 
 
-def NewportKmirrorTracking(parent, controller, socket, motor, t_angle):
+def NewportKmirrorTracking(parent, controller, socket, motor, t_angle, track_event):
     """
 This function initiates kmirror tracking.  The tracking algorith updates the
 speed of rotation based on feedback from the telescope.  If the telescope is 
@@ -758,9 +758,10 @@ user stops it in the NESSI GUI.
     
     while not track_event.isSet():
         try:
-            A = math.radians(parent.keywords['TELAZ'])
-            H = math.radians(parent.keywords['TELALT'])
-            PA = float(parent.keywords['PA'])
+            keywords = parent.instrument.keywords
+            A = math.radians(keywords['TELAZ'])
+            H = math.radians(keywords['TELALT'])
+            PA = float(keywords['PA'])
         except TypeError:
             track_event.set()
             time.sleep(1)

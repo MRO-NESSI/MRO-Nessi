@@ -90,24 +90,18 @@ class KMirror(InstrumentComponent):
         return np.NewportStatusGet(self.controller, self.sockets[1], 
                                    self.motor)[0]
 
-    def userAngleToPositionAngle(self):
-        pass
-    """
-    @property
-    def physicalAngle(self):
-        if self.telescope:
-            parallactic_angle = paself.instrument
-            .telescope.parallactic_angle 
-            altitute = paself.instrument
-            .telescope.altitude
+    def userAngleToPositionAngle(self, userAngle):
+        if self.instrument.telescope:
+            parallactic_angle = self.instrument.telescope.parallactic_angle
+            altitude          = self.instrument.telescope.altitude
+            tmode         = int(self.instrument.cfg['kmirror']['direction'])
+            positionAngle = 0.5 * ((userAngle - parallactic_angle) 
+                                 - tmode * (altitude))
+            return positionAngle
         else:
             return None
-
-        user_angle = None
-
-        return 
-    """
-
+        
+        
 
     @logCall(msg='Moving KMirror.')
     def move(self, position):
@@ -132,6 +126,14 @@ class KMirror(InstrumentComponent):
             raise InstrumentError('An error occured during a movement of'
                                   ' the K-Mirror. \n The following '
                                   ' error was raised...\n %s' % repr(e))
+
+    def moveToUserAngle(self, userAngle):
+        pa = self.userAngleToPositionAngle(userAngle)
+        if not pa:
+            raise InstrumentError('Unable to produce Position Angle from'
+                                  'user angle!')
+        self.move(self.userAngleToPositionAngle(userAngle))
+
 
     @logCall(msg='Stepping KMirror.')   
     def step(self, offset):
