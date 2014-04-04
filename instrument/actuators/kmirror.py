@@ -1,5 +1,7 @@
+from threadtools import run_async
 import instrument.actuators.newport as np
 from instrument.component import InstrumentComponent, InstrumentError, logCall
+
 
 class KMirror(InstrumentComponent):
     """Represents the Newport controlled K-Mirror.
@@ -88,6 +90,19 @@ class KMirror(InstrumentComponent):
         return np.NewportStatusGet(self.controller, self.sockets[1], 
                                    self.motor)[0]
 
+    def userAngleToPositionAngle(self, userAngle):
+        if self.instrument.telescope:
+            parallactic_angle = self.instrument.telescope.parallactic_angle
+            altitude          = self.instrument.telescope.altitude
+            tmode         = int(self.instrument.cfg['kmirror']['direction'])
+            positionAngle = 0.5 * ((userAngle - parallactic_angle) 
+                                 - tmode * (altitude))
+            return positionAngle
+        else:
+            return None
+        
+        
+
     @logCall(msg='Moving KMirror.')
     def move(self, position):
         """Moves the wheel to a selected position.
@@ -111,6 +126,14 @@ class KMirror(InstrumentComponent):
             raise InstrumentError('An error occured during a movement of'
                                   ' the K-Mirror. \n The following '
                                   ' error was raised...\n %s' % repr(e))
+
+    def moveToUserAngle(self, userAngle):
+        pa = self.userAngleToPositionAngle(userAngle)
+        if not pa:
+            raise InstrumentError('Unable to produce Position Angle from'
+                                  'user angle!')
+        self.move(self.userAngleToPositionAngle(userAngle))
+
 
     @logCall(msg='Stepping KMirror.')   
     def step(self, offset):
@@ -162,12 +185,15 @@ class KMirror(InstrumentComponent):
             raise InstrumentError('An error occured during a stop sequence of'
                                   ' the K-Mirror.\n The following '
                                   ' error was raised...\n %s' % repr(e))    
-
-    def track(self, t_angle):
+    @logCall(msg='Tracking KMirror')
+    @run_async(daemon=True)
+    def track(self, t_angle, track_event):
         """Starts the K-Mirror tracking loop.
             
         Arguments:
             t_angle -- A user defined value specific to the tracking target.
+            track_event --- threading.Event object to signal when tracking
+                            is finished.
 
         Raises:
             InstrumentError
@@ -176,9 +202,8 @@ class KMirror(InstrumentComponent):
             None
         """
         try:
-            self.track_status = True
             np.NewportKmirrorTracking(self, self.controller, self.sockets[0],
-                                      self.motor, t_angle)        
+                                      self.motor, t_angle, track_event)        
         except InstrumentError as e:
             raise InstrumentError('An error occured during a stop sequence of'
                                   ' the K-Mirror.\n The following '

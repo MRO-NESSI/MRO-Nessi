@@ -306,7 +306,8 @@ class Instrument(object):
             "CDELT2"   : 0.000119444444,# deg per pixel y
             "CRVAL1"   : 0.0,           #?????????
             "CRVAL2"   : 0.0,           #?????????
-            "CROTA2"   : 0.0            #?????????
+            "CROTA2"   :                #Image rotation value
+            self.kmirror.positionAngle * 2 + 180
             }
         
         return keywords
