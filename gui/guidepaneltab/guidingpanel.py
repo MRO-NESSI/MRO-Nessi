@@ -71,11 +71,11 @@ class GuidingPanel(wx.Panel):
         self.guide_routine()
 
     def StopGuide(self):
-        self.parent.guideCamPanel.Enable(True)
         self.guide.SetLabel("StartGuiding")
         self.guide.SetForegroundColour((0,0,0))
         self._guide_stop.set()
         self.guide.SetValue(False)
+        self.parent.guideCamPanel.Enable(True)
 
 
     def getInitialXY(self):
