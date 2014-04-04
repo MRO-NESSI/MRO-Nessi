@@ -5,6 +5,7 @@ import math
 import time
 from time import clock
 import threading
+import logging
 from wx.lib.pubsub import Publisher
 
 import XPS_C8_drivers as xps
@@ -247,6 +248,7 @@ def NewportWheelMove(controller, wheel, socket, current, position):
         if value[0] != 0:
             XPSErrorHandler(controller, socket, value[0], "GPIODigitalGet")
         elif int(format(value[1], "016b")[::-1][bit]) != val:
+            logging.info("Slow motion due to previous switch passed.")
             Gset = controller.GroupSpinParametersSet(socket, group, speed,
                                                      800)
             while True:
@@ -285,6 +287,7 @@ def NewportWheelMove(controller, wheel, socket, current, position):
                 XPSErrorHandler(controller ,socket, Gset[0],
                                 "GroupSpinParametersSet")
             else:
+                logging.info("Slow due to position search.")
                 try:
                     wheelcheck(controller, socket, bit, val, group)
                 except TimeoutError:
