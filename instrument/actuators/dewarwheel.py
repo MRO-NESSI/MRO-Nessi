@@ -36,7 +36,7 @@ class DewarWheel(InstrumentComponent):
         self.positions   = positions
 
         self.initialize()
-        self.home()
+        #self.home()
 
     def __str__(self):
         return self.name

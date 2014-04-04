@@ -748,6 +748,7 @@ user stops it in the NESSI GUI.
     motor:      [str]   Which motor is being used.  This is for config file
                         purposes.
     t_angle:    [float] User defined angle specific to the target.
+    track_event:[threading.Event] Event to signal end of tracking.
 
 """
     Gmode = controller.GroupJogModeEnable(socket, cfg[motor]["group"])
@@ -755,13 +756,13 @@ user stops it in the NESSI GUI.
         XPSErrorHandler(controller, socket, Gmode[0], "GroupJogModeEnable")
     phi = math.radians(33.984861)
     
-    while parent.trackstatus == True:
+    while not track_event.isSet():
         try:
             A = math.radians(parent.keywords['TELAZ'])
             H = math.radians(parent.keywords['TELALT'])
             PA = float(parent.keywords['PA'])
         except TypeError:
-            parent.trackstatus = False
+            track_event.set()
             time.sleep(1)
         else:
             angle = .5*(t_angle - PA - int(cfg[motor]["direction"])*H)

@@ -1,5 +1,7 @@
 import logging
 from time import sleep
+from threading import Event
+
 import wx
 
 import instrument.actuators.newport as new
@@ -144,25 +146,59 @@ class KmirrorPanel(wx.Panel):
             
         wx.CallAfter(self.Enable, True)
 
-    @run_async(daemon=True)
     def on_track(self, event):
-        wx.CallAfter(self.Enable, False)
-        children = self.GetChildren()
         if self.track_button.GetValue():
-            wx.CallAfter(self.track_button.SetLabel, "Stop Tracking")
-            wx.CallAfter(self.track_button.SetForegroundColour, (34,139,34))
-            for child in children:
-                if child != self.track_button: wx.CallAfter(child.Enable, False)
-#            self.start_tracking()
+            self.StartTracking()
         else:
-            wx.CallAfter(self.track_button.SetLabel, "Start Tracking")
-            wx.CallAfter(self.track_button.SetForegroundColour,(0,0,0))
-            wx.CallAfter(self.Enable, True)
-            for child in children:
-                if child != self.track_button: wx.CallAfter(child.Enable, True)
-#            self.stop_tracking()
-        wx.CallAfter(self.Enable, True)
+            self.StopTracking()
+    def StartTracking(self):
+        """Called by on_track (the function that is run when hitting
+        the Track button) in the event that the KMirror is currently
+        not tracking, and begins the tracking process.
 
+        Arguments
+        ---------
+        ->None
+            
+        Returns
+        -------
+        ->None
+        """
+        self.Enable(False)
+        self.track_button.SetLabel("Stop Tracking")
+        self.track_button.SetForegroundColour((34,139,34))
+
+        t_angle = self.t_angle.GetValue()
+        try:
+            t_angle = float(t_angle)
+        except:
+            wx.CallAfter(wx.MessageBox,
+                         'Please select a valid t_angle!', 
+                             'INVALID T_ANGLE!', wx.OK | wx.ICON_ERROR)
+            self.StopTracking()
+            return
+        
+        self._track_event = Event()
+        self.kmirror(t_angle, self._track_event)
+
+    def StopTracking(self):
+        """Called by on_track (the function that is run when hitting
+        the Track button) in the event that the KMirror is currently
+        tracking, and ends the tracking process.
+
+        Arguments
+        ---------
+        ->None
+            
+        Returns
+        -------
+        ->None
+        """
+        self.track_button.SetLabel("Start Tracking")
+        self.track_button.SetForegroundColour((0,0,0))
+        self._track_event.set()
+        self.track_button.SetValue(False)
+        self.Enable(True)
 
     def on_timer(self, event):
         try:
