@@ -51,6 +51,10 @@ class KmirrorPanel(wx.Panel):
             self, -1, size=(126,-1), 
             choices=("Position Angle", "Vertical Angle", "Stationary"), 
             style=wx.CB_READONLY)
+
+        self.t_angle_text  = wx.StaticText(self, label="T-Angle:")
+        self.t_angle       = wx.TextCtrl(self, size=(62,-1))
+
                         
         # Layout
         ################################################################
@@ -107,6 +111,11 @@ class KmirrorPanel(wx.Panel):
         sizer.Add(self.mode_txt,  pos=(4,0), 
                   flag=wx.ALIGN_RIGHT|wx.ALIGN_CENTER_VERTICAL)
         sizer.Add(self.mode, pos=(4,1), span=(1,3), flag=wx.ALIGN_LEFT)
+
+        sizer.Add(self.t_angle_text, pos=(5,0), 
+                  flag=wx.ALIGN_RIGHT | wx.ALIGN_CENTER_VERTICAL)
+        sizer.Add(self.t_angle, pos=(5,1), span=(1,4), flag=wx.ALIGN_LEFT)
+
 
         # Add the grid bag to the static box and make everything fit
         sizer.SetMinSize(wx.Size(200, -1))
