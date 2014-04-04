@@ -90,6 +90,25 @@ class KMirror(InstrumentComponent):
         return np.NewportStatusGet(self.controller, self.sockets[1], 
                                    self.motor)[0]
 
+    def userAngleToPositionAngle(self):
+        pass
+    """
+    @property
+    def physicalAngle(self):
+        if self.telescope:
+            parallactic_angle = paself.instrument
+            .telescope.parallactic_angle 
+            altitute = paself.instrument
+            .telescope.altitude
+        else:
+            return None
+
+        user_angle = None
+
+        return 
+    """
+
+
     @logCall(msg='Moving KMirror.')
     def move(self, position):
         """Moves the wheel to a selected position.
