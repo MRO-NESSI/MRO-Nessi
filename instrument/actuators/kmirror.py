@@ -93,8 +93,8 @@ class KMirror(InstrumentComponent):
 
     def userAngleToPositionAngle(self, userAngle):
         if self.instrument.telescope:
-            parallactic_angle = self.instrument.telescope.parallactic_angle
-            altitude          = self.instrument.telescope.altitude
+            parallactic_angle = self.instrument.telescope.parallactic_angle_manual
+            altitude      = self.instrument.telescope.altitude
             tmode         = int(self.instrument.cfg['kmirror']['direction'])
             positionAngle = 0.5 * ((userAngle - parallactic_angle) 
                                  - tmode * (altitude))

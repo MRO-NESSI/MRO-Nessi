@@ -1,3 +1,5 @@
+from math import sin, cos, tan, atan, degrees, radians 
+
 from indiclient import indiclient
 
 class Telescope(object):
@@ -81,11 +83,27 @@ class Telescope(object):
         #All should be in radians, to use math.py
         #teneta = cos(latrad)*sin(HArad) / (sin(latrad)*cos(decrad) - cos(latrad)*sin(decrad)*cos(HArad))
         #return atan(teneta)
-        dec_degree = self.dec
-        ha_degree  = 
-        lat_degree = 
+        dec_rad = radians(self.dec)
+        ha_rad  = radians(self.ha)
+        lat_rad = radians(self.latitude)
+        teneta  = cos(lat_rad) * sin(ha_rad) / (
+            sin(lat_rad) * cos(dec_rad) - cos(lat_rad) * sin(dec_rad) * cos(ha_rad)
+            )
+        return degrees(atan(teneta))
         
-    
+    @property
+    def ha(self):
+        '''get hour angle.'''
+        ha_degree = self._indi.get_element(
+            "Telescope", "Pointing", "HA").get_float()
+        
+        return ha_degree
+
+    @property
+    def latitude(self):
+        #A constant taken from MRO's wiki page
+        return 33.976667
+
     @property
     def julian_date(self):
         jul = self._indi.get_element(
