@@ -191,6 +191,13 @@ class KmirrorPanel(wx.Panel):
             self.kmirror.moveToUserAngle(ua)
             sleep(cadence)
 
+    @run_async(deamon=True)
+    def VelocityTracking(self, cadence, stop_event):
+        while not stop_event.isSet():
+            self.kmirror.setVelocity()
+            sleep(cadence)
+
+
     def StopTracking(self):
         """Called by on_track (the function that is run when hitting
         the Track button) in the event that the KMirror is currently
