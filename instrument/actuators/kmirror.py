@@ -1,4 +1,5 @@
 from threadtools import run_async
+import math
 import instrument.actuators.newport as np
 from instrument.component import InstrumentComponent, InstrumentError, logCall
 
@@ -135,6 +136,27 @@ class KMirror(InstrumentComponent):
         self.move(self.userAngleToPositionAngle(userAngle))
 
 
+    def setVelocity(self):
+        vel = self.calculateVelocity()
+        if not vel:
+            raise InstrumentError('Unable to produce new velocity for'
+                                  'tracking.')
+        self.updateVelocity(self.calculateVelocity())
+        
+
+    def calculateVelocity():
+        if self.instrument.telescope:
+            phi = math.radians(33.984861)
+            azimuth   = self.instrument.telescope.azimuth
+            altitude  = self.instrument.telescope.altitude
+            vel       = ((-.262)*(.5)*180*math.cos(phi)*math.cos(azimuth))/\
+                        (math.cos(altitude)*3600*math.pi)
+            return vel
+        else:
+            return None
+        
+    
+
     @logCall(msg='Stepping KMirror.')   
     def step(self, offset):
         """Moves by a given offset angle.
@@ -208,4 +230,27 @@ class KMirror(InstrumentComponent):
             raise InstrumentError('An error occured during a stop sequence of'
                                   ' the K-Mirror.\n The following '
                                   ' error was raised...\n %s' % repr(e))
+    @logCall(msg='Updating KMirror velocity.')
+    def updateVelocity(self, vel):
+        """Moves the KMirror at a set velocity.
+            
+        Arguments:
+            vel -- Which velocity [float] to set the kmirror motor to.
+
+        Raises:
+            InstrumentError
+        
+        Returns:
+            None
+        """
+        try:
+            with self.lock:
+                np.NewportKmirrorRotate(self.controller, self.sockets[0], 
+                                   self.motor, vel)
+        except InstrumentError as e:
+            raise InstrumentError('An error occured during a velocity set of'
+                                  ' the K-Mirror. \n The following '
+                                  ' error was raised...\n %s' % repr(e))
+
+
 
