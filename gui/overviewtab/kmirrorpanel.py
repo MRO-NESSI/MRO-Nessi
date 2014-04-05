@@ -191,7 +191,7 @@ class KmirrorPanel(wx.Panel):
             self.kmirror.moveToUserAngle(ua)
             sleep(cadence)
 
-    @run_async(deamon=True)
+    @run_async(daemon=True)
     def VelocityTracking(self, cadence, stop_event):
         while not stop_event.isSet():
             self.kmirror.setVelocity()
