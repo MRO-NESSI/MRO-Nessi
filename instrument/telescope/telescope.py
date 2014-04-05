@@ -74,6 +74,19 @@ class Telescope(object):
         return pa
 
     @property
+    def parallactic_angle_manual(self):
+        #Need HA
+        #Need Dec
+        #Need lat
+        #All should be in radians, to use math.py
+        #teneta = cos(latrad)*sin(HArad) / (sin(latrad)*cos(decrad) - cos(latrad)*sin(decrad)*cos(HArad))
+        #return atan(teneta)
+        dec_degree = self.dec
+        ha_degree  = 
+        lat_degree = 
+        
+    
+    @property
     def julian_date(self):
         jul = self._indi.get_element(
             "Telescope", "Pointing", "JD").get_float()
