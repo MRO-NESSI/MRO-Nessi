@@ -140,6 +140,7 @@ class GuideCamPanel(wx.Panel):
             #Make Fits File
             pass
 
+    @callafter
     def OnExposeSeries(self, event):
         if self.take_series.GetValue():
             count   = self.series.GetValue()
