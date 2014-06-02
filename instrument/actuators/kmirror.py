@@ -93,7 +93,7 @@ class KMirror(InstrumentComponent):
 
     def userAngleToPositionAngle(self, userAngle):
         if self.instrument.telescope:
-            parallactic_angle = self.instrument.telescope.parallactic_angle_manual
+            parallactic_angle = self.instrument.telescope.parallactic_angle
             altitude      = self.instrument.telescope.altitude
             tmode         = int(self.instrument.cfg['kmirror']['direction'])
             positionAngle = 0.5 * ((userAngle - parallactic_angle) 
@@ -251,6 +251,5 @@ class KMirror(InstrumentComponent):
             raise InstrumentError('An error occured during a velocity set of'
                                   ' the K-Mirror. \n The following '
                                   ' error was raised...\n %s' % repr(e))
-
 
 
