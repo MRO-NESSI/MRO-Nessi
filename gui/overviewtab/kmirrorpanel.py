@@ -51,7 +51,7 @@ class KmirrorPanel(wx.Panel):
         self.mode_txt = wx.StaticText(self, label="Mode:")
         self.mode     = wx.ComboBox(
             self, -1, size=(126,-1), 
-            choices=("Position Angle", "Vertical Angle", "Stationary"), 
+            choices=("Discrete Tracking", "Velocity Tracking"), 
             style=wx.CB_READONLY)
 
         self.t_angle_text  = wx.StaticText(self, label="T-Angle:")
@@ -173,7 +173,6 @@ class KmirrorPanel(wx.Panel):
 
         self._track_event = Event()
         t_angle = self.t_angle.GetValue()
-        ua = float(self.new_pa.GetValue())
         try:
             t_angle = float(t_angle)
         except:
@@ -182,8 +181,31 @@ class KmirrorPanel(wx.Panel):
                              'INVALID T_ANGLE!', wx.OK | wx.ICON_ERROR)
             self.StopTracking()
             return
+
+        user_angle = self.new_pa.GetValue()
+        try:
+            user_angle = float(user_angle)
+        except:
+            wx.CallAfter(wx.MessageBox,
+                         'Please select a valid user_angle!', 
+                             'INVALID USER_ANGLE!', wx.OK | wx.ICON_ERROR)
+            self.StopTracking()
+            return
         
-        self.DiscreteTracking(1, ua, self._track_event)
+        selected_mode = self.mode.GetSelection()
+        print selected_mode
+        if selected_mode is -1:
+            wx.CallAfter(wx.MessageBox,
+                         'Please Choose a tracking mode!',
+                         'NO TRACKING MODE SELECTED!', 
+                         wx.OK | wx.ICON_ERROR)
+            self.StopTracking()
+            return
+            
+        if selected_mode is 0:
+            self.DiscreteTracking(1, user_angle, self._track_event)
+        if selected_mode is 1:
+            self.VelocityTracking(1, self._track_event)
 
     @run_async(daemon=True)
     def DiscreteTracking(self, cadence, ua, stop_event):
