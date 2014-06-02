@@ -5,7 +5,7 @@ from threading import Event
 import wx
 
 import instrument.actuators.newport as new
-from   threadtools import run_async
+from   threadtools import run_async, callafter
 from   instrument.component import InstrumentError
 
 class KmirrorPanel(wx.Panel):
@@ -152,7 +152,7 @@ class KmirrorPanel(wx.Panel):
         else:
             self.StopTracking()
 
-
+    @callafter
     def StartTracking(self):
         """Called by on_track (the function that is run when hitting
         the Track button) in the event that the KMirror is currently
@@ -166,7 +166,7 @@ class KmirrorPanel(wx.Panel):
         -------
         ->None
         """
-        self.Enable(False)
+        #self.Enable(False)
         self.track_button.Enable(True)
         self.track_button.SetLabel("Stop Tracking")
         self.track_button.SetForegroundColour((34,139,34))

@@ -5,7 +5,7 @@ import re
 
 import wx
 
-from threadtools import run_async
+from threadtools import run_async, callafter
 from instrument.instrument import InstrumentError
 
 class GuidingPanel(wx.Panel):
@@ -63,13 +63,17 @@ class GuidingPanel(wx.Panel):
         else:
             self.StopGuide()
 
+    @callafter
     def StartGuide(self):
-        self.parent.guideCamPanel.Enable(False)
+        logging.info('StartGuide called!')
+        #self.parent.guideCamPanel.Enable(False)
         self.guide.SetLabel("Stop Guiding")
         self.guide.SetForegroundColour((34,139,34))
         self._guide_stop = Event()
+        logging.info('About to start ruite.')
         self.guide_routine()
 
+    @callafter
     def StopGuide(self):
         self.guide.SetLabel("StartGuiding")
         self.guide.SetForegroundColour((0,0,0))
@@ -152,8 +156,10 @@ class GuidingPanel(wx.Panel):
                          % (new_sky[0][0] / 15.0, new_sky[0][1]))
             
             # convert RA in decimal degrees back to RA in decimal hours
-            #self.telescope.ra  = new_sky[0][0] / 15.0
-            #self.telesceop.dec = new_sky[0][1]
+            self.telescope.ra  = new_sky[0][0] / 15.0
+            self.telesceop.dec = new_sky[0][1]
             
             logging.info("Sleeping for %f" % cadence)
             sleep(cadence)
+
+        logging.info("Stopping guiding...")
