@@ -50,7 +50,6 @@ def main():
 
     batches.append(
         ('Setting up Aptitude...', [
-            'add-apt-repository ppa:olebole/astro-precise',
             'apt-get update',
             'apt-get autoremove',
             'apt-get autoclean',
