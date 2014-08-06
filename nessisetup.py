@@ -163,9 +163,8 @@ KERNEL=="fliusb*", MODE="666", GROUP="plugdev"
 
     print colors['OK'] + 'Setting up pyfli...'
     taskBatch('Downloading/Building fliusb-1.3...', [
-            'cd ~/Downloads',
-            'git clone https://github.com/charris/pyfli.git',
-            'cd ~/Downloads/pyfli/fliusb-1.3',
+            'git clone https://github.com/charris/pyfli.git /tmp/pyfli-build',
+            'cd /tmp/pyfli-build/fliusb-1.3',
             'make clean',
             'make'
             ])
@@ -177,7 +176,7 @@ KERNEL=="fliusb*", MODE="666", GROUP="plugdev"
             'depmod'
             ])
     taskBatch('Building/Installing pyfli...', [
-            'cd ~/Downloads/pyfli',
+            'cd /tmp/pyfli-build',
             'python setup.py build',
             'python setup.py install'
             ])
