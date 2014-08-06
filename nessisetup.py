@@ -164,6 +164,7 @@ KERNEL=="fliusb*", MODE="666", GROUP="plugdev"
 
     print colors['OK'] + 'Setting up pyfli...'
     taskBatch('Downloading/Building fliusb-1.3...', [
+            'rm -rf /tmp/pyfli-build',
             'git clone https://github.com/charris/pyfli.git /tmp/pyfli-build',
             'cd /tmp/pyfli-build/fliusb-1.3',
             'make clean',
