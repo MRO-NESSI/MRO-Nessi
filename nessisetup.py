@@ -162,6 +162,17 @@ KERNEL=="fliusb*", MODE="666", GROUP="plugdev"
 
     taskBatch('Reloading rules...', ['udevadm control --reload-rules'])
 
+    print colors['OK'] + 'Installing PyGuide...'
+    taskBatch('Fetching and installing PyGuide...', [
+            'rm -rf /tmp/PyGuide-build',
+            'mkdir /tmp/PyGuide-build',
+            'cd /tmp/PyGuide-build',
+            'wget http://www.astro.washington.edu/users/rowen/PyGuide/files/PyGuide_2.2.1.zip -O PyGuide.zip',
+            'unzip PyGuide.zip',
+            'cd PyGuide_2.2.1',
+            'python setup.py build',
+            'python setup.py install'
+            ])
     print colors['OK'] + 'Setting up pyfli...'
     taskBatch('Downloading/Building fliusb-1.3...', [
             'rm -rf /tmp/pyfli-build',
