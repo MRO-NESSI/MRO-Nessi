@@ -79,6 +79,7 @@ def main():
             'apt-get install python-serial',
             'apt-get install python-usb',
             'pip install -U pyusb',
+            'pip install -U pywcs',
             'apt-get install python-pyds9',
         ]))
     batches.append(
