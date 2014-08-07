@@ -162,6 +162,11 @@ KERNEL=="fliusb*", MODE="666", GROUP="plugdev"
 
     taskBatch('Reloading rules...', ['udevadm control --reload-rules'])
 
+    print colors['OK'] + 'Installing kernel headers...'
+    uname = check_output(['uname', '-r']).strip()
+    taskBatch('Installing kernel headers...', [
+            'apt-get install linux-headers-%s' % uname
+        ])
     print colors['OK'] + 'Installing PyGuide...'
     taskBatch('Fetching and installing PyGuide...', [
             'rm -rf /tmp/PyGuide-build',
@@ -182,7 +187,6 @@ KERNEL=="fliusb*", MODE="666", GROUP="plugdev"
             'make'
             ])
     print colors['OK'] + 'Installing fliusb...'
-    uname = check_output(['uname', '-r']).strip()
     taskBatch('Copying files/depmod...', [
             'mkdir /lib/modules/%s/misc' % uname,
             'cp fliusb.ko /lib/modules/%s/misc/' % uname,
