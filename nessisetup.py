@@ -188,7 +188,7 @@ KERNEL=="fliusb*", MODE="666", GROUP="plugdev"
             ])
     print colors['OK'] + 'Installing fliusb...'
     taskBatch('Copying files/depmod...', [
-            'mkdir /lib/modules/%s/misc' % uname,
+            'mkdir -p /lib/modules/%s/misc' % uname,
             'cp fliusb.ko /lib/modules/%s/misc/' % uname,
             'depmod'
             ])
@@ -199,15 +199,15 @@ KERNEL=="fliusb*", MODE="666", GROUP="plugdev"
             ])
     
     print colors['OK'] + 'Installing NESSI...'
-
+    user_home = check_output(['printenv', 'HOME']).strip()
     taskBatch('Downloading current software...', [
-            'cd ~/Documents',
+            'mkdir -p %s/NESSI' % user_home,
+            'cd %s/NESSI' % user_home,
             'wget https://bitbucket.org/lschmidt/nessi/get/master.tar.gz',
             'tar -xvf master.tar.gz',
             ])
 
     print colors['OK'] + 'Moving NESSI...'
-
     try:
         check_output('mv lschmidt* nessi', shell=True)
         user = check_output('who').split()[0]
