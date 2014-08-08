@@ -15,7 +15,7 @@ class ThorlabsController(InstrumentComponent):
     _channel    = '\x01'
     _chan_ident = '\x01\x00'
     
-    _ports = {0: '/dev/ttyREI12', 1: '/dev/ttyREI34'}
+    _ports = {1: '/dev/ttyAGR', 0: '/dev/ttyREI34'}
 
     def __init__(self, instrument, port):
         """Build controller, and establish connection.

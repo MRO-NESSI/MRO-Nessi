@@ -127,8 +127,8 @@ def main():
 #numbers. If this device is replaced, find which device
 #it is, find the serial number, and replace.
 
-ATTRS{serial}=="83840902", SYMLINK+="ttyREI12", MODE="0666"
-ATTRS{serial}=="83841481", SYMLINK+="ttyREI34", MODE="0666"
+ATTRS{serial}=="83840902", SYMLINK+="ttyREI34", MODE="0666"
+ATTRS{serial}=="83841481", SYMLINK+="ttyAGR", MODE="0666"
 '''
     f = open('/etc/udev/rules.d/90-thorlabs.rules', 'w')
     f.write(thorlabs)
