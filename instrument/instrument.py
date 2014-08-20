@@ -307,7 +307,7 @@ class Instrument(object):
             "CRVAL1"   : 0.0,           #?????????
             "CRVAL2"   : 0.0,           #?????????
             "CROTA2"   :                #Image rotation value
-            self.kmirror.positionAngle * 2 + 180
+            self.kmirror.positionAngle * 2 + 180 if self.kmirror else None
             }
         
         return keywords

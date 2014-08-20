@@ -137,7 +137,7 @@ class GuideCamPanel(wx.Panel):
         self.parent.d.set('zoom to fit')
 
         if self.autosave_cb.GetValue():
-            #Make Fits File
+            #TODO: Make Fits File
             pass
 
     @callafter
@@ -148,7 +148,7 @@ class GuideCamPanel(wx.Panel):
             try:
                 cadence = float(cadence)
             except:
-                wx.CallAfter(wx.MessageBox,'Please select cadence time in secconds!', 
+                wx.CallAfter(wx.MessageBox,'Please select cadence time in seconds!',
                              'INVALID EXPOSURE TIME!', wx.OK | wx.ICON_ERROR)
                 self.endSeries()
                 return
@@ -189,7 +189,7 @@ class GuideCamPanel(wx.Panel):
             if self._series_stop.isSet():
                 break
             self.takePicture()
-            logging.debug("Guid cam series: %i of %i" % (i, count))
+            logging.debug("Guide cam series: %i of %i" % (i, count))
             sleep(cadence)
         self.endSeries()
         
