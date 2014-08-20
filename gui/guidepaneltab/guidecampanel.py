@@ -15,6 +15,10 @@ import wx
 
 from threadtools import run_async, callafter
 
+import datetime
+
+AUTOSAVE_FNAME = 'autosave/GuideCam_%m-%d-%Y_%H:%M:%S:%f.fits'
+
 class GuideCamPanel(wx.Panel):    
     def __init__(self, parent):
         super(GuideCamPanel, self).__init__(parent)
@@ -137,8 +141,15 @@ class GuideCamPanel(wx.Panel):
         self.parent.d.set('zoom to fit')
 
         if self.autosave_cb.GetValue():
-            #TODO: Make Fits File
-            pass
+            fname = datetime.datetime.now().strftime(AUTOSAVE_FNAME)
+            try:
+                with open(fname, 'wb') as image:
+                    i.writeto(image)
+                    image.close()
+                    print('Image autosaved to ' + fname)
+            except IOError as e:
+                wx.MessageBox('Warning, image could not be autosaved!',
+                              'FILE IO ERROR!', wx.OK | wx.ICON_ERROR)
 
     @callafter
     def OnExposeSeries(self, event):

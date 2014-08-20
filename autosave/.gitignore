@@ -1,0 +1,4 @@
+# track the autosave directory and this .gitignore, but do not track any other files.
+
+*
+!.gitignore
