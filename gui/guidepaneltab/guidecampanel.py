@@ -15,9 +15,11 @@ import wx
 
 from threadtools import run_async, callafter
 
+import os
 import datetime
 
-AUTOSAVE_FNAME = 'autosave/GuideCam_%m-%d-%Y_%H:%M:%S:%f.fits'
+AUTOSAVE_DIR = os.path.expanduser('~/Images/guide/%Y-%d-%m')
+AUTOSAVE_FNAME = AUTOSAVE_DIR + '/%H:%M:%S:%f.fits'
 
 class GuideCamPanel(wx.Panel):    
     def __init__(self, parent):
@@ -141,14 +143,18 @@ class GuideCamPanel(wx.Panel):
         self.parent.d.set('zoom to fit')
 
         if self.autosave_cb.GetValue():
+            fdir = datetime.datetime.now().strftime(AUTOSAVE_DIR)
             fname = datetime.datetime.now().strftime(AUTOSAVE_FNAME)
             try:
+                if not os.path.isdir(fdir):
+                    os.makedirs(fdir)
+                    print("Created autosave directory " + fdir)
                 with open(fname, 'wb') as image:
                     i.writeto(image)
                     image.close()
                     print('Image autosaved to ' + fname)
             except IOError as e:
-                wx.MessageBox('Warning, image could not be autosaved!',
+                wx.MessageBox('Warning, image could not be autosaved to %s!' % fname,
                               'FILE IO ERROR!', wx.OK | wx.ICON_ERROR)
 
     @callafter
